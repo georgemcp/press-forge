@@ -306,22 +306,30 @@ function PreflightPanel({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <button
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(checkoutPending)}
             type="button"
+            aria-label="Buy one export credit for nine dollars"
             onClick={() => onCheckout("payment")}
           >
             {checkoutPending === "payment" ? <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> : <LockKeyhole aria-hidden className="h-3.5 w-3.5" />}
-            Export credit
+            <span className="flex flex-col text-left leading-tight">
+              <span>Buy export</span>
+              <span className="text-[11px] text-muted">$9 one-time</span>
+            </span>
           </button>
           <button
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(checkoutPending)}
             type="button"
+            aria-label="Start Trim Proof Pro subscription for twenty nine dollars per month"
             onClick={() => onCheckout("subscription")}
           >
             {checkoutPending === "subscription" ? <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck aria-hidden className="h-3.5 w-3.5" />}
-            Subscription
+            <span className="flex flex-col text-left leading-tight">
+              <span>Start Pro</span>
+              <span className="text-[11px] text-muted">$29/month</span>
+            </span>
           </button>
         </div>
         <p className="mt-3 text-xs leading-5 text-muted">

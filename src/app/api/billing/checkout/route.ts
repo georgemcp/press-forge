@@ -48,6 +48,22 @@ export async function POST(request: Request) {
     cancel_url: `${appUrl}/app?mode=advanced&checkout=cancelled`,
     client_reference_id: payload.userId,
     customer_email: payload.email,
+    branding_settings: {
+      display_name: "Trim Proof"
+    },
+    wallet_options: {
+      link: {
+        display: "never"
+      }
+    },
+    custom_text: {
+      submit: {
+        message:
+          mode === "subscription"
+            ? "Trim Proof Pro unlocks recurring advanced PDF/X exports at trimproof.com."
+            : "This checkout unlocks one Trim Proof advanced PDF/X export at trimproof.com."
+      }
+    },
     metadata: {
       product: "trimproof",
       entitlement: mode === "subscription" ? "subscription" : "export_credit"
