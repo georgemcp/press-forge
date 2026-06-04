@@ -5,10 +5,12 @@
 Set these after the production domain and analytics property exist:
 
 ```bash
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-...
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-9VNCX1HGN5
 NEXT_PUBLIC_GTM_CONTAINER_ID=GTM-...
-NEXT_PUBLIC_APP_URL=https://...
+NEXT_PUBLIC_APP_URL=https://trimproof.com
 ```
+
+`NEXT_PUBLIC_GA_MEASUREMENT_ID` and `NEXT_PUBLIC_GTM_CONTAINER_ID` must be available during the Docker build as well as at runtime. Static marketing pages are generated at build time.
 
 ## Events
 

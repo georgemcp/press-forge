@@ -9,9 +9,11 @@ Production target:
 - Local app port behind nginx: `3047`
 - Supabase project: `justcsfgntvtbxprcnoh`
 - Stripe prices: export credit `price_1TejgIRy14ye40TRwCxJSBu7`; monthly subscription `price_1TejgJRy14ye40TRgqMqHR9V`
+- GA4 measurement ID: `G-9VNCX1HGN5`
 - TLS: Let's Encrypt certificate at `/etc/letsencrypt/live/trimproof.com/`, expiring `2026-09-02` with scheduled auto-renewal
 
 The app is deployed with Docker Compose. Nginx terminates public HTTP/HTTPS and proxies to the app container on `127.0.0.1:3047`.
+Public `NEXT_PUBLIC_*` variables are passed as Docker build args so statically rendered marketing pages include analytics tags after rebuilds. Use `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build` for production rebuilds.
 
 Required production env:
 
@@ -30,3 +32,4 @@ Verification:
 - Generate a proof in `/app` and verify the returned `/api/exports/proof/files/...` URL downloads a PDF.
 - `curl -I http://trimproof.com`
 - `curl -I https://trimproof.com` after the certificate is issued
+- Browser-check `https://trimproof.com` and `https://trimproof.com/app` for `https://www.googletagmanager.com/gtag/js?id=G-9VNCX1HGN5`
