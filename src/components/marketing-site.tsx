@@ -13,7 +13,8 @@ import {
   Ruler,
   SearchCheck,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  WalletCards
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { trackEvent } from "@/lib/analytics/events";
@@ -53,6 +54,39 @@ const workflowCards: Array<[string, string, LucideIcon]> = [
   ["Gate", "Run PDF/X, CMYK, font, DPI, and box checks before delivery.", ShieldCheck]
 ];
 
+const pricingPlans = [
+  {
+    id: "dummy",
+    name: "Dummy proof",
+    price: "$0",
+    cadence: "sample",
+    body: "See bleed, trim, safe-area guides, crop marks, and a preflight report before paying.",
+    cta: "Run dummy proof",
+    href: "/app",
+    features: ["Sample business-card proof", "Preflight report", "No account required"]
+  },
+  {
+    id: "export",
+    name: "Export credit",
+    price: "$9",
+    cadence: "per export",
+    body: "Unlock one advanced PDF/X export when a specific job needs a printer-ready file.",
+    cta: "Buy export credit",
+    href: "/app?mode=advanced",
+    features: ["PDF/X-1a export", "CMYK conversion", "Credit consumed on generated proof"]
+  },
+  {
+    id: "pro",
+    name: "Trim Proof Pro",
+    price: "$29",
+    cadence: "per month",
+    body: "Use advanced mode for repeat print work without buying one credit at a time.",
+    cta: "Start Pro",
+    href: "/app?mode=advanced",
+    features: ["Subscription checkout", "Advanced export controls", "Built for frequent jobs"]
+  }
+];
+
 function JsonLd() {
   const schema = {
     "@context": "https://schema.org",
@@ -73,10 +107,16 @@ function JsonLd() {
         description:
           "Trim Proof turns design briefs into print-ready PDF/X files with deterministic CMYK conversion, bleed, crop marks, embedded vector fonts, and preflight checks.",
         offers: {
-          "@type": "Offer",
-          price: "0",
+          "@type": "AggregateOffer",
           priceCurrency: "USD",
-          description: "Pricing is configured through Stripe for export credits and subscriptions."
+          lowPrice: "0",
+          highPrice: "29",
+          offerCount: 3,
+          offers: [
+            { "@type": "Offer", name: "Dummy proof", price: "0", priceCurrency: "USD" },
+            { "@type": "Offer", name: "Export credit", price: "9", priceCurrency: "USD" },
+            { "@type": "Offer", name: "Trim Proof Pro", price: "29", priceCurrency: "USD" }
+          ]
         }
       },
       {
@@ -170,6 +210,7 @@ export function MarketingSite() {
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-semibold text-muted md:flex">
             <a href="#how-it-works">How it works</a>
+            <a href="#pricing">Pricing</a>
             <a href="#seo-pages">Tools</a>
             <a href="#faq">FAQ</a>
           </nav>
@@ -244,7 +285,54 @@ export function MarketingSite() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16">
+      <section className="border-b border-border bg-background" id="pricing">
+        <div className="mx-auto max-w-7xl px-4 py-16">
+          <div className="max-w-3xl">
+            <WalletCards aria-hidden className="h-6 w-6 text-brand" />
+            <h2 className="mt-4 font-display text-3xl font-bold text-surface-ink">Pay once for one file, or subscribe for repeat print work.</h2>
+            <p className="mt-4 text-base leading-7 text-muted">
+              Trim Proof is usable before checkout, then paid advanced export is handled by Stripe. Small teams can buy
+              one export credit for a single job or use the monthly plan when print-ready files are part of the weekly workflow.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            {pricingPlans.map((plan) => (
+              <article key={plan.id} className="flex min-h-[340px] flex-col rounded-[8px] border border-border bg-surface p-5">
+                <div>
+                  <h3 className="font-display text-2xl font-bold text-surface-ink">{plan.name}</h3>
+                  <div className="mt-4 flex items-end gap-2">
+                    <span className="font-display text-4xl font-bold text-surface-ink">{plan.price}</span>
+                    <span className="pb-1 text-sm font-semibold text-muted">{plan.cadence}</span>
+                  </div>
+                  <p className="mt-4 text-sm leading-6 text-muted">{plan.body}</p>
+                </div>
+                <ul className="mt-5 flex-1 space-y-3 text-sm font-semibold text-surface-ink">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex gap-2">
+                      <CheckCircle2 aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-[8px] bg-surface-ink px-4 text-sm font-bold text-white"
+                  href={plan.href}
+                  onClick={() =>
+                    trackEvent(plan.id === "dummy" ? "dummy_proof_started" : "advanced_mode_selected", {
+                      source: `pricing_${plan.id}`
+                    })
+                  }
+                >
+                  {plan.cta}
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-16" id="seo-pages">
         <div className="grid gap-8 lg:grid-cols-[0.75fr_1fr]">
           <div>
             <SearchCheck aria-hidden className="h-6 w-6 text-brand" />
