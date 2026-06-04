@@ -23,6 +23,8 @@ Trim Proof pushes events to both `dataLayer` and `gtag` when configured:
 - `checkout_started`
 - `email_signup_submitted`
 
+The email signup API also returns server-side delivery status for the transactional confirmation and admin alert. Use that API response for operational smoke tests; use GA4 for aggregate conversion reporting.
+
 ## Recommended GA4 Conversions
 
 Mark these as key events:
