@@ -44,8 +44,8 @@ export async function POST(request: Request) {
         quantity: 1
       }
     ],
-    success_url: `${appUrl}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appUrl}/?checkout=cancelled`,
+    success_url: `${appUrl}/app?mode=advanced&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${appUrl}/app?mode=advanced&checkout=cancelled`,
     client_reference_id: payload.userId,
     customer_email: payload.email,
     metadata: {

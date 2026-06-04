@@ -8,11 +8,20 @@ export const metadata = {
 
 interface AppPageProps {
   searchParams: Promise<{
+    checkout?: string;
     mode?: string;
+    session_id?: string;
   }>;
 }
 
 export default async function AppPage({ searchParams }: AppPageProps) {
   const params = await searchParams;
-  return <TrimProofWorkspace initialMode={params.mode === "advanced" ? "advanced" : "dummy"} initialSpec={sampleBusinessCardLayout} />;
+  return (
+    <TrimProofWorkspace
+      checkoutSessionId={params.checkout === "success" ? params.session_id : undefined}
+      checkoutState={params.checkout}
+      initialMode={params.mode === "advanced" ? "advanced" : "dummy"}
+      initialSpec={sampleBusinessCardLayout}
+    />
+  );
 }

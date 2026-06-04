@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   BadgeCheck,
   Box,
@@ -21,6 +21,8 @@ import type { PreflightReport, PreflightStatus } from "@/lib/print/preflight";
 import { trackEvent } from "@/lib/analytics/events";
 
 interface TrimProofWorkspaceProps {
+  checkoutSessionId?: string;
+  checkoutState?: string;
   initialSpec: LayoutSpec;
   initialMode?: WorkspaceMode;
 }
@@ -34,6 +36,11 @@ interface ProofApiResponse {
 
 type CheckoutMode = "payment" | "subscription";
 type WorkspaceMode = "dummy" | "advanced";
+
+interface PaidSession {
+  id: string;
+  entitlement: "export_credit" | "subscription";
+}
 
 const statusTone: Record<PreflightStatus, string> = {
   passed: "bg-success text-white",
@@ -237,6 +244,8 @@ function IntakePanel({
 }
 
 function PreflightPanel({
+  mode,
+  paidSession,
   report,
   isPending,
   checkoutPending,
@@ -244,6 +253,8 @@ function PreflightPanel({
   onCheckout,
   downloadUrl
 }: {
+  mode: WorkspaceMode;
+  paidSession?: PaidSession;
   report?: PreflightReport;
   isPending: boolean;
   checkoutPending?: CheckoutMode;
@@ -251,6 +262,7 @@ function PreflightPanel({
   onCheckout: (mode: CheckoutMode) => void;
   downloadUrl?: string;
 }) {
+  const advancedLocked = mode === "advanced" && !paidSession;
   const checks = report?.checks ?? [
     { id: "layout", label: "LayoutSpec schema", status: "passed" as const, evidence: "Ready" },
     { id: "pdfx", label: "PDF/X proof", status: "needs_attention" as const, evidence: "Run export to verify." },
@@ -274,7 +286,7 @@ function PreflightPanel({
           onClick={onGenerate}
         >
           {isPending ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : <Play aria-hidden className="h-4 w-4" />}
-          {report ? "Regenerate proof" : "Generate press proof"}
+          {advancedLocked ? "Unlock export first" : report ? "Regenerate proof" : "Generate press proof"}
         </button>
         {downloadUrl ? (
           <a
@@ -313,7 +325,11 @@ function PreflightPanel({
           </button>
         </div>
         <p className="mt-3 text-xs leading-5 text-muted">
-          Prices live in Stripe Price IDs. Files are delivered only after preflight passes or is flagged for review.
+          {paidSession
+            ? paidSession.entitlement === "subscription"
+              ? "Subscription verified. Advanced exports are unlocked for this session."
+              : "Paid export credit verified. This credit is consumed when the PDF/X proof is generated."
+            : "Advanced PDF/X export requires a Stripe export credit or subscription."}
         </p>
       </div>
 
@@ -340,18 +356,53 @@ function PreflightPanel({
   );
 }
 
-export function TrimProofWorkspace({ initialMode = "dummy", initialSpec }: TrimProofWorkspaceProps) {
+export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMode = "dummy", initialSpec }: TrimProofWorkspaceProps) {
   const [mode, setMode] = useState<WorkspaceMode>(initialMode);
   const [brief, setBrief] = useState("Create a premium business card for a prepress automation studio. Keep all text vector and export PDF/X-1a.");
   const [proof, setProof] = useState<ProofApiResponse>();
   const [error, setError] = useState<string>();
   const [checkoutPending, setCheckoutPending] = useState<CheckoutMode>();
+  const [paidSession, setPaidSession] = useState<PaidSession>();
+  const [sessionPending, setSessionPending] = useState(Boolean(checkoutSessionId));
   const [isPending, startTransition] = useTransition();
 
   const spec = useMemo(() => initialSpec, [initialSpec]);
 
+  useEffect(() => {
+    if (!checkoutSessionId) {
+      if (checkoutState === "cancelled") {
+        setError("Checkout was cancelled. Advanced export is still locked.");
+      }
+      return;
+    }
+    let cancelled = false;
+    setSessionPending(true);
+    void (async () => {
+      const response = await fetch(`/api/billing/session?session_id=${encodeURIComponent(checkoutSessionId)}`);
+      const payload = (await response.json().catch(() => undefined)) as { session?: PaidSession; error?: string } | undefined;
+      if (cancelled) {
+        return;
+      }
+      if (!response.ok || !payload?.session) {
+        setError(payload?.error ?? "Checkout could not be verified.");
+      } else {
+        setPaidSession(payload.session);
+        setMode("advanced");
+        trackEvent("checkout_verified", { entitlement: payload.session.entitlement });
+      }
+      setSessionPending(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [checkoutSessionId, checkoutState]);
+
   function generateProof() {
     setError(undefined);
+    if (mode === "advanced" && !paidSession) {
+      setError("Advanced export requires a Stripe export credit or subscription first.");
+      return;
+    }
     startTransition(() => {
       void (async () => {
         trackEvent(mode === "dummy" ? "dummy_proof_started" : "proof_export_started", { mode });
@@ -360,7 +411,7 @@ export function TrimProofWorkspace({ initialMode = "dummy", initialSpec }: TrimP
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ brief, spec, mode })
+          body: JSON.stringify({ brief, spec, mode, checkoutSessionId: paidSession?.id })
         });
         if (!response.ok) {
           const payload = (await response.json().catch(() => undefined)) as { error?: string } | undefined;
@@ -369,6 +420,9 @@ export function TrimProofWorkspace({ initialMode = "dummy", initialSpec }: TrimP
         }
         const payload = (await response.json()) as ProofApiResponse;
         setProof(payload);
+        if (mode === "advanced" && paidSession?.entitlement === "export_credit") {
+          setPaidSession(undefined);
+        }
         trackEvent("proof_export_completed", { mode, status: payload.report.status });
       })();
     });
@@ -420,6 +474,9 @@ export function TrimProofWorkspace({ initialMode = "dummy", initialSpec }: TrimP
         {error ? (
           <div className="border-b border-danger/30 bg-danger/10 px-5 py-3 text-sm font-semibold text-danger">{error}</div>
         ) : null}
+        {sessionPending ? (
+          <div className="border-b border-brand/20 bg-brand-soft px-5 py-3 text-sm font-semibold text-brand">Verifying checkout session...</div>
+        ) : null}
 
         <div className="flex flex-1 flex-col overflow-auto xl:flex-row xl:overflow-hidden">
           <IntakePanel brief={brief} mode={mode} setBrief={setBrief} setMode={setMode} spec={spec} />
@@ -428,8 +485,10 @@ export function TrimProofWorkspace({ initialMode = "dummy", initialSpec }: TrimP
             checkoutPending={checkoutPending}
             downloadUrl={proof?.downloadUrl}
             isPending={isPending}
+            mode={mode}
             onCheckout={startCheckout}
             onGenerate={generateProof}
+            paidSession={paidSession}
             report={proof?.report}
           />
         </div>

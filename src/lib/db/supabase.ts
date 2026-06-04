@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
 
 export function createBrowserSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -6,7 +7,7 @@ export function createBrowserSupabaseClient() {
   if (!url || !anonKey) {
     return undefined;
   }
-  return createClient(url, anonKey);
+  return createClient<Database>(url, anonKey);
 }
 
 export function createServiceSupabaseClient() {
@@ -15,7 +16,7 @@ export function createServiceSupabaseClient() {
   if (!url || !serviceKey) {
     return undefined;
   }
-  return createClient(url, serviceKey, {
+  return createClient<Database>(url, serviceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false

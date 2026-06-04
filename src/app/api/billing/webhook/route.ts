@@ -43,6 +43,21 @@ export async function POST(request: Request) {
     const session = event.data.object;
     const entitlement = session.metadata?.entitlement;
     const userId = session.client_reference_id;
+    if (entitlement === "export_credit" || entitlement === "subscription") {
+      await supabase.from("export_orders").upsert(
+        {
+          stripe_session_id: session.id,
+          stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
+          customer_email: session.customer_details?.email ?? session.customer_email ?? null,
+          entitlement,
+          checkout_mode: session.mode,
+          status: "paid"
+        },
+        {
+          onConflict: "stripe_session_id"
+        }
+      );
+    }
     if (userId && entitlement === "export_credit") {
       await supabase.from("credits_usage").insert({
         user_id: userId,
