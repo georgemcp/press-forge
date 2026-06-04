@@ -10,6 +10,7 @@ Production target:
 - Supabase project: `justcsfgntvtbxprcnoh`
 - Stripe prices: export credit `price_1TejgIRy14ye40TRwCxJSBu7`; monthly subscription `price_1TejgJRy14ye40TRgqMqHR9V`
 - GA4 measurement ID: `G-9VNCX1HGN5`
+- Transactional email: SendGrid from `launch@trimproof.com`; admin notifications to `george.mcpherson@rightawaygroup.com`
 - TLS: Let's Encrypt certificate at `/etc/letsencrypt/live/trimproof.com/`, expiring `2026-09-02` with scheduled auto-renewal
 
 The app is deployed with Docker Compose. Nginx terminates public HTTP/HTTPS and proxies to the app container on `127.0.0.1:3047`.
@@ -25,6 +26,14 @@ Required production env:
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID` or `NEXT_PUBLIC_GTM_CONTAINER_ID` when analytics tags are live
 - `EMAIL_PROVIDER`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, `TRIMPROOF_ADMIN_EMAIL`, and either `RESEND_API_KEY` or `SENDGRID_API_KEY` when transactional signup email is live
 - `OPENAI_API_KEY` and/or `GEMINI_API_KEY` when creative image providers are enabled
+
+Production email DNS:
+
+- SendGrid authenticated domain ID: `31303631`
+- `em.trimproof.com` CNAME `u56539253.wl004.sendgrid.net`
+- `s1._domainkey.trimproof.com` CNAME `s1.domainkey.u56539253.wl004.sendgrid.net`
+- `s2._domainkey.trimproof.com` CNAME `s2.domainkey.u56539253.wl004.sendgrid.net`
+- Validation status on `2026-06-04`: `valid=true` for return-path and both DKIM records.
 
 Verification:
 
