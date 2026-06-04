@@ -1,9 +1,16 @@
+import { z } from "zod";
 import { NextResponse } from "next/server";
 import { getAppUrl, getStripeClient } from "@/lib/billing/stripe";
 
 export const runtime = "nodejs";
 
 type CheckoutMode = "payment" | "subscription";
+
+const checkoutSchema = z.object({
+  mode: z.enum(["payment", "subscription"]).optional(),
+  userId: z.string().min(1).optional(),
+  email: z.string().email()
+});
 
 function resolvePriceId(mode: CheckoutMode) {
   if (mode === "subscription") {
@@ -23,8 +30,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const payload = (await request.json().catch(() => ({}))) as { mode?: CheckoutMode; userId?: string; email?: string };
-  const mode: CheckoutMode = payload.mode === "subscription" ? "subscription" : "payment";
+  const payload = await request.json().catch(() => ({}));
+  const parsed = checkoutSchema.safeParse(payload);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Enter a valid billing email before checkout." }, { status: 400 });
+  }
+  const mode: CheckoutMode = parsed.data.mode === "subscription" ? "subscription" : "payment";
   const priceId = resolvePriceId(mode);
   if (!priceId) {
     return NextResponse.json(
@@ -46,8 +57,8 @@ export async function POST(request: Request) {
     ],
     success_url: `${appUrl}/app?mode=advanced&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/app?mode=advanced&checkout=cancelled`,
-    client_reference_id: payload.userId,
-    customer_email: payload.email,
+    client_reference_id: parsed.data.userId,
+    customer_email: parsed.data.email?.trim().toLowerCase(),
     branding_settings: {
       display_name: "Trim Proof"
     },

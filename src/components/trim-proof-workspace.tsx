@@ -9,6 +9,7 @@ import {
   Layers3,
   Loader2,
   LockKeyhole,
+  Mail,
   Play,
   Ruler,
   ShieldCheck,
@@ -249,8 +250,13 @@ function PreflightPanel({
   report,
   isPending,
   checkoutPending,
+  accessPending,
+  billingEmail,
+  accessMessage,
+  setBillingEmail,
   onGenerate,
   onCheckout,
+  onSendAccessLink,
   downloadUrl
 }: {
   mode: WorkspaceMode;
@@ -258,8 +264,13 @@ function PreflightPanel({
   report?: PreflightReport;
   isPending: boolean;
   checkoutPending?: CheckoutMode;
+  accessPending?: boolean;
+  billingEmail: string;
+  accessMessage?: string;
+  setBillingEmail: (email: string) => void;
   onGenerate: () => void;
   onCheckout: (mode: CheckoutMode) => void;
+  onSendAccessLink: () => void;
   downloadUrl?: string;
 }) {
   const advancedLocked = mode === "advanced" && !paidSession;
@@ -304,9 +315,21 @@ function PreflightPanel({
           <WalletCards aria-hidden className="h-4 w-4 text-brand" />
           <h3 className="font-display text-sm font-semibold text-surface-ink">Billing</h3>
         </div>
+        <label className="text-xs font-semibold uppercase text-muted" htmlFor="billing-email">
+          Billing email
+        </label>
+        <input
+          id="billing-email"
+          className="mt-2 h-10 w-full rounded-[8px] border border-border bg-surface px-3 text-sm text-surface-ink"
+          inputMode="email"
+          placeholder="you@company.com"
+          type="email"
+          value={billingEmail}
+          onChange={(event) => setBillingEmail(event.target.value)}
+        />
         <div className="grid grid-cols-2 gap-2">
           <button
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 inline-flex min-h-12 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(checkoutPending)}
             type="button"
             aria-label="Buy one export credit for nine dollars"
@@ -319,7 +342,7 @@ function PreflightPanel({
             </span>
           </button>
           <button
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 inline-flex min-h-12 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(checkoutPending)}
             type="button"
             aria-label="Start Trim Proof Pro subscription for twenty nine dollars per month"
@@ -332,13 +355,23 @@ function PreflightPanel({
             </span>
           </button>
         </div>
+        <button
+          className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={Boolean(accessPending)}
+          type="button"
+          onClick={onSendAccessLink}
+        >
+          {accessPending ? <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> : <Mail aria-hidden className="h-3.5 w-3.5" />}
+          Email my access link
+        </button>
         <p className="mt-3 text-xs leading-5 text-muted">
           {paidSession
             ? paidSession.entitlement === "subscription"
               ? "Subscription verified. Advanced exports are unlocked for this session."
               : "Paid export credit verified. This credit is consumed when the PDF/X proof is generated."
-            : "Advanced PDF/X export requires a Stripe export credit or subscription."}
+            : "Use the same billing email at checkout so Trim Proof can send access links for unused credits or subscriptions."}
         </p>
+        {accessMessage ? <p className="mt-2 text-xs font-semibold text-brand">{accessMessage}</p> : null}
       </div>
 
       <div className="space-y-3 overflow-auto p-5">
@@ -370,6 +403,9 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
   const [proof, setProof] = useState<ProofApiResponse>();
   const [error, setError] = useState<string>();
   const [checkoutPending, setCheckoutPending] = useState<CheckoutMode>();
+  const [accessPending, setAccessPending] = useState(false);
+  const [billingEmail, setBillingEmail] = useState("");
+  const [accessMessage, setAccessMessage] = useState<string>();
   const [paidSession, setPaidSession] = useState<PaidSession>();
   const [sessionPending, setSessionPending] = useState(Boolean(checkoutSessionId));
   const [isPending, startTransition] = useTransition();
@@ -438,6 +474,12 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
 
   async function startCheckout(mode: CheckoutMode) {
     setError(undefined);
+    setAccessMessage(undefined);
+    const email = billingEmail.trim().toLowerCase();
+    if (!email.includes("@")) {
+      setError("Enter a billing email first so Trim Proof can attach the checkout to your access link.");
+      return;
+    }
     setCheckoutPending(mode);
     trackEvent("checkout_started", { mode });
     try {
@@ -446,7 +488,7 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ mode })
+        body: JSON.stringify({ mode, email })
       });
       const payload = (await response.json().catch(() => undefined)) as { url?: string; error?: string } | undefined;
       if (!response.ok || !payload?.url) {
@@ -456,6 +498,40 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
       window.location.href = payload.url;
     } finally {
       setCheckoutPending(undefined);
+    }
+  }
+
+  async function sendAccessLink() {
+    setError(undefined);
+    setAccessMessage(undefined);
+    const email = billingEmail.trim().toLowerCase();
+    if (!email.includes("@")) {
+      setError("Enter the billing email used for checkout first.");
+      return;
+    }
+    setAccessPending(true);
+    try {
+      const response = await fetch("/api/billing/access-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email })
+      });
+      const payload = (await response.json().catch(() => undefined)) as { matched?: boolean; error?: string; email?: { status?: string } } | undefined;
+      if (!response.ok) {
+        setError(payload?.error ?? "Access link request failed.");
+        return;
+      }
+      if (payload?.matched && payload.email?.status === "sent") {
+        setAccessMessage("Access link sent. Check your inbox.");
+      } else if (payload?.matched) {
+        setAccessMessage("Access was found, but email delivery is not configured.");
+      } else {
+        setAccessMessage("No unused credit or active subscription was found for that email.");
+      }
+    } finally {
+      setAccessPending(false);
     }
   }
 
@@ -490,14 +566,19 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
           <IntakePanel brief={brief} mode={mode} setBrief={setBrief} setMode={setMode} spec={spec} />
           <PrintPreview spec={spec} />
           <PreflightPanel
+            accessMessage={accessMessage}
+            accessPending={accessPending}
+            billingEmail={billingEmail}
             checkoutPending={checkoutPending}
             downloadUrl={proof?.downloadUrl}
             isPending={isPending}
             mode={mode}
             onCheckout={startCheckout}
             onGenerate={generateProof}
+            onSendAccessLink={sendAccessLink}
             paidSession={paidSession}
             report={proof?.report}
+            setBillingEmail={setBillingEmail}
           />
         </div>
       </div>

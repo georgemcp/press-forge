@@ -10,6 +10,8 @@ export interface PaidCheckoutSession {
   consumed?: boolean;
 }
 
+const activeSubscriptionStatuses = new Set(["active", "trialing"]);
+
 function getSessionCustomerEmail(session: Stripe.Checkout.Session) {
   return session.customer_details?.email ?? session.customer_email ?? undefined;
 }
@@ -33,6 +35,15 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
   }
   if (session.status !== "complete" || session.payment_status !== "paid") {
     throw new Error("Checkout session is not paid.");
+  }
+  if (session.mode === "subscription") {
+    const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+    if (subscriptionId) {
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      if (!activeSubscriptionStatuses.has(subscription.status)) {
+        throw new Error("Subscription is not active.");
+      }
+    }
   }
 
   const supabase = createServiceSupabaseClient();

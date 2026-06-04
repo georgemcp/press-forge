@@ -40,6 +40,8 @@ Verification:
 - `docker compose -f docker-compose.prod.yml ps`
 - `curl http://127.0.0.1:3047/api/health`
 - Generate a proof in `/app` and verify the returned `/api/exports/proof/files/...` URL downloads a PDF.
+- Start a Checkout Session from `/app?mode=advanced` with a billing email and confirm Stripe opens a Trim Proof-branded hosted Checkout page.
+- Submit `/api/billing/access-link` with a billing email and confirm active subscriptions or unused export credits receive an emailed `/app?mode=advanced&checkout=success&session_id=...` access link.
 - `curl -I http://trimproof.com`
 - `curl -I https://trimproof.com` after the certificate is issued
 - Browser-check `https://trimproof.com` and `https://trimproof.com/app` for `https://www.googletagmanager.com/gtag/js?id=G-9VNCX1HGN5`
