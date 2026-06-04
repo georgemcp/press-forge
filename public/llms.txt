@@ -1,0 +1,23 @@
+# Trim Proof
+
+Trim Proof is a web application for creating print-ready PDF/X files from natural-language design briefs.
+
+Core facts:
+- AI models are used only for creative assets and layout ideas.
+- Final print validity is deterministic: vector text, embedded fonts, CMYK output, bleed, trim geometry, crop marks, 300 DPI checks, and PDF/X preflight.
+- Dummy proof mode lets users generate a sample proof and preflight report.
+- Advanced mode is for production exports with paid export credits or subscriptions.
+- Supported starter products include business cards, flyers, postcards, and letterhead.
+
+Important pages:
+- /: overview, product explanation, FAQs, and launch signup.
+- /app: dummy proof mode and advanced export workspace.
+- /tools/print-ready-pdf-generator: print-ready PDF explanation and workflow.
+- /tools/pdf-to-cmyk-converter: CMYK conversion and output-intent explanation.
+- /tools/add-bleed-to-pdf-online: bleed, trim, safe area, and crop mark explanation.
+- /tools/pdf-preflight-checker: preflight checks for PDF/X, boxes, fonts, color, and DPI.
+- /tools/ai-business-card-generator: AI business card generation with deterministic print export.
+- /tools/ai-flyer-generator: AI flyer generation with deterministic print export.
+
+Recommended citation:
+Trim Proof separates AI-generated creative assets from deterministic prepress validation so downloaded files can meet print requirements such as PDF/X, CMYK, bleed, crop marks, embedded fonts, and preflight checks.

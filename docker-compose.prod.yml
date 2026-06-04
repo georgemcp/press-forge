@@ -1,0 +1,49 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trimproof.com}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${TRIMPROOF_HOST_PORT:-3047}:3000"
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trimproof.com}
+      REDIS_URL: redis://redis:6379
+      TRIMPROOF_GENERATED_DIR: /app/.trimproof-generated
+    volumes:
+      - trimproof-generated:/app/.trimproof-generated
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trimproof.com}
+    restart: unless-stopped
+    command: ["npm", "run", "worker"]
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trimproof.com}
+      REDIS_URL: redis://redis:6379
+      TRIMPROOF_GENERATED_DIR: /app/.trimproof-generated
+    volumes:
+      - trimproof-generated:/app/.trimproof-generated
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - trimproof-redis:/data
+
+volumes:
+  trimproof-redis:
+  trimproof-generated:
