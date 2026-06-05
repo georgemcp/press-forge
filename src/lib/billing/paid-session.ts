@@ -14,6 +14,7 @@ export interface PaidCheckoutSession {
 }
 
 const activeSubscriptionStatuses = new Set(["active", "trialing"]);
+const unavailableExportCreditStatuses = new Set(["processing", "consumed", "refunded", "expired"]);
 
 function getSessionCustomerEmail(session: Stripe.Checkout.Session) {
   return session.customer_details?.email ?? session.customer_email ?? undefined;
@@ -57,12 +58,28 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
   const supabase = createServiceSupabaseClient();
   let consumed = false;
   if (supabase) {
-    const { data: existingOrder } = await supabase
+    const { data: existingOrder, error: existingOrderError } = await supabase
       .from("export_orders")
       .select("status")
       .eq("stripe_session_id", session.id)
       .maybeSingle();
-    consumed = existingOrder?.status === "consumed";
+    if (existingOrderError) {
+      throw new Error(existingOrderError.message);
+    }
+
+    consumed = entitlement === "export_credit" && unavailableExportCreditStatuses.has(existingOrder?.status ?? "");
+    if (consumed) {
+      return {
+        id: session.id,
+        entitlement,
+        mode: session.mode,
+        customerId,
+        customerEmail: getSessionCustomerEmail(session),
+        subscriptionId,
+        subscriptionStatus,
+        consumed
+      };
+    }
 
     await supabase.from("export_orders").upsert(
       {
@@ -91,7 +108,61 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
   };
 }
 
-export async function consumeExportCredit(sessionId: string, proofJobId: string) {
+export async function claimExportCredit(sessionId: string, proofJobId: string) {
+  const supabase = createServiceSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase service client is required to claim export credits.");
+  }
+
+  const { data, error } = await supabase
+    .from("export_orders")
+    .update({
+      status: "processing",
+      proof_job_id: proofJobId,
+      consumed_at: null
+    })
+    .eq("stripe_session_id", sessionId)
+    .eq("entitlement", "export_credit")
+    .eq("status", "paid")
+    .select("stripe_session_id")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data) {
+    throw new Error("This export credit has already been used.");
+  }
+}
+
+export async function finalizeExportCredit(sessionId: string, proofJobId: string) {
+  const supabase = createServiceSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase service client is required to finalize export credits.");
+  }
+
+  const { data, error } = await supabase
+    .from("export_orders")
+    .update({
+      status: "consumed",
+      consumed_at: new Date().toISOString()
+    })
+    .eq("stripe_session_id", sessionId)
+    .eq("entitlement", "export_credit")
+    .eq("status", "processing")
+    .eq("proof_job_id", proofJobId)
+    .select("stripe_session_id")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data) {
+    throw new Error("Export credit could not be finalized.");
+  }
+}
+
+export async function releaseExportCredit(sessionId: string, proofJobId: string) {
   const supabase = createServiceSupabaseClient();
   if (!supabase) {
     return;
@@ -100,11 +171,12 @@ export async function consumeExportCredit(sessionId: string, proofJobId: string)
   await supabase
     .from("export_orders")
     .update({
-      status: "consumed",
-      proof_job_id: proofJobId,
-      consumed_at: new Date().toISOString()
+      status: "paid",
+      proof_job_id: null,
+      consumed_at: null
     })
     .eq("stripe_session_id", sessionId)
     .eq("entitlement", "export_credit")
-    .eq("status", "paid");
+    .eq("status", "processing")
+    .eq("proof_job_id", proofJobId);
 }
