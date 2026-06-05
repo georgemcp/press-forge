@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState, useTransition } from "react";
 import {
   BadgeCheck,
@@ -114,13 +115,22 @@ function PrintPreview({ spec, assetUrl, assetProvider }: { spec: LayoutSpec; ass
           <div className="absolute inset-[9.6%] border border-surface-ink" />
           <div className="absolute inset-[15.2%] border border-dashed border-success" />
           <div
-            className="relative h-full overflow-hidden border border-transparent bg-[oklch(0.98_0.008_84)] bg-cover bg-center p-5 sm:p-8"
+            className="relative h-full overflow-hidden border border-transparent bg-[oklch(0.98_0.008_84)] p-5 sm:p-8"
             data-proof-asset={assetUrl ? "ready" : "pending"}
-            style={assetUrl ? { backgroundImage: `linear-gradient(90deg, oklch(0.98 0.008 84 / 0.78), oklch(0.98 0.008 84 / 0.3)), url(${assetUrl})` } : undefined}
           >
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,oklch(0.98_0.008_84_/_0.8),oklch(0.98_0.008_84_/_0.2))]" />
-            <div className="absolute bottom-5 right-5 top-5 w-2 bg-accent sm:bottom-7 sm:right-8 sm:top-7 sm:w-3" />
-            <div className="flex h-full flex-col justify-between">
+            {assetUrl ? (
+              <Image
+                alt=""
+                className="absolute inset-0 object-cover opacity-100 saturate-[1.08] contrast-[1.04]"
+                fill
+                sizes="(min-width: 1280px) 52vw, 94vw"
+                src={assetUrl}
+                unoptimized
+              />
+            ) : null}
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,oklch(0.98_0.008_84_/_0.86)_0%,oklch(0.98_0.008_84_/_0.68)_24%,oklch(0.98_0.008_84_/_0.22)_48%,transparent_72%)]" />
+            <div className="absolute bottom-5 right-5 top-5 z-10 w-2 bg-accent sm:bottom-7 sm:right-8 sm:top-7 sm:w-3" />
+            <div className="relative z-10 flex h-full flex-col justify-between">
               <div>
                 <div className="relative font-display text-2xl font-bold tracking-normal text-surface-ink sm:text-3xl">{brand}</div>
                 <div className="relative mt-2 max-w-[360px] text-sm font-semibold text-muted">{tagline}</div>

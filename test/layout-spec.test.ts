@@ -40,6 +40,14 @@ describe("LayoutSpec schema", () => {
     expect(spec.assetSlots[0]?.providerHint).toBe("gemini");
   });
 
+  it("does not treat instruction words as the brand", () => {
+    const spec = deriveLayoutSpecFromBrief({
+      brief: "Create a premium business card for a prepress automation studio. Keep all text vector and export PDF/X-1a."
+    });
+
+    expect(spec.textBlocks.find((block) => block.id === "brand")?.content).toBe("PREPRESS AUTOMATION STUDIO");
+  });
+
   it("extracts brands when a brief starts with the company name", () => {
     const spec = deriveLayoutSpecFromBrief({
       brief: "bare getaways business card"

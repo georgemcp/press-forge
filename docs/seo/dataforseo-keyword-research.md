@@ -2,6 +2,23 @@
 
 Market: United States / English
 
+Core set refreshed live via DataForSEO Google Ads Search Volume on 2026-06-05.
+
+| Refreshed keyword | Search volume | CPC | Competition | Competition index |
+|---|---:|---:|---|---:|
+| ai flyer generator | 4400 | 5.24 | HIGH | 71 |
+| ai business card generator | 1600 | 5.17 | HIGH | 84 |
+| pdf to cmyk | 140 |  | LOW | 1 |
+| convert pdf to cmyk | 140 | 10.6 | LOW | 2 |
+| pdf/x-1a | 140 |  | LOW | 0 |
+| print ready pdf | 110 | 2.38 | LOW | 5 |
+| business card with bleed | 110 | 8.41 | MEDIUM | 38 |
+| add bleed to pdf | 90 | 2.27 | LOW | 4 |
+| pdf preflight | 70 | 9.55 | LOW | 7 |
+| preflight pdf online | 10 |  | LOW | 25 |
+| pdf preflight checker online |  |  |  |  |
+| online prepress software |  |  |  |  |
+
 | Keyword | Search volume | CPC | Competition | Intent |
 |---|---:|---:|---:|---|
 | ai flyer generator | 4400 | 5.24 | HIGH | Create/export |

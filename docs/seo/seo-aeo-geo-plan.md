@@ -2,7 +2,7 @@
 
 ## Demand Evidence
 
-DataForSEO showed the strongest current demand around:
+DataForSEO live Google Ads Search Volume was refreshed for the core keyword set on 2026-06-05. The strongest current demand remains:
 
 - `ai flyer generator`: 4,400 monthly searches, high competition
 - `ai business card generator`: 1,600 monthly searches, high competition
@@ -11,6 +11,7 @@ DataForSEO showed the strongest current demand around:
 - `pdf/x-1a`, `pdf x1a`, `pdf x 1a`: 140 monthly searches each
 - `print ready pdf`: 110 monthly searches
 - `business card with bleed`: 110 monthly searches
+- `pdf preflight`: 70 monthly searches, low competition, high CPC signal
 
 ## Architecture
 
@@ -31,6 +32,14 @@ Every important page should answer the main query within the first screen:
 - What does it check or produce?
 - Why is deterministic prepress different from a raster image generator?
 - What are the next steps?
+
+Each tool page should also expose:
+
+- Direct search-intent statement
+- Visible preflight/checklist bullets
+- Step-by-step workflow
+- Related internal links to nearby print problems
+- FAQ, HowTo, SoftwareApplication, and BreadcrumbList schema where relevant
 
 ## GEO / AI Search
 

@@ -61,7 +61,7 @@ function cleanupCandidate(value: string) {
 
 function rejectGeneric(value: string) {
   const normalized = value.toLowerCase().replace(/^the\s+/i, "").trim();
-  if (genericBrandPhrases.has(normalized) || normalized.length < 2) {
+  if (/^(?:create|make|design|generate|build|prepare|write|draft)\b/.test(normalized) || genericBrandPhrases.has(normalized) || normalized.length < 2) {
     return undefined;
   }
   return value;
@@ -89,7 +89,7 @@ function extractBrand(brief: string) {
     return titleCase(quoted);
   }
 
-  const forMatch = brief.match(/\bfor\s+(?:a|an|the)?\s*([A-Za-z0-9&'. -]{2,48})(?:,| with| that| to |$)/i)?.[1];
+  const forMatch = brief.match(/\bfor\s+(?:a|an|the)?\s*([^,.;|]{2,64}?)(?=,|;|\.|\||\s+with\b|\s+that\b|\s+to\b|$)/i)?.[1];
   const candidate = forMatch ? rejectGeneric(cleanupCandidate(forMatch)) : undefined;
   if (candidate) {
     return titleCase(candidate);
@@ -193,7 +193,8 @@ function createAssetSlots(brief: string, brand: string, tagline: string): AssetS
         `Mood: ${tagline}.`,
         `Creative brief: ${style}.`,
         "No text, no letters, no numbers, no logo, no watermark, no mockup, no paper shadows.",
-        "Leave calm negative space on the left half for vector typography and use refined print-production texture."
+        "Make the artwork visibly present with refined shapes, texture, or brand-relevant atmosphere; do not return a mostly blank white canvas.",
+        "Leave the left third calm enough for vector typography and place stronger visual energy toward the right edge."
       ].join(" "),
       providerHint: "gemini",
       x: -0.125,

@@ -4,6 +4,10 @@ export interface ToolPage {
   metaDescription: string;
   h1: string;
   answer: string;
+  intent: string;
+  checks: string[];
+  steps: string[];
+  relatedSlugs: string[];
   sections: Array<{
     heading: string;
     body: string;
@@ -25,6 +29,10 @@ export const toolPages: ToolPage[] = [
     answer:
       "A print-ready PDF generator should create the correct trim size, bleed, crop marks, embedded fonts, CMYK output, and preflight report. Trim Proof is built to generate creative assets separately from the deterministic prepress step that makes the final file printable.",
     keywords: ["print ready PDF", "print ready PDF generator", "make PDF print ready"],
+    intent: "Use this page when you need to turn a plain-English print brief into a PDF that a printer can inspect without guessing the trim size, bleed, fonts, color workflow, or raster resolution.",
+    checks: ["TrimBox and BleedBox dimensions", "PDF/X subtype", "Embedded vector fonts", "Placed raster DPI", "Crop marks when enabled"],
+    steps: ["Describe the product and brand", "Generate a dummy proof", "Review the visible bleed, trim, and safe guides", "Open advanced mode for a paid production export", "Download the PDF/X proof after preflight passes"],
+    relatedSlugs: ["ai-business-card-generator", "ai-flyer-generator", "pdf-preflight-checker"],
     sections: [
       {
         heading: "What makes a PDF print-ready?",
@@ -57,6 +65,10 @@ export const toolPages: ToolPage[] = [
     answer:
       "PDF to CMYK conversion should use an ICC-aware print workflow, not a visual-only color filter. Trim Proof targets CMYK output through Ghostscript and validates the final file before download.",
     keywords: ["pdf to cmyk", "convert PDF to CMYK", "CMYK PDF converter"],
+    intent: "Use this page when an RGB or screen-first PDF needs a print-oriented color workflow before it goes to a commercial printer.",
+    checks: ["Explicit print profile", "PDF/X output intent", "CMYK-oriented export path", "Preflight report after conversion", "No hidden rasterized text requirement"],
+    steps: ["Choose the print profile expected by the printer", "Keep text as vector fonts", "Generate or upload the structured proof", "Convert through the deterministic prepress layer", "Inspect the preflight report before sending"],
+    relatedSlugs: ["print-ready-pdf-generator", "pdf-preflight-checker", "add-bleed-to-pdf-online"],
     sections: [
       {
         heading: "Why RGB PDFs cause print surprises",
@@ -85,6 +97,10 @@ export const toolPages: ToolPage[] = [
     answer:
       "Bleed is artwork that extends beyond the trim edge so small cutting shifts do not leave white slivers. Trim Proof uses product-specific bleed geometry, usually 0.125 inches on each side by default.",
     keywords: ["add bleed to PDF online", "PDF bleed generator", "crop marks and bleed PDF"],
+    intent: "Use this page when the artwork reaches the cut edge and the printer needs extra image area outside the final trim size.",
+    checks: ["0.125 inch default bleed for starter products", "Separate TrimBox and BleedBox", "Safe-area guide", "Crop marks", "Artwork placed through the bleed edge"],
+    steps: ["Confirm the final trim size", "Extend background artwork into bleed", "Keep important text inside the safe area", "Generate crop marks if requested", "Run preflight before downloading the PDF"],
+    relatedSlugs: ["ai-business-card-generator", "print-ready-pdf-generator", "pdf-preflight-checker"],
     sections: [
       {
         heading: "How much bleed should a file have?",
@@ -113,6 +129,10 @@ export const toolPages: ToolPage[] = [
     answer:
       "A PDF preflight checker should verify that the file is the expected size, has correct trim and bleed boxes, embeds fonts, uses the intended color workflow, and contains images at print resolution.",
     keywords: ["PDF preflight", "preflight PDF online", "check PDF for print"],
+    intent: "Use this page when a PDF looks fine on screen but needs structural print checks before a printer or client receives it.",
+    checks: ["PDF exists and is downloadable", "MediaBox, TrimBox, and BleedBox", "PDF/X subtype", "Embedded fonts", "Placed raster DPI", "Ghostscript PDF/X conversion"],
+    steps: ["Generate the proof", "Run the preflight gate", "Review passed and needs-attention checks", "Fix geometry, fonts, or images when needed", "Download the PDF only after the report is acceptable"],
+    relatedSlugs: ["print-ready-pdf-generator", "pdf-to-cmyk-converter", "add-bleed-to-pdf-online"],
     sections: [
       {
         heading: "What Trim Proof checks before delivery",
@@ -141,6 +161,10 @@ export const toolPages: ToolPage[] = [
     answer:
       "An AI business card generator is useful only if the final export is actually printable. Trim Proof lets AI assist with creative assets while deterministic code handles vector text, bleed, CMYK, crop marks, and PDF/X.",
     keywords: ["AI business card generator", "business card PDF", "business card with bleed"],
+    intent: "Use this page when you want AI-assisted business-card creative without accepting distorted model-painted text or missing bleed geometry.",
+    checks: ["3.5 by 2 inch trim profile", "0.125 inch bleed", "Vector business-card text", "Embedded fonts", "Raster background DPI", "PDF/X preflight"],
+    steps: ["Write the brand or business-card brief", "Let the creative layer generate background art", "Keep contact text in vector type", "Check the safe area", "Export the PDF/X proof when preflight passes"],
+    relatedSlugs: ["print-ready-pdf-generator", "add-bleed-to-pdf-online", "pdf-preflight-checker"],
     sections: [
       {
         heading: "Why model-painted text is risky",
@@ -169,6 +193,10 @@ export const toolPages: ToolPage[] = [
     answer:
       "An AI flyer generator should produce more than a screen image. Trim Proof is designed to turn flyer briefs into structured layouts, generate creative assets, and export deterministic print-ready PDF/X files.",
     keywords: ["AI flyer generator", "flyer PDF maker", "print ready artwork generator"],
+    intent: "Use this page when you need flyer concepts from AI but still need a print-production path for bleed, crop marks, CMYK, and preflight.",
+    checks: ["Product-specific trim and bleed", "Creative asset slots", "Vector headline and body text", "Output profile", "Preflight report before download"],
+    steps: ["Describe the flyer offer and format", "Generate creative art separately from text", "Review safe margins", "Choose advanced export settings for production", "Download the checked PDF/X file"],
+    relatedSlugs: ["print-ready-pdf-generator", "pdf-to-cmyk-converter", "pdf-preflight-checker"],
     sections: [
       {
         heading: "Flyers need production geometry",
