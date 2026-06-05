@@ -1,8 +1,16 @@
+"use client";
+
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 
 export function AnalyticsTags() {
+  const pathname = usePathname();
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const gtmId = process.env.NEXT_PUBLIC_GTM_CONTAINER_ID;
+
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <>
