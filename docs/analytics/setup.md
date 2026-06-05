@@ -2,17 +2,25 @@
 
 ## Environment Variables
 
+Production uses the `Trim Proof` GA4 property under the Right Away Home Services account:
+
+- Property ID: `540372104`
+- Web stream ID: `15008052932`
+- Measurement ID: `G-9VNCX1HGN5`
+
 Set these after the production domain and analytics property exist:
 
 ```bash
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-9VNCX1HGN5
 NEXT_PUBLIC_GTM_CONTAINER_ID=GTM-...
+GA4_PROPERTY_ID=540372104
+GOOGLE_ANALYTICS_PROPERTY_ID=540372104
 GA4_API_SECRET=...
 NEXT_PUBLIC_APP_URL=https://trimproof.com
 ```
 
 `NEXT_PUBLIC_GA_MEASUREMENT_ID` and `NEXT_PUBLIC_GTM_CONTAINER_ID` must be available during the Docker build as well as at runtime. Static marketing pages are generated at build time.
-`GA4_API_SECRET` is server-only. `GA4_MEASUREMENT_PROTOCOL_API_SECRET` is also accepted as an alias. Create the secret in GA4 under Admin > Data streams > the Trim Proof web stream > Measurement Protocol API secrets, then set it only in production/server env.
+`GA4_API_SECRET` is server-only. `GA4_MEASUREMENT_PROTOCOL_API_SECRET` is also accepted as an alias. The production Measurement Protocol secret was created for the Trim Proof web stream on 2026-06-05 after the `/privacy` disclosure page was live; keep the secret only in production/server env.
 
 ## Events
 
@@ -59,4 +67,4 @@ Create GA4 event tags for each custom event above. Use a dataLayer custom event 
 
 ## Domain Note
 
-A real GA4 web data stream should use the production website URL. Do not attach tracking to a final property until the production domain is chosen.
+The production GA4 web stream URL is `https://trimproof.com`. Keep `/privacy` published because the GA4 Measurement Protocol user-data acknowledgement depends on having the necessary analytics disclosures live before server-side events are sent.

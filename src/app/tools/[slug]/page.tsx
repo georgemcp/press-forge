@@ -196,6 +196,17 @@ export default async function ToolLandingPage({ params }: ToolPageProps) {
           </Link>
         </div>
       </section>
+
+      <footer className="border-t border-border bg-surface">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-6 text-sm font-semibold text-muted">
+          <Link className="transition hover:text-surface-ink" href="/">
+            Trim Proof
+          </Link>
+          <Link className="transition hover:text-surface-ink" href="/privacy">
+            Privacy
+          </Link>
+        </div>
+      </footer>
     </main>
   );
 }

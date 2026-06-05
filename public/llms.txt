@@ -15,6 +15,7 @@ Core facts:
 Important pages:
 - /: overview, product explanation, FAQs, and launch signup.
 - /app: dummy proof mode and advanced export workspace.
+- /privacy: privacy policy for analytics, billing, email, AI provider, and generated proof data.
 - /tools/print-ready-pdf-generator: print-ready PDF explanation and workflow.
 - /tools/pdf-to-cmyk-converter: CMYK conversion and output-intent explanation.
 - /tools/add-bleed-to-pdf-online: bleed, trim, safe area, and crop mark explanation.

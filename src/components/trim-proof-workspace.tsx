@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import {
   BadgeCheck,
@@ -149,7 +150,7 @@ function PrintPreview({ spec, assetUrl, assetProvider }: { spec: LayoutSpec; ass
                 unoptimized
               />
             ) : null}
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,oklch(0.98_0.008_84_/_0.86)_0%,oklch(0.98_0.008_84_/_0.68)_24%,oklch(0.98_0.008_84_/_0.22)_48%,transparent_72%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,oklch(0.98_0.008_84_/_0.9)_0%,oklch(0.98_0.008_84_/_0.66)_26%,oklch(0.98_0.008_84_/_0.12)_46%,transparent_58%)]" />
             <div className="absolute bottom-5 right-5 top-5 z-10 w-2 bg-accent sm:bottom-7 sm:right-8 sm:top-7 sm:w-3" />
             <div className="relative z-10 flex h-full flex-col justify-between">
               <div>
@@ -785,6 +786,9 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
             <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">GPT Image 2</span>
             <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">Nano Banana Pro</span>
             <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">{spec.pdfxLevel}</span>
+            <Link className="rounded-[6px] border border-border bg-surface px-2.5 py-1 transition hover:text-surface-ink" href="/privacy">
+              Privacy
+            </Link>
           </div>
         </header>
 

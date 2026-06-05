@@ -382,6 +382,20 @@ export function MarketingSite() {
           <EmailCapture />
         </div>
       </section>
+
+      <footer className="border-t border-border bg-surface">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm font-semibold text-muted sm:flex-row sm:items-center sm:justify-between">
+          <span>Trim Proof. AI creative upstream, deterministic prepress downstream.</span>
+          <div className="flex gap-4">
+            <Link className="transition hover:text-surface-ink" href="/privacy">
+              Privacy
+            </Link>
+            <Link className="transition hover:text-surface-ink" href="/app">
+              App
+            </Link>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
