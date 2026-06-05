@@ -27,9 +27,11 @@ Required production env:
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `GA4_PROPERTY_ID`, `GOOGLE_ANALYTICS_PROPERTY_ID`, or `NEXT_PUBLIC_GTM_CONTAINER_ID` when analytics tags are live
 - `GA4_API_SECRET` or `GA4_MEASUREMENT_PROTOCOL_API_SECRET` when verified Stripe/webhook purchases, launch signups, checkout starts, and proof exports should send server-side GA4 conversion events
+- `TRIMPROOF_ADMIN_PASSWORD` and `TRIMPROOF_ADMIN_SESSION_SECRET` for the protected `/admin` management center
 - `EMAIL_PROVIDER`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, `TRIMPROOF_ADMIN_EMAIL`, and either `RESEND_API_KEY` or `SENDGRID_API_KEY` when transactional signup email is live
 - `OPENAI_API_KEY` and/or `GEMINI_API_KEY` when creative image providers are enabled
 - `OPENAI_IMAGE_MODEL=gpt-image-2` and `GEMINI_IMAGE_MODEL=gemini-3-pro-image` for the current premium creative model defaults
+- `TRIMPROOF_EXPORT_PRICE_CENTS`, `TRIMPROOF_SUBSCRIPTION_PRICE_CENTS`, `TRIMPROOF_STRIPE_FEE_BPS`, `TRIMPROOF_STRIPE_FIXED_FEE_CENTS`, and `TRIMPROOF_ESTIMATED_PROOF_COST_CENTS` when admin contribution-margin assumptions need to differ from defaults
 
 Production email DNS:
 
@@ -54,4 +56,5 @@ Verification:
 - Browser-check `https://trimproof.com` and `https://trimproof.com/app` for `https://www.googletagmanager.com/gtag/js?id=G-9VNCX1HGN5`
 - Confirm `/api/health` reports `serverAnalyticsConfigured: true` when `GA4_API_SECRET` is set.
 - Confirm `/privacy` remains published before sending GA4 Measurement Protocol events.
+- Visit `/admin/login`, authenticate with the production admin password, and confirm `/admin` loads account, subscription, order, usage, margin, and readiness sections.
 - Submit the launch-list form and confirm `/api/email-signup` returns an `email.confirmation.status`; `sent` means provider delivery was accepted, `skipped` means the signup was saved but no provider was configured.
