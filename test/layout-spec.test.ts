@@ -55,4 +55,32 @@ describe("LayoutSpec schema", () => {
 
     expect(spec.textBlocks.find((block) => block.id === "brand")?.content).toBe("BARE GETAWAYS");
   });
+
+  it("derives flyer geometry when flyer is selected", () => {
+    const spec = deriveLayoutSpecFromBrief({
+      brief: "Create a premium flyer for Bare Getaways with a tropical travel feel.",
+      productType: "flyer"
+    });
+
+    expect(spec.productType).toBe("flyer");
+    expect(spec.assetSlots[0]).toMatchObject({
+      x: -0.125,
+      y: -0.125,
+      width: 8.75,
+      height: 11.25
+    });
+    expect(spec.textBlocks.find((block) => block.id === "brand")?.fontSize).toBeGreaterThan(30);
+  });
+
+  it("infers postcard geometry from the brief when no product is selected", () => {
+    const spec = deriveLayoutSpecFromBrief({
+      brief: "Bare Getaways postcard with warm Caribbean water"
+    });
+
+    expect(spec.productType).toBe("postcard");
+    expect(spec.assetSlots[0]).toMatchObject({
+      width: 6.25,
+      height: 4.25
+    });
+  });
 });

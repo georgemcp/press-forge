@@ -6,6 +6,10 @@ import { exportLayoutPdf } from "./pdf-export";
 import { runPreflight, type PreflightReport } from "./preflight";
 import { sampleBusinessCardLayout } from "./sample-layout";
 
+function getProofFileBaseName(productType: LayoutSpec["productType"]) {
+  return `trimproof-${productType.replaceAll("_", "-")}`;
+}
+
 export interface ProofResult {
   outputDir: string;
   sourcePdfPath: string;
@@ -20,7 +24,7 @@ export async function generateProof(input: LayoutSpec = sampleBusinessCardLayout
   const assets = await resolveLayoutAssets(spec, outputDir);
   const exportResult = await exportLayoutPdf(spec, {
     outputDir,
-    fileBaseName: "trimproof-business-card",
+    fileBaseName: getProofFileBaseName(spec.productType),
     assets
   });
   const report = await runPreflight(exportResult.sourcePdfPath, spec.productType, outputDir, assets);

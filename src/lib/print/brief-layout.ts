@@ -1,9 +1,35 @@
+import { PRODUCT_PROFILES, type ProductType } from "./constants";
 import { layoutSpecSchema, type AssetSlot, type CmykColor, type LayoutSpec, type TextBlock } from "./layout-spec";
 import { sampleBusinessCardLayout } from "./sample-layout";
 
 interface BriefLayoutInput {
   brief?: string;
+  productType?: ProductType;
 }
+
+type TextBlockTemplate = Pick<TextBlock, "id" | "role" | "x" | "y" | "width" | "fontSize" | "weight">;
+
+const textBlockTemplates: Record<ProductType, TextBlockTemplate[]> = {
+  business_card: sampleBusinessCardLayout.textBlocks.map(({ id, role, x, y, width, fontSize, weight }) => ({ id, role, x, y, width, fontSize, weight })),
+  postcard: [
+    { id: "brand", role: "brand", x: 0.55, y: 3.08, width: 4.8, fontSize: 28, weight: "bold" },
+    { id: "tagline", role: "subhead", x: 0.55, y: 2.62, width: 4.4, fontSize: 12, weight: "medium" },
+    { id: "name", role: "headline", x: 0.55, y: 0.96, width: 2.6, fontSize: 16, weight: "bold" },
+    { id: "contact", role: "contact", x: 0.55, y: 0.62, width: 4.8, fontSize: 9.2, weight: "regular" }
+  ],
+  flyer: [
+    { id: "brand", role: "brand", x: 0.72, y: 9.75, width: 7.2, fontSize: 42, weight: "bold" },
+    { id: "tagline", role: "subhead", x: 0.75, y: 8.86, width: 6.8, fontSize: 19, weight: "medium" },
+    { id: "name", role: "headline", x: 0.78, y: 1.72, width: 3.6, fontSize: 23, weight: "bold" },
+    { id: "contact", role: "contact", x: 0.8, y: 1.18, width: 6.8, fontSize: 12.5, weight: "regular" }
+  ],
+  letterhead: [
+    { id: "brand", role: "brand", x: 0.68, y: 10.12, width: 6.4, fontSize: 30, weight: "bold" },
+    { id: "tagline", role: "subhead", x: 0.7, y: 9.52, width: 5.8, fontSize: 12.5, weight: "medium" },
+    { id: "name", role: "headline", x: 0.7, y: 8.64, width: 3.4, fontSize: 15.5, weight: "bold" },
+    { id: "contact", role: "contact", x: 0.72, y: 0.72, width: 7.2, fontSize: 10, weight: "regular" }
+  ]
+};
 
 const genericBrandPhrases = new Set([
   "a business card",
@@ -100,6 +126,23 @@ function extractBrand(brief: string) {
   return leadingCandidate ? titleCase(leadingCandidate) : "Trim Proof";
 }
 
+function inferProductType(brief: string, requested?: ProductType): ProductType {
+  if (requested) {
+    return requested;
+  }
+  const lower = brief.toLowerCase();
+  if (lower.includes("letterhead")) {
+    return "letterhead";
+  }
+  if (lower.includes("flyer")) {
+    return "flyer";
+  }
+  if (lower.includes("postcard")) {
+    return "postcard";
+  }
+  return "business_card";
+}
+
 function extractPersonName(brief: string) {
   const explicit = extractLabeledValue(brief, ["name", "person"]);
   if (explicit) {
@@ -163,32 +206,31 @@ function selectPalette(brief: string) {
   return palettes.technical;
 }
 
-function updateTextBlocks(blocks: TextBlock[], values: Record<string, string>, palette: LayoutSpec["palette"]) {
-  return blocks.map((block) => {
+function createTextBlocks(productType: ProductType, values: Record<string, string>, palette: LayoutSpec["palette"]) {
+  return textBlockTemplates[productType].map((block) => {
     if (block.id === "brand") {
-      return { ...block, content: values.brand.toUpperCase(), color: palette.ink };
+      return { ...block, content: values.brand.toUpperCase(), color: palette.ink } satisfies TextBlock;
     }
     if (block.id === "tagline") {
-      return { ...block, content: values.tagline, color: { c: 0.55, m: 0.44, y: 0.38, k: 0.46 } };
+      return { ...block, content: values.tagline, color: { c: 0.55, m: 0.44, y: 0.38, k: 0.46 } } satisfies TextBlock;
     }
     if (block.id === "name") {
-      return { ...block, content: values.personName, color: palette.ink };
+      return { ...block, content: values.personName, color: palette.ink } satisfies TextBlock;
     }
-    if (block.id === "contact") {
-      return { ...block, content: `${values.contact}  |  PDF/X-1a ready`, color: { c: 0.48, m: 0.38, y: 0.32, k: 0.42 } };
-    }
-    return block;
+    return { ...block, content: `${values.contact}  |  PDF/X-1a ready`, color: { c: 0.48, m: 0.38, y: 0.32, k: 0.42 } } satisfies TextBlock;
   });
 }
 
-function createAssetSlots(brief: string, brand: string, tagline: string): AssetSlot[] {
+function createAssetSlots(productType: ProductType, brief: string, brand: string, tagline: string): AssetSlot[] {
+  const profile = PRODUCT_PROFILES[productType];
   const style = brief || `Premium print-ready identity proof for ${brand}.`;
+  const productLabel = profile.label.toLowerCase();
   return [
     {
       id: "background-art",
       kind: "background",
       prompt: [
-        "Create a professional full-bleed business card background image for commercial printing.",
+        `Create a professional full-bleed ${productLabel} background image for commercial printing.`,
         `Brand context: ${brand}.`,
         `Mood: ${tagline}.`,
         `Creative brief: ${style}.`,
@@ -197,10 +239,10 @@ function createAssetSlots(brief: string, brand: string, tagline: string): AssetS
         "Leave the left third calm enough for vector typography and place stronger visual energy toward the right edge."
       ].join(" "),
       providerHint: "gemini",
-      x: -0.125,
-      y: -0.125,
-      width: 3.75,
-      height: 2.25,
+      x: -profile.bleedIn,
+      y: -profile.bleedIn,
+      width: profile.trimWidthIn + 2 * profile.bleedIn,
+      height: profile.trimHeightIn + 2 * profile.bleedIn,
       minimumDpi: 300
     }
   ];
@@ -208,6 +250,7 @@ function createAssetSlots(brief: string, brand: string, tagline: string): AssetS
 
 export function deriveLayoutSpecFromBrief(input: BriefLayoutInput): LayoutSpec {
   const brief = normalizeBrief(input.brief);
+  const productType = inferProductType(brief, input.productType);
   const brand = extractBrand(brief);
   const personName = extractPersonName(brief);
   const contact = extractContact(brief, brand);
@@ -216,9 +259,10 @@ export function deriveLayoutSpecFromBrief(input: BriefLayoutInput): LayoutSpec {
 
   return layoutSpecSchema.parse({
     ...sampleBusinessCardLayout,
+    productType,
     palette,
     styleDirection: brief || sampleBusinessCardLayout.styleDirection,
-    textBlocks: updateTextBlocks(sampleBusinessCardLayout.textBlocks, { brand, personName, contact, tagline }, palette),
-    assetSlots: createAssetSlots(brief, brand, tagline)
+    textBlocks: createTextBlocks(productType, { brand, personName, contact, tagline }, palette),
+    assetSlots: createAssetSlots(productType, brief, brand, tagline)
   });
 }

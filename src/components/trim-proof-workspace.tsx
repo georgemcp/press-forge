@@ -19,6 +19,7 @@ import {
   WalletCards,
   TriangleAlert
 } from "lucide-react";
+import { PRODUCT_PROFILES, type ProductType } from "@/lib/print/constants";
 import type { LayoutSpec } from "@/lib/print/layout-spec";
 import type { PreflightReport, PreflightStatus } from "@/lib/print/preflight";
 import { trackEvent } from "@/lib/analytics/events";
@@ -42,6 +43,7 @@ interface ProofApiResponse {
     slotId: string;
     provider: "openai" | "gemini" | "recraft" | "deterministic";
     url: string;
+    previewUrl?: string;
     effectiveDpi: number;
   }>;
 }
@@ -86,6 +88,8 @@ function GuideLabel({ children, tone }: { children: React.ReactNode; tone: "blee
 }
 
 function PrintPreview({ spec, assetUrl, assetProvider }: { spec: LayoutSpec; assetUrl?: string; assetProvider?: ProofAssetUrl["provider"] }) {
+  const productProfile = PRODUCT_PROFILES[spec.productType];
+  const aspect = productProfile.trimWidthIn / productProfile.trimHeightIn;
   const brand = spec.textBlocks.find((block) => block.id === "brand")?.content ?? "TRIM PROOF";
   const tagline = spec.textBlocks.find((block) => block.id === "tagline")?.content ?? "AI creative, deterministic prepress.";
   const name = spec.textBlocks.find((block) => block.id === "name")?.content ?? "Mara Vale";
@@ -97,8 +101,10 @@ function PrintPreview({ spec, assetUrl, assetProvider }: { spec: LayoutSpec; ass
         <div className="flex items-center gap-3">
           <Ruler aria-hidden className="h-4 w-4 text-accent" />
           <div>
-            <h2 className="font-display text-sm font-semibold text-surface-ink">Business card proof</h2>
-            <p className="text-xs text-muted">3.5 in x 2 in trim, 0.125 in bleed, PDF/X-1a target</p>
+            <h2 className="font-display text-sm font-semibold text-surface-ink">{productProfile.label} proof</h2>
+            <p className="text-xs text-muted">
+              {productProfile.trimWidthIn} in x {productProfile.trimHeightIn} in trim, {productProfile.bleedIn} in bleed, PDF/X-1a target
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -111,8 +117,12 @@ function PrintPreview({ spec, assetUrl, assetProvider }: { spec: LayoutSpec; ass
 
       <div className="print-grid flex min-h-0 flex-1 items-center justify-center p-3">
         <div
-          className="relative aspect-[5/3] max-h-full w-[min(96%,calc((100vh-8rem)*1.66))] max-w-[860px] border border-accent/80 bg-background p-[4.8%] shadow-[0_18px_56px_oklch(0.18_0.02_252_/_0.15)]"
+          className="relative max-h-full max-w-[860px] border border-accent/80 bg-background p-[4.8%] shadow-[0_18px_56px_oklch(0.18_0.02_252_/_0.15)]"
           data-proof-card
+          style={{
+            aspectRatio: `${productProfile.trimWidthIn} / ${productProfile.trimHeightIn}`,
+            width: `min(96%, ${Math.round(700 * aspect)}px)`
+          }}
         >
           <div className="absolute inset-[4.8%] border border-dashed border-accent" />
           <div className="absolute inset-[9.6%] border border-surface-ink" />
@@ -155,14 +165,20 @@ function IntakePanel({
   brief,
   setBrief,
   mode,
-  setMode
+  setMode,
+  productType,
+  setProductType
 }: {
   spec: LayoutSpec;
   brief: string;
   setBrief: (value: string) => void;
   mode: WorkspaceMode;
   setMode: (mode: WorkspaceMode) => void;
+  productType: ProductType;
+  setProductType: (productType: ProductType) => void;
 }) {
+  const productProfile = PRODUCT_PROFILES[productType];
+
   return (
     <aside className="flex w-full shrink-0 flex-col overflow-hidden bg-surface-strong/75 xl:w-[310px]">
       <div className="shrink-0 border-b border-border p-4">
@@ -207,15 +223,16 @@ function IntakePanel({
         <div>
           <label className="text-xs font-semibold uppercase text-muted">Product</label>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            {["Business card", "Postcard", "Flyer", "Letterhead"].map((product, index) => (
+            {(Object.keys(PRODUCT_PROFILES) as ProductType[]).map((product) => (
               <button
                 key={product}
                 className={`rounded-[8px] border px-3 py-2 text-left text-xs font-semibold ${
-                  index === 0 ? "border-brand bg-brand-soft text-brand" : "border-border bg-surface text-muted"
+                  productType === product ? "border-brand bg-brand-soft text-brand" : "border-border bg-surface text-muted"
                 }`}
                 type="button"
+                onClick={() => setProductType(product)}
               >
-                {product}
+                {PRODUCT_PROFILES[product].label}
               </button>
             ))}
           </div>
@@ -224,7 +241,7 @@ function IntakePanel({
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-[8px] border border-border bg-surface p-3">
             <div className="text-[11px] font-semibold uppercase text-muted">Bleed</div>
-            <div className="mt-1 font-display text-xl font-bold text-surface-ink">0.125 in</div>
+            <div className="mt-1 font-display text-xl font-bold text-surface-ink">{productProfile.bleedIn} in</div>
           </div>
           <div className="rounded-[8px] border border-border bg-surface p-3">
             <div className="text-[11px] font-semibold uppercase text-muted">Min DPI</div>
@@ -249,6 +266,12 @@ function IntakePanel({
             <div className="flex justify-between">
               <span>Print profile</span>
               <span className="font-semibold text-surface-ink">{spec.printProfile}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Trim size</span>
+              <span className="font-semibold text-surface-ink">
+                {productProfile.trimWidthIn} x {productProfile.trimHeightIn} in
+              </span>
             </div>
           </div>
         </div>
@@ -471,6 +494,7 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
   const [paidSession, setPaidSession] = useState<PaidSession>();
   const [sessionPending, setSessionPending] = useState(Boolean(checkoutSessionId));
   const [spec, setSpec] = useState(initialSpec);
+  const [productType, setProductTypeState] = useState<ProductType>(initialSpec.productType);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -502,6 +526,31 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
     };
   }, [checkoutSessionId, checkoutState]);
 
+  function setProductType(product: ProductType) {
+    setProductTypeState(product);
+    setProof(undefined);
+    setError(undefined);
+    void (async () => {
+      try {
+        const specResponse = await fetch("/api/layout-spec", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ brief, productType: product })
+        });
+        const specPayload = (await specResponse.json().catch(() => undefined)) as LayoutSpecApiResponse | undefined;
+        if (specResponse.ok && specPayload?.spec) {
+          setSpec(specPayload.spec);
+        } else {
+          setError(specPayload?.error ?? "Product layout refresh failed.");
+        }
+      } catch {
+        setError("Product layout refresh failed.");
+      }
+    })();
+  }
+
   function generateProof() {
     setError(undefined);
     if (mode === "advanced" && !paidSession) {
@@ -510,38 +559,43 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
     }
     startTransition(() => {
       void (async () => {
-        const specResponse = await fetch("/api/layout-spec", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ brief })
-        });
-        const specPayload = (await specResponse.json().catch(() => undefined)) as LayoutSpecApiResponse | undefined;
-        if (!specResponse.ok || !specPayload?.spec) {
-          setError(specPayload?.error ?? "LayoutSpec generation failed.");
-          return;
+        try {
+          const specResponse = await fetch("/api/layout-spec", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ brief, productType })
+          });
+          const specPayload = (await specResponse.json().catch(() => undefined)) as LayoutSpecApiResponse | undefined;
+          if (!specResponse.ok || !specPayload?.spec) {
+            setError(specPayload?.error ?? "LayoutSpec generation failed.");
+            return;
+          }
+          setSpec(specPayload.spec);
+          setProductTypeState(specPayload.spec.productType);
+          trackEvent(mode === "dummy" ? "dummy_proof_started" : "proof_export_started", { mode });
+          const response = await fetch("/api/exports/proof", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ brief, spec: specPayload.spec, mode, checkoutSessionId: paidSession?.id })
+          });
+          if (!response.ok) {
+            const payload = (await response.json().catch(() => undefined)) as { error?: string } | undefined;
+            setError(payload?.error ?? "Proof generation failed.");
+            return;
+          }
+          const payload = (await response.json()) as ProofApiResponse;
+          setProof(payload);
+          if (mode === "advanced" && paidSession?.entitlement === "export_credit") {
+            setPaidSession(undefined);
+          }
+          trackEvent("proof_export_completed", { mode, status: payload.report.status });
+        } catch {
+          setError("Proof generation failed.");
         }
-        setSpec(specPayload.spec);
-        trackEvent(mode === "dummy" ? "dummy_proof_started" : "proof_export_started", { mode });
-        const response = await fetch("/api/exports/proof", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ brief, spec: specPayload.spec, mode, checkoutSessionId: paidSession?.id })
-        });
-        if (!response.ok) {
-          const payload = (await response.json().catch(() => undefined)) as { error?: string } | undefined;
-          setError(payload?.error ?? "Proof generation failed.");
-          return;
-        }
-        const payload = (await response.json()) as ProofApiResponse;
-        setProof(payload);
-        if (mode === "advanced" && paidSession?.entitlement === "export_credit") {
-          setPaidSession(undefined);
-        }
-        trackEvent("proof_export_completed", { mode, status: payload.report.status });
       })();
     });
   }
@@ -665,8 +719,16 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
         ) : null}
 
         <div className="flex min-h-0 flex-1 flex-col overflow-visible xl:flex-row xl:overflow-hidden">
-          <IntakePanel brief={brief} mode={mode} setBrief={setBrief} setMode={setMode} spec={spec} />
-          <PrintPreview assetProvider={proof?.assetUrls?.[0]?.provider} assetUrl={proof?.assetUrls?.[0]?.url} spec={spec} />
+          <IntakePanel
+            brief={brief}
+            mode={mode}
+            productType={productType}
+            setBrief={setBrief}
+            setMode={setMode}
+            setProductType={setProductType}
+            spec={spec}
+          />
+          <PrintPreview assetProvider={proof?.assetUrls?.[0]?.provider} assetUrl={proof?.assetUrls?.[0]?.previewUrl ?? proof?.assetUrls?.[0]?.url} spec={spec} />
           <PreflightPanel
             accessMessage={accessMessage}
             accessPending={accessPending}

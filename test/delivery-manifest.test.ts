@@ -22,6 +22,9 @@ describe("proof delivery manifest", () => {
     await writeProofDeliveryManifest(outputDir, "advanced");
 
     await expect(canServeProofFile(outputDir, "trimproof-business-card.pdfx.pdf")).resolves.toBe(true);
+    await expect(canServeProofFile(outputDir, "trimproof-flyer.pdfx.pdf")).resolves.toBe(true);
+    await expect(canServeProofFile(outputDir, "trimproof-postcard.pdfx.pdf")).resolves.toBe(true);
+    await expect(canServeProofFile(outputDir, "trimproof-letterhead.pdfx.pdf")).resolves.toBe(true);
     await expect(canServeProofFile(outputDir, "trimproof-business-card.source.pdf")).resolves.toBe(true);
     await expect(canServeProofFile(outputDir, "trimproof-business-card.master.svg")).resolves.toBe(true);
   });
@@ -31,6 +34,7 @@ describe("proof delivery manifest", () => {
     await writeProofDeliveryManifest(outputDir, "dummy");
 
     await expect(canServeProofFile(outputDir, "trimproof-business-card.pdfx.pdf")).resolves.toBe(false);
+    await expect(canServeProofFile(outputDir, "trimproof-flyer.pdfx.pdf")).resolves.toBe(false);
     await expect(canServeProofFile(outputDir, "trimproof-business-card.source.pdf")).resolves.toBe(false);
     await expect(canServeProofFile(outputDir, "trimproof-business-card.master.svg")).resolves.toBe(false);
   });

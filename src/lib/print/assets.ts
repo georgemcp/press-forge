@@ -17,6 +17,7 @@ export interface ResolvedAsset {
   effectiveDpi: number;
   minimumDpi: number;
   filePath: string;
+  previewPath: string;
 }
 
 function toRgb(color: CmykColor) {
@@ -110,7 +111,18 @@ async function normalizeAsset(slot: AssetSlot, generated: GeneratedAsset | undef
     .png({ compressionLevel: 9 })
     .toBuffer();
   const filePath = path.join(outputDir, `asset-${slot.id.replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}.png`);
+  const previewPath = path.join(outputDir, `asset-${slot.id.replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}-preview.png`);
+  const preview = await sharp(png)
+    .resize({
+      width: size.widthPx >= size.heightPx ? 1400 : undefined,
+      height: size.heightPx > size.widthPx ? 1400 : undefined,
+      fit: "inside",
+      withoutEnlargement: true
+    })
+    .png({ compressionLevel: 8, quality: 85 })
+    .toBuffer();
   await fs.writeFile(filePath, png);
+  await fs.writeFile(previewPath, preview);
 
   return {
     slot,
@@ -122,7 +134,8 @@ async function normalizeAsset(slot: AssetSlot, generated: GeneratedAsset | undef
     heightPx: size.heightPx,
     effectiveDpi: Math.min(size.widthPx / slot.width, size.heightPx / slot.height),
     minimumDpi: slot.minimumDpi,
-    filePath
+    filePath,
+    previewPath
   };
 }
 

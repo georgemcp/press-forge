@@ -91,6 +91,7 @@ export async function POST(request: Request) {
         slotId: asset.slotId,
         provider: asset.provider,
         url: `${fileBase}/${path.basename(asset.filePath)}`,
+        previewUrl: `${fileBase}/${path.basename(asset.previewPath)}`,
         effectiveDpi: asset.effectiveDpi
       }))
     });
