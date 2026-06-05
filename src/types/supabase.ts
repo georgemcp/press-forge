@@ -154,7 +154,9 @@ export type Database = {
           proof_job_id: string | null
           status: string
           stripe_customer_id: string | null
+          stripe_payment_intent_id: string | null
           stripe_session_id: string
+          stripe_subscription_id: string | null
           updated_at: string
         }
         Insert: {
@@ -167,7 +169,9 @@ export type Database = {
           proof_job_id?: string | null
           status?: string
           stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
           stripe_session_id: string
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -180,7 +184,9 @@ export type Database = {
           proof_job_id?: string | null
           status?: string
           stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
           stripe_session_id?: string
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Relationships: []

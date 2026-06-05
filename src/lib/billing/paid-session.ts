@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { getStripeClient } from "@/lib/billing/stripe";
+import { stripeObjectId } from "@/lib/billing/order-lifecycle";
 
 export interface PaidCheckoutSession {
   id: string;
@@ -85,6 +86,8 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
       {
         stripe_session_id: session.id,
         stripe_customer_id: customerId ?? null,
+        stripe_payment_intent_id: stripeObjectId(session.payment_intent),
+        stripe_subscription_id: subscriptionId ?? null,
         customer_email: getSessionCustomerEmail(session) ?? null,
         entitlement,
         checkout_mode: session.mode,

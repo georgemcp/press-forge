@@ -2,6 +2,13 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
+import {
+  exportOrderStatusForSubscription,
+  stripeObjectId,
+  updateExportOrderBySessionId,
+  updateExportOrdersByPaymentIntentId,
+  updateExportOrdersBySubscriptionId
+} from "@/lib/billing/order-lifecycle";
 import { getStripeClient } from "@/lib/billing/stripe";
 
 export const runtime = "nodejs";
@@ -13,6 +20,10 @@ function centsToValue(amount?: number | null) {
 function numericSessionId(value?: string) {
   const sessionId = Number(value);
   return Number.isFinite(sessionId) && sessionId > 0 ? sessionId : undefined;
+}
+
+function invoiceSubscriptionId(invoice: { subscription?: string | { id?: string | null } | null; parent?: { subscription_details?: { subscription?: string | { id?: string | null } | null } | null } | null }) {
+  return stripeObjectId(invoice.parent?.subscription_details?.subscription ?? invoice.subscription);
 }
 
 export async function POST(request: Request) {
@@ -58,6 +69,8 @@ export async function POST(request: Request) {
         {
           stripe_session_id: session.id,
           stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
+          stripe_payment_intent_id: stripeObjectId(session.payment_intent),
+          stripe_subscription_id: stripeObjectId(session.subscription),
           customer_email: session.customer_details?.email ?? session.customer_email ?? null,
           entitlement,
           checkout_mode: session.mode,
@@ -116,6 +129,24 @@ export async function POST(request: Request) {
         .eq("id", userId);
     }
 
+  } else if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
+    const session = event.data.object;
+    await updateExportOrderBySessionId(supabase, session.id, "expired");
+  } else if (event.type === "charge.refunded") {
+    const charge = event.data.object;
+    const paymentIntentId = stripeObjectId(charge.payment_intent);
+    if (charge.refunded && paymentIntentId) {
+      await updateExportOrdersByPaymentIntentId(supabase, paymentIntentId, "refunded");
+    }
+  } else if (event.type === "invoice.payment_failed") {
+    const invoice = event.data.object;
+    const subscriptionId = invoiceSubscriptionId(invoice);
+    if (subscriptionId) {
+      await updateExportOrdersBySubscriptionId(supabase, subscriptionId, "expired");
+    }
+  } else if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object;
+    await updateExportOrdersBySubscriptionId(supabase, subscription.id, exportOrderStatusForSubscription(subscription.status));
   }
 
   return NextResponse.json({ received: true, persisted: true });

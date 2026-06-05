@@ -44,6 +44,7 @@ Verification:
 - `curl http://127.0.0.1:3047/api/health`
 - Generate a proof in `/app` and verify the returned `/api/exports/proof/files/...` URL downloads a PDF.
 - Start a Checkout Session from `/app?mode=advanced` with a billing email and confirm Stripe opens a Trim Proof-branded hosted Checkout page.
+- Confirm the Stripe webhook endpoint is subscribed to `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_failed`, `charge.refunded`, `invoice.payment_failed`, `customer.subscription.updated`, and `customer.subscription.deleted` so paid access follows refunds, failed payments, and cancellations.
 - Submit `/api/billing/access-link` with a billing email and confirm active subscriptions or unused export credits receive an emailed `/app?mode=advanced&checkout=success&session_id=...` access link.
 - For a paid subscription checkout session, submit `/api/billing/portal` and confirm Stripe opens subscription management with a return URL back to `/app`.
 - `curl -I http://trimproof.com`
