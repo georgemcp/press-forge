@@ -12,7 +12,7 @@ NEXT_PUBLIC_APP_URL=https://trimproof.com
 ```
 
 `NEXT_PUBLIC_GA_MEASUREMENT_ID` and `NEXT_PUBLIC_GTM_CONTAINER_ID` must be available during the Docker build as well as at runtime. Static marketing pages are generated at build time.
-`GA4_API_SECRET` is server-only. Create it in GA4 under Admin > Data streams > the Trim Proof web stream > Measurement Protocol API secrets, then set it only in production/server env.
+`GA4_API_SECRET` is server-only. `GA4_MEASUREMENT_PROTOCOL_API_SECRET` is also accepted as an alias. Create the secret in GA4 under Admin > Data streams > the Trim Proof web stream > Measurement Protocol API secrets, then set it only in production/server env.
 
 ## Events
 
@@ -31,6 +31,8 @@ Trim Proof also emits server-side GA4 Measurement Protocol events when `GA4_API_
 
 - `purchase` from the verified Stripe `checkout.session.completed` webhook, including `transaction_id`, `value`, `currency`, `entitlement`, `checkout_mode`, and ecommerce `items`.
 - `generate_lead` from a successful launch-list signup, including `source` and page context.
+- `checkout_started` from server-side Stripe Checkout creation when GA attribution is present.
+- `proof_export_completed` from successful proof generation, including proof mode, product type, PDF/X level, print profile, preflight status, and asset provider.
 
 The browser sends GA client/session attribution into Stripe Checkout metadata so the server-side `purchase` event can be tied back to the original web visitor. Do not put email addresses or other direct personal identifiers in GA event params.
 

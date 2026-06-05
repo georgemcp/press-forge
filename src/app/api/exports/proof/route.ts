@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { generateProof } from "@/lib/print/proof";
 import { writeProofDeliveryManifest } from "@/lib/print/delivery-manifest";
 import { layoutSpecSchema } from "@/lib/print/layout-spec";
@@ -15,6 +16,11 @@ export async function POST(request: Request) {
     brief?: string;
     mode?: "dummy" | "advanced";
     checkoutSessionId?: string;
+    analytics?: {
+      gaClientId?: string;
+      gaSessionId?: string;
+      pagePath?: string;
+    };
   };
   const parsed = layoutSpecSchema.safeParse(payload.spec ?? sampleBusinessCardLayout);
   if (!parsed.success) {
@@ -80,11 +86,36 @@ export async function POST(request: Request) {
           svgUrl: `${fileBase}/${path.basename(proof.svgMasterPath)}`
         }
       : {};
+    const analytics = await sendServerAnalyticsEvent({
+      name: "proof_export_completed",
+      clientId: payload.analytics?.gaClientId,
+      params: {
+        mode,
+        product_type: parsed.data.productType,
+        report_status: proof.report.status,
+        print_profile: proof.report.printProfile,
+        pdfx_level: proof.report.pdfxLevel,
+        asset_provider: proof.assets[0]?.provider,
+        production_download_locked: !manifest.canDownloadProductionFiles,
+        entitlement: paidSession?.entitlement ?? "dummy",
+        page_path: payload.analytics?.pagePath,
+        session_id: numericSessionId(payload.analytics?.gaSessionId)
+      }
+    });
+    if (analytics.status === "failed") {
+      console.error("Trim Proof server analytics event failed", {
+        event: "proof_export_completed",
+        provider: analytics.provider,
+        reason: analytics.reason
+      });
+    }
+
     return NextResponse.json({
       jobId,
       mode,
       productionDownloadLocked: !manifest.canDownloadProductionFiles,
       report: proof.report,
+      analytics,
       ...productionUrls,
       reportUrl: `${fileBase}/${path.basename(proof.reportPath)}`,
       assetUrls: proof.assets.map((asset) => ({
@@ -106,4 +137,9 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function numericSessionId(value?: string) {
+  const sessionId = Number(value);
+  return Number.isFinite(sessionId) && sessionId > 0 ? sessionId : undefined;
 }

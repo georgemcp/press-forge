@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
+import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { getAppUrl, getStripeClient } from "@/lib/billing/stripe";
 
 export const runtime = "nodejs";
@@ -30,6 +31,11 @@ function resolvePriceId(mode: CheckoutMode) {
 
 function stringMetadata(metadata: Record<string, string | undefined>) {
   return Object.fromEntries(Object.entries(metadata).filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0));
+}
+
+function numericSessionId(value?: string) {
+  const sessionId = Number(value);
+  return Number.isFinite(sessionId) && sessionId > 0 ? sessionId : undefined;
 }
 
 export async function POST(request: Request) {
@@ -100,7 +106,28 @@ export async function POST(request: Request) {
     }
   });
 
+  const analytics = await sendServerAnalyticsEvent({
+    name: "checkout_started",
+    clientId: parsed.data.analytics?.gaClientId,
+    params: {
+      checkout_mode: mode,
+      entitlement: mode === "subscription" ? "subscription" : "export_credit",
+      currency: "USD",
+      value: mode === "subscription" ? 29 : 9,
+      page_path: parsed.data.analytics?.pagePath,
+      session_id: numericSessionId(parsed.data.analytics?.gaSessionId)
+    }
+  });
+  if (analytics.status === "failed") {
+    console.error("Trim Proof server analytics event failed", {
+      event: "checkout_started",
+      provider: analytics.provider,
+      reason: analytics.reason
+    });
+  }
+
   return NextResponse.json({
-    url: session.url
+    url: session.url,
+    analytics
   });
 }

@@ -26,7 +26,7 @@ export function isServerAnalyticsConfigured() {
 
 function resolveGa4Config() {
   const measurementId = firstValue(process.env.GA4_MEASUREMENT_ID, process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID);
-  const apiSecret = firstValue(process.env.GA4_API_SECRET, process.env.GOOGLE_ANALYTICS_API_SECRET);
+  const apiSecret = firstValue(process.env.GA4_API_SECRET, process.env.GA4_MEASUREMENT_PROTOCOL_API_SECRET, process.env.GOOGLE_ANALYTICS_API_SECRET);
   if (!measurementId || !apiSecret) {
     return undefined;
   }

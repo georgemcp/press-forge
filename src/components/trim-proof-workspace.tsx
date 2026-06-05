@@ -47,6 +47,12 @@ interface ProofApiResponse {
     previewUrl?: string;
     effectiveDpi: number;
   }>;
+  analytics?: {
+    status: "sent" | "skipped" | "failed";
+    configured: boolean;
+    provider: "ga4_measurement_protocol";
+    reason?: string;
+  };
 }
 
 type ProofAssetUrl = NonNullable<ProofApiResponse["assetUrls"]>[number];
@@ -651,7 +657,7 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
             headers: {
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({ brief, spec: refreshedSpec, mode, checkoutSessionId: paidSession?.id })
+            body: JSON.stringify({ brief, spec: refreshedSpec, mode, checkoutSessionId: paidSession?.id, analytics: getAnalyticsAttribution() })
           });
           if (!response.ok) {
             const payload = (await response.json().catch(() => undefined)) as { error?: string } | undefined;
