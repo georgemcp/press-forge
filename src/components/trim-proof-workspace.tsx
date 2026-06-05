@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   BadgeCheck,
   Box,
@@ -34,6 +34,11 @@ interface ProofApiResponse {
   downloadUrl: string;
   sourceUrl: string;
   svgUrl: string;
+}
+
+interface LayoutSpecApiResponse {
+  spec: LayoutSpec;
+  error?: string;
 }
 
 type CheckoutMode = "payment" | "subscription";
@@ -425,9 +430,8 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
   const [accessMessage, setAccessMessage] = useState<string>();
   const [paidSession, setPaidSession] = useState<PaidSession>();
   const [sessionPending, setSessionPending] = useState(Boolean(checkoutSessionId));
+  const [spec, setSpec] = useState(initialSpec);
   const [isPending, startTransition] = useTransition();
-
-  const spec = useMemo(() => initialSpec, [initialSpec]);
 
   useEffect(() => {
     if (!checkoutSessionId) {
@@ -466,13 +470,26 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
     }
     startTransition(() => {
       void (async () => {
+        const specResponse = await fetch("/api/layout-spec", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ brief })
+        });
+        const specPayload = (await specResponse.json().catch(() => undefined)) as LayoutSpecApiResponse | undefined;
+        if (!specResponse.ok || !specPayload?.spec) {
+          setError(specPayload?.error ?? "LayoutSpec generation failed.");
+          return;
+        }
+        setSpec(specPayload.spec);
         trackEvent(mode === "dummy" ? "dummy_proof_started" : "proof_export_started", { mode });
         const response = await fetch("/api/exports/proof", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ brief, spec, mode, checkoutSessionId: paidSession?.id })
+          body: JSON.stringify({ brief, spec: specPayload.spec, mode, checkoutSessionId: paidSession?.id })
         });
         if (!response.ok) {
           const payload = (await response.json().catch(() => undefined)) as { error?: string } | undefined;

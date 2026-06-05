@@ -1,20 +1,15 @@
 import { NextResponse } from "next/server";
-import { layoutSpecSchema } from "@/lib/print/layout-spec";
-import { sampleBusinessCardLayout } from "@/lib/print/sample-layout";
+import { deriveLayoutSpecFromBrief } from "@/lib/print/brief-layout";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   const payload = (await request.json().catch(() => ({}))) as { brief?: string };
-  const brief = payload.brief?.trim();
-  const spec = layoutSpecSchema.parse({
-    ...sampleBusinessCardLayout,
-    styleDirection: brief ? `User brief: ${brief}` : sampleBusinessCardLayout.styleDirection
-  });
+  const spec = deriveLayoutSpecFromBrief({ brief: payload.brief });
 
   return NextResponse.json({
     spec,
-    source: "deterministic-fallback",
-    note: "LLM JSON decomposition is isolated behind this endpoint; deterministic fallback keeps prepress proof runnable without model credentials."
+    source: "deterministic-brief-parser",
+    note: "The current production path converts the brief into validated LayoutSpec JSON without giving print-validity work to an image model."
   });
 }

@@ -73,12 +73,26 @@ export async function locateCmykProfile() {
 }
 
 async function locatePdfxDefinition() {
+  const versionedSharePath = await firstExisting(
+    await fs
+      .readdir("/usr/share/ghostscript", { withFileTypes: true })
+      .then((entries) =>
+        entries
+          .filter((entry) => entry.isDirectory())
+          .map((entry) => path.join("/usr/share/ghostscript", entry.name, "lib", "PDFX_def.ps"))
+          .sort()
+          .reverse()
+      )
+      .catch(() => [])
+  );
+
   return firstExisting([
     "/opt/homebrew/Cellar/ghostscript/10.07.1/share/ghostscript/lib/PDFX_def.ps",
     "/opt/homebrew/share/ghostscript/lib/PDFX_def.ps",
     "/usr/local/share/ghostscript/lib/PDFX_def.ps",
+    versionedSharePath,
     "/usr/share/ghostscript/lib/PDFX_def.ps"
-  ]);
+  ].filter(Boolean) as string[]);
 }
 
 async function writePdfxDefinition(outputDir: string, iccPath?: string) {
@@ -87,10 +101,9 @@ async function writePdfxDefinition(outputDir: string, iccPath?: string) {
     return undefined;
   }
   const definition = await fs.readFile(definitionPath, "utf8");
-  const patched = definition.replace(
-    /^\/ICCProfile .*$/m,
-    iccPath ? `/ICCProfile (${iccPath}) def` : ""
-  );
+  const patched = definition
+    .replace(/PDF\/X-3:2002/g, "PDF/X-1a:2001")
+    .replace(/^\/ICCProfile .*$/m, iccPath ? `/ICCProfile (${iccPath}) def` : "");
   const customPath = path.join(outputDir, "PDFX_def.trimproof.ps");
   await fs.writeFile(customPath, patched);
   return customPath;
@@ -125,9 +138,9 @@ export async function convertToPdfX(sourcePdfPath: string, outputDir: string, bo
     "-dBATCH",
     "-dNOPAUSE",
     "-dSAFER",
+    ...(iccPath ? [`--permit-file-read=${iccPath}`] : []),
     "-sDEVICE=pdfwrite",
     "-dCompatibilityLevel=1.4",
-    "-dPDFX=1",
     "-dPDFSETTINGS=/prepress",
     "-dEmbedAllFonts=true",
     "-dSubsetFonts=false",
