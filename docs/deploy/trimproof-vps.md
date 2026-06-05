@@ -43,6 +43,7 @@ Verification:
 
 - `docker compose -f docker-compose.prod.yml ps`
 - `curl http://127.0.0.1:3047/api/health`
+- Confirm `/api/health` reports `stripeCheckoutConfigured`, `stripeWebhookConfigured`, and `stripePortalConfigured` as `true` before treating paid exports and subscription management as live.
 - Generate a proof in `/app` and verify the returned `/api/exports/proof/files/...` URL downloads a PDF.
 - Start a Checkout Session from `/app?mode=advanced` with a billing email and confirm Stripe opens a Trim Proof-branded hosted Checkout page.
 - Confirm the Stripe webhook endpoint is subscribed to `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_failed`, `charge.refunded`, `invoice.payment_failed`, `customer.subscription.updated`, and `customer.subscription.deleted` so paid access follows refunds, failed payments, and cancellations.
