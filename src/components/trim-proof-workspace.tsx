@@ -12,6 +12,7 @@ import {
   Mail,
   Play,
   Ruler,
+  Settings,
   ShieldCheck,
   Sparkles,
   WalletCards,
@@ -251,11 +252,13 @@ function PreflightPanel({
   isPending,
   checkoutPending,
   accessPending,
+  portalPending,
   billingEmail,
   accessMessage,
   setBillingEmail,
   onGenerate,
   onCheckout,
+  onManageSubscription,
   onSendAccessLink,
   downloadUrl
 }: {
@@ -265,11 +268,13 @@ function PreflightPanel({
   isPending: boolean;
   checkoutPending?: CheckoutMode;
   accessPending?: boolean;
+  portalPending?: boolean;
   billingEmail: string;
   accessMessage?: string;
   setBillingEmail: (email: string) => void;
   onGenerate: () => void;
   onCheckout: (mode: CheckoutMode) => void;
+  onManageSubscription: () => void;
   onSendAccessLink: () => void;
   downloadUrl?: string;
 }) {
@@ -364,6 +369,17 @@ function PreflightPanel({
           {accessPending ? <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> : <Mail aria-hidden className="h-3.5 w-3.5" />}
           Email my access link
         </button>
+        {paidSession?.entitlement === "subscription" ? (
+          <button
+            className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-[8px] border border-brand/30 bg-brand-soft px-3 text-xs font-semibold text-brand disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={Boolean(portalPending)}
+            type="button"
+            onClick={onManageSubscription}
+          >
+            {portalPending ? <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> : <Settings aria-hidden className="h-3.5 w-3.5" />}
+            Manage subscription
+          </button>
+        ) : null}
         <p className="mt-3 text-xs leading-5 text-muted">
           {paidSession
             ? paidSession.entitlement === "subscription"
@@ -404,6 +420,7 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
   const [error, setError] = useState<string>();
   const [checkoutPending, setCheckoutPending] = useState<CheckoutMode>();
   const [accessPending, setAccessPending] = useState(false);
+  const [portalPending, setPortalPending] = useState(false);
   const [billingEmail, setBillingEmail] = useState("");
   const [accessMessage, setAccessMessage] = useState<string>();
   const [paidSession, setPaidSession] = useState<PaidSession>();
@@ -535,6 +552,34 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
     }
   }
 
+  async function manageSubscription() {
+    setError(undefined);
+    setAccessMessage(undefined);
+    if (!paidSession || paidSession.entitlement !== "subscription") {
+      setError("Verify a Trim Proof Pro checkout session before opening subscription management.");
+      return;
+    }
+    setPortalPending(true);
+    trackEvent("subscription_portal_started", { entitlement: paidSession.entitlement });
+    try {
+      const response = await fetch("/api/billing/portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ sessionId: paidSession.id })
+      });
+      const payload = (await response.json().catch(() => undefined)) as { url?: string; error?: string } | undefined;
+      if (!response.ok || !payload?.url) {
+        setError(payload?.error ?? "Subscription management could not start.");
+        return;
+      }
+      window.location.href = payload.url;
+    } finally {
+      setPortalPending(false);
+    }
+  }
+
   return (
     <main className="min-h-screen p-2 text-foreground sm:p-4">
       <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-[1500px] flex-col overflow-hidden rounded-[8px] border border-border bg-surface shadow-[0_24px_90px_oklch(0.18_0.02_252_/_0.12)]">
@@ -575,8 +620,10 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
             mode={mode}
             onCheckout={startCheckout}
             onGenerate={generateProof}
+            onManageSubscription={manageSubscription}
             onSendAccessLink={sendAccessLink}
             paidSession={paidSession}
+            portalPending={portalPending}
             report={proof?.report}
             setBillingEmail={setBillingEmail}
           />

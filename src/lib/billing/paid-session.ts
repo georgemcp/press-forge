@@ -6,7 +6,10 @@ export interface PaidCheckoutSession {
   id: string;
   entitlement: "export_credit" | "subscription";
   mode: "payment" | "subscription";
+  customerId?: string;
   customerEmail?: string;
+  subscriptionId?: string;
+  subscriptionStatus?: string;
   consumed?: boolean;
 }
 
@@ -36,13 +39,18 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
   if (session.status !== "complete" || session.payment_status !== "paid") {
     throw new Error("Checkout session is not paid.");
   }
+  const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+  let subscriptionId: string | undefined;
+  let subscriptionStatus: string | undefined;
   if (session.mode === "subscription") {
-    const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
-    if (subscriptionId) {
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      if (!activeSubscriptionStatuses.has(subscription.status)) {
-        throw new Error("Subscription is not active.");
-      }
+    subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+    if (!subscriptionId) {
+      throw new Error("Checkout session subscription is missing.");
+    }
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    subscriptionStatus = subscription.status;
+    if (!activeSubscriptionStatuses.has(subscription.status)) {
+      throw new Error("Subscription is not active.");
     }
   }
 
@@ -59,7 +67,7 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
     await supabase.from("export_orders").upsert(
       {
         stripe_session_id: session.id,
-        stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
+        stripe_customer_id: customerId ?? null,
         customer_email: getSessionCustomerEmail(session) ?? null,
         entitlement,
         checkout_mode: session.mode,
@@ -75,7 +83,10 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
     id: session.id,
     entitlement,
     mode: session.mode,
+    customerId,
     customerEmail: getSessionCustomerEmail(session),
+    subscriptionId,
+    subscriptionStatus,
     consumed
   };
 }

@@ -12,6 +12,7 @@ export type TrimProofEvent =
   | "proof_export_completed"
   | "checkout_started"
   | "checkout_verified"
+  | "subscription_portal_started"
   | "email_signup_submitted";
 
 export function trackEvent(event: TrimProofEvent, params: Record<string, string | number | boolean | undefined> = {}) {
