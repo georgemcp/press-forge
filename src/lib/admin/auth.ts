@@ -2,11 +2,19 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const ADMIN_SESSION_COOKIE = "trimproof_admin";
 
-const sessionVersion = "v1";
+const sessionVersion = "v2";
 const sessionTtlSeconds = 60 * 60 * 8;
 
 function firstValue(...values: Array<string | undefined>) {
   return values.find((value) => typeof value === "string" && value.trim().length > 0)?.trim();
+}
+
+export function normalizeAdminLoginEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function getAdminEmail() {
+  return firstValue(process.env.TRIMPROOF_ADMIN_EMAIL, process.env.ADMIN_DASHBOARD_EMAIL);
 }
 
 function getAdminPassword() {
@@ -32,10 +40,10 @@ function safeEqual(left: string, right: string) {
 }
 
 export function isAdminAuthConfigured() {
-  return Boolean(getAdminPassword() && getAdminSessionSecret());
+  return Boolean(getAdminEmail() && getAdminPassword() && getAdminSessionSecret());
 }
 
-export function validateAdminPassword(candidate: string) {
+function validateAdminPassword(candidate: string) {
   const expected = getAdminPassword();
   if (!expected) {
     return false;
@@ -43,9 +51,25 @@ export function validateAdminPassword(candidate: string) {
   return safeEqual(candidate, expected);
 }
 
+export function validateAdminCredentials(email: string, password: string) {
+  const expectedEmail = getAdminEmail();
+  if (!expectedEmail) {
+    return false;
+  }
+  return safeEqual(normalizeAdminLoginEmail(email), normalizeAdminLoginEmail(expectedEmail)) && validateAdminPassword(password);
+}
+
+function encodeEmailSegment(email: string) {
+  return Buffer.from(normalizeAdminLoginEmail(email), "utf8").toString("base64url");
+}
+
 export function createAdminSessionValue(now = Date.now()) {
+  const email = getAdminEmail();
+  if (!email) {
+    throw new Error("Admin email is not configured.");
+  }
   const expiresAt = now + sessionTtlSeconds * 1000;
-  const payload = `${sessionVersion}.${expiresAt}`;
+  const payload = `${sessionVersion}.${expiresAt}.${encodeEmailSegment(email)}`;
   const signature = sign(payload);
   if (!signature) {
     throw new Error("Admin session secret is not configured.");
@@ -57,15 +81,19 @@ export function verifyAdminSessionValue(value: string | undefined, now = Date.no
   if (!value) {
     return false;
   }
-  const [version, expiresAtValue, signature, extra] = value.split(".");
-  if (version !== sessionVersion || !expiresAtValue || !signature || extra) {
+  const [version, expiresAtValue, emailSegment, signature, extra] = value.split(".");
+  if (version !== sessionVersion || !expiresAtValue || !emailSegment || !signature || extra) {
     return false;
   }
   const expiresAt = Number(expiresAtValue);
   if (!Number.isFinite(expiresAt) || expiresAt <= now) {
     return false;
   }
-  const expected = sign(`${version}.${expiresAtValue}`);
+  const expectedEmail = getAdminEmail();
+  if (!expectedEmail || emailSegment !== encodeEmailSegment(expectedEmail)) {
+    return false;
+  }
+  const expected = sign(`${version}.${expiresAtValue}.${emailSegment}`);
   if (!expected) {
     return false;
   }
@@ -75,7 +103,7 @@ export function verifyAdminSessionValue(value: string | undefined, now = Date.no
 export function getAdminSessionCookieOptions() {
   return {
     httpOnly: true,
-    sameSite: "lax" as const,
+    sameSite: "strict" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/admin",
     maxAge: sessionTtlSeconds

@@ -7,11 +7,12 @@ The admin center lives at `/admin` and is protected by a signed HTTP-only sessio
 ```bash
 TRIMPROOF_ADMIN_PASSWORD=...
 TRIMPROOF_ADMIN_SESSION_SECRET=...
+TRIMPROOF_ADMIN_EMAIL=owner@example.com
 SUPABASE_SERVICE_ROLE_KEY=...
 NEXT_PUBLIC_SUPABASE_URL=...
 ```
 
-Use a long random value for `TRIMPROOF_ADMIN_SESSION_SECRET`. The password is checked server-side and is never exposed to the browser.
+Use a long random value for `TRIMPROOF_ADMIN_SESSION_SECRET`. The email and password are checked server-side, and only a signed HTTP-only cookie is stored in the browser. Changing `TRIMPROOF_ADMIN_EMAIL` invalidates existing admin sessions.
 
 ## Optional Margin Assumptions
 
@@ -51,4 +52,4 @@ All management actions re-check the signed admin session server-side before muta
 
 - Recurring invoice revenue is inferred from active subscription run-rate; invoice-level MRR history requires persisting Stripe invoice events.
 - Exact AI provider costs are estimated per generated proof; exact OpenAI/Gemini cost ingestion should replace the configured proof-cost assumption.
-- Role-based admin users should replace the shared admin password before adding multi-operator permissions or support-staff roles.
+- Role-based admin users should replace the single super-admin credential before adding multi-operator permissions or support-staff roles.

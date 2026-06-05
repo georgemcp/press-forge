@@ -9,8 +9,8 @@ import {
   createAdminSessionValue,
   getAdminSessionCookieOptions,
   isAdminAuthConfigured,
-  verifyAdminSessionValue,
-  validateAdminPassword
+  validateAdminCredentials,
+  verifyAdminSessionValue
 } from "@/lib/admin/auth";
 import { getOrderAccountEmail, normalizeAdminEmail, type ExportOrderRow } from "@/lib/admin/metrics";
 import { buildAccessLinkEmail } from "@/lib/billing/access-link-email";
@@ -20,19 +20,23 @@ import { sendTransactionalEmail } from "@/lib/email/transactional";
 
 export interface AdminLoginState {
   error?: string;
+  email?: string;
 }
 
 export async function loginAdmin(_state: AdminLoginState, formData: FormData): Promise<AdminLoginState> {
+  const email = String(formData.get("email") ?? "");
   if (!isAdminAuthConfigured()) {
     return {
-      error: "Admin login is not configured. Set TRIMPROOF_ADMIN_PASSWORD and TRIMPROOF_ADMIN_SESSION_SECRET."
+      email,
+      error: "Admin login is not configured. Set TRIMPROOF_ADMIN_EMAIL, TRIMPROOF_ADMIN_PASSWORD, and TRIMPROOF_ADMIN_SESSION_SECRET."
     };
   }
 
   const password = String(formData.get("password") ?? "");
-  if (!validateAdminPassword(password)) {
+  if (!validateAdminCredentials(email, password)) {
     return {
-      error: "That admin password did not match."
+      email,
+      error: "That super admin login did not match."
     };
   }
 

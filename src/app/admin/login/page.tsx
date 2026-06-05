@@ -31,14 +31,14 @@ export default async function AdminLoginPage() {
           </div>
         </div>
         <p className="mt-4 text-sm leading-6 text-muted">
-          Management access for accounts, subscriptions, proof usage, revenue, margin, and production readiness.
+          Super admin access for accounts, subscriptions, proof usage, revenue, margin, and production readiness.
         </p>
         <div className="mt-6">
           <AdminLoginForm configured={configured} />
         </div>
         {!configured ? (
           <p className="mt-4 rounded-[8px] border border-warning/30 bg-warning/10 px-3 py-2 text-sm font-semibold text-surface-ink">
-            Set `TRIMPROOF_ADMIN_PASSWORD` and `TRIMPROOF_ADMIN_SESSION_SECRET` in production to enable login.
+            Set `TRIMPROOF_ADMIN_EMAIL`, `TRIMPROOF_ADMIN_PASSWORD`, and `TRIMPROOF_ADMIN_SESSION_SECRET` in production to enable login.
           </p>
         ) : null}
         <Link className="mt-5 inline-flex text-sm font-semibold text-brand hover:underline" href="/">
