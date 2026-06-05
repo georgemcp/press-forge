@@ -23,6 +23,7 @@ import { PRODUCT_PROFILES, type ProductType } from "@/lib/print/constants";
 import type { LayoutSpec } from "@/lib/print/layout-spec";
 import type { PreflightReport, PreflightStatus } from "@/lib/print/preflight";
 import { trackEvent } from "@/lib/analytics/events";
+import { getAnalyticsAttribution } from "@/lib/analytics/attribution";
 
 interface TrimProofWorkspaceProps {
   checkoutSessionId?: string;
@@ -616,7 +617,7 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ mode, email })
+        body: JSON.stringify({ mode, email, analytics: getAnalyticsAttribution() })
       });
       const payload = (await response.json().catch(() => undefined)) as { url?: string; error?: string } | undefined;
       if (!response.ok || !payload?.url) {

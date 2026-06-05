@@ -6,10 +6,19 @@ export const runtime = "nodejs";
 
 type CheckoutMode = "payment" | "subscription";
 
+const analyticsSchema = z
+  .object({
+    gaClientId: z.string().min(1).max(120).optional(),
+    gaSessionId: z.string().min(1).max(120).optional(),
+    pagePath: z.string().min(1).max(240).optional()
+  })
+  .optional();
+
 const checkoutSchema = z.object({
   mode: z.enum(["payment", "subscription"]).optional(),
   userId: z.string().min(1).optional(),
-  email: z.string().email()
+  email: z.string().email(),
+  analytics: analyticsSchema
 });
 
 function resolvePriceId(mode: CheckoutMode) {
@@ -17,6 +26,10 @@ function resolvePriceId(mode: CheckoutMode) {
     return process.env.STRIPE_SUBSCRIPTION_PRICE_ID;
   }
   return process.env.STRIPE_EXPORT_PRICE_ID;
+}
+
+function stringMetadata(metadata: Record<string, string | undefined>) {
+  return Object.fromEntries(Object.entries(metadata).filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0));
 }
 
 export async function POST(request: Request) {
@@ -47,6 +60,13 @@ export async function POST(request: Request) {
   }
 
   const appUrl = getAppUrl();
+  const metadata = {
+    product: "trimproof",
+    entitlement: mode === "subscription" ? "subscription" : "export_credit",
+    ga_client_id: parsed.data.analytics?.gaClientId,
+    ga_session_id: parsed.data.analytics?.gaSessionId,
+    page_path: parsed.data.analytics?.pagePath
+  };
   const session = await stripe.checkout.sessions.create({
     mode,
     line_items: [
@@ -76,8 +96,7 @@ export async function POST(request: Request) {
       }
     },
     metadata: {
-      product: "trimproof",
-      entitlement: mode === "subscription" ? "subscription" : "export_credit"
+      ...stringMetadata(metadata)
     }
   });
 

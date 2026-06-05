@@ -1,11 +1,21 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
+import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { getAdminSignupRecipients, sendTransactionalEmail } from "@/lib/email/transactional";
+
+const analyticsSchema = z
+  .object({
+    gaClientId: z.string().min(1).max(120).optional(),
+    gaSessionId: z.string().min(1).max(120).optional(),
+    pagePath: z.string().min(1).max(240).optional()
+  })
+  .optional();
 
 const emailSignupSchema = z.object({
   email: z.string().email(),
-  source: z.string().min(1).max(80).default("unknown")
+  source: z.string().min(1).max(80).default("unknown"),
+  analytics: analyticsSchema
 });
 
 function escapeHtml(value: string) {
@@ -15,6 +25,11 @@ function escapeHtml(value: string) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function numericSessionId(value?: string) {
+  const sessionId = Number(value);
+  return Number.isFinite(sessionId) && sessionId > 0 ? sessionId : undefined;
 }
 
 function confirmationEmail(email: string) {
@@ -103,9 +118,29 @@ export async function POST(request: Request) {
     });
   }
 
+  const analytics = await sendServerAnalyticsEvent({
+    name: "generate_lead",
+    clientId: parsed.data.analytics?.gaClientId,
+    params: {
+      source: parsed.data.source,
+      page_path: parsed.data.analytics?.pagePath,
+      session_id: numericSessionId(parsed.data.analytics?.gaSessionId),
+      currency: "USD",
+      value: 0
+    }
+  });
+  if (analytics.status === "failed") {
+    console.error("Trim Proof server analytics event failed", {
+      event: "generate_lead",
+      provider: analytics.provider,
+      reason: analytics.reason
+    });
+  }
+
   return NextResponse.json({
     ok: true,
     persisted: Boolean(supabase),
+    analytics,
     email: {
       confirmation,
       adminNotification

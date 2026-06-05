@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { trackEvent } from "@/lib/analytics/events";
+import { getAnalyticsAttribution } from "@/lib/analytics/attribution";
 
 const answerBlocks = [
   {
@@ -156,7 +157,7 @@ function EmailCapture() {
     const response = await fetch("/api/email-signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, source: "marketing_home" })
+      body: JSON.stringify({ email, source: "marketing_home", analytics: getAnalyticsAttribution() })
     });
     if (!response.ok) {
       setStatus("error");

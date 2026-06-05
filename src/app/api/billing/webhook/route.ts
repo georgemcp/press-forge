@@ -1,9 +1,19 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
+import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { getStripeClient } from "@/lib/billing/stripe";
 
 export const runtime = "nodejs";
+
+function centsToValue(amount?: number | null) {
+  return typeof amount === "number" ? Number((amount / 100).toFixed(2)) : undefined;
+}
+
+function numericSessionId(value?: string) {
+  const sessionId = Number(value);
+  return Number.isFinite(sessionId) && sessionId > 0 ? sessionId : undefined;
+}
 
 export async function POST(request: Request) {
   const stripe = getStripeClient();
@@ -57,6 +67,36 @@ export async function POST(request: Request) {
           onConflict: "stripe_session_id"
         }
       );
+      const analytics = await sendServerAnalyticsEvent({
+        name: "purchase",
+        clientId: session.metadata?.ga_client_id,
+        userId,
+        params: {
+          transaction_id: session.id,
+          affiliation: "trimproof.com",
+          value: centsToValue(session.amount_total),
+          currency: session.currency?.toUpperCase() ?? "USD",
+          entitlement,
+          checkout_mode: session.mode,
+          session_id: numericSessionId(session.metadata?.ga_session_id),
+          page_path: session.metadata?.page_path,
+          items: [
+            {
+              item_id: entitlement === "subscription" ? "trimproof_pro_monthly" : "trimproof_export_credit",
+              item_name: entitlement === "subscription" ? "Trim Proof Pro" : "Trim Proof Export Credit",
+              price: centsToValue(session.amount_total) ?? 0,
+              quantity: 1
+            }
+          ]
+        }
+      });
+      if (analytics.status === "failed") {
+        console.error("Trim Proof server analytics event failed", {
+          event: "purchase",
+          provider: analytics.provider,
+          reason: analytics.reason
+        });
+      }
     }
     if (userId && entitlement === "export_credit") {
       await supabase.from("credits_usage").insert({
@@ -75,6 +115,7 @@ export async function POST(request: Request) {
         })
         .eq("id", userId);
     }
+
   }
 
   return NextResponse.json({ received: true, persisted: true });
