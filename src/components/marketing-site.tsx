@@ -10,6 +10,7 @@ import {
   FileCheck2,
   Layers3,
   Mail,
+  MoveRight,
   Ruler,
   SearchCheck,
   ShieldCheck,
@@ -48,11 +49,20 @@ const keywordTargets = [
   "PDF preflight checker"
 ];
 
+const proofMetrics = [
+  ["Trim", "3.5 x 2 in"],
+  ["Bleed", "0.125 in"],
+  ["Images", "300 DPI gate"],
+  ["Text", "Vector embedded"],
+  ["Color", "CMYK / ICC"],
+  ["Output", "PDF/X-1a"]
+];
+
 const workflowCards: Array<[string, string, LucideIcon]> = [
-  ["Brief", "Describe the piece: business card, flyer, postcard, or letterhead.", Sparkles],
-  ["Creative assets", "Use AI for imagery and decorative art, never final text.", Layers3],
-  ["Prepress", "Typeset text as embedded vector fonts and build exact bleed geometry.", Ruler],
-  ["Gate", "Run PDF/X, CMYK, font, DPI, and box checks before delivery.", ShieldCheck]
+  ["01 Brief", "Plain-English job intake for cards, flyers, postcards, and letterhead.", Sparkles],
+  ["02 Creative", "Image models create decorative art while final text stays deterministic.", Layers3],
+  ["03 Geometry", "Trim, bleed, safe area, crop marks, ICC profile, and boxes are built exactly.", Ruler],
+  ["04 Gate", "PDF/X, fonts, color, and DPI checks decide whether the file is safe to export.", ShieldCheck]
 ];
 
 const pricingPlans = [
@@ -199,15 +209,18 @@ function EmailCapture() {
 
 export function MarketingSite() {
   return (
-    <main className="min-h-screen text-foreground">
+    <main className="min-h-screen bg-background text-foreground">
       <JsonLd />
-      <header className="sticky top-0 z-10 border-b border-border bg-background/92 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-border bg-surface/94 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Link className="flex items-center gap-3" href="/">
-            <span className="grid h-9 w-9 place-items-center rounded-[8px] bg-surface-ink text-white">
+            <span className="grid h-9 w-9 place-items-center rounded-[8px] bg-surface-ink text-white shadow-[0_10px_30px_oklch(0.18_0.02_252_/_0.18)]">
               <FileCheck2 aria-hidden className="h-4 w-4" />
             </span>
-            <span className="font-display text-lg font-bold">Trim Proof</span>
+            <span>
+              <span className="block font-display text-lg font-bold leading-none">Trim Proof</span>
+              <span className="hidden text-[11px] font-semibold uppercase text-muted sm:block">PDF/X proof engine</span>
+            </span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-semibold text-muted md:flex">
             <a href="#how-it-works">How it works</a>
@@ -226,7 +239,7 @@ export function MarketingSite() {
         </div>
       </header>
 
-      <section className="relative min-h-[calc(100svh-8rem)] overflow-hidden">
+      <section className="relative min-h-[calc(88svh-4rem)] overflow-hidden border-b border-border">
         <Image
           alt="Trim Proof SaaS workspace showing brief intake, business card proof, PDF/X preflight, and billing controls."
           className="object-cover"
@@ -235,70 +248,108 @@ export function MarketingSite() {
           sizes="100vw"
           src="/trim-proof-workspace-concept.png"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,oklch(0.16_0.02_248_/_0.88),oklch(0.16_0.02_248_/_0.58)_48%,oklch(0.16_0.02_248_/_0.18))]" />
-        <div className="relative mx-auto flex min-h-[calc(100svh-8rem)] max-w-7xl items-center px-4 py-14">
-          <div className="max-w-3xl">
-            <h1 className="font-display text-5xl font-bold leading-[1.02] text-white md:text-6xl">
-            Create print-ready PDF/X files from a plain-English brief.
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,oklch(0.14_0.018_252_/_0.92),oklch(0.18_0.025_252_/_0.74)_42%,oklch(0.21_0.02_252_/_0.22)_76%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-[linear-gradient(0deg,oklch(0.14_0.018_252_/_0.68),transparent)]" />
+        <div className="relative mx-auto grid min-h-[calc(88svh-4rem)] max-w-7xl content-end px-4 py-8 md:py-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.72fr)] lg:items-end">
+            <div className="max-w-4xl">
+              <p className="mb-4 inline-flex items-center gap-2 border-y border-white/24 py-2 text-[11px] font-bold uppercase text-white/82 sm:text-xs">
+                AI upstream <MoveRight aria-hidden className="h-3.5 w-3.5" /> deterministic prepress downstream
+              </p>
+              <h1 className="max-w-4xl font-display text-[clamp(2.65rem,7.4vw,6.4rem)] font-bold leading-[0.92] text-white">
+                Trim Proof makes AI art press-ready.
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/86">
-              Trim Proof pairs AI-assisted creative direction with deterministic prepress: CMYK output, bleed, crop marks,
-              embedded vector fonts, 300 DPI checks, and a preflight gate before download.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-[8px] bg-accent px-5 text-sm font-bold text-accent-ink"
-                href="/app"
-                onClick={() => trackEvent("dummy_proof_started", { source: "hero" })}
-              >
-                Run a dummy proof
-                <ArrowRight aria-hidden className="h-4 w-4" />
-              </Link>
-              <Link
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-[8px] border border-white/28 bg-white/12 px-5 text-sm font-bold text-white backdrop-blur"
-                href="/app?mode=advanced"
-                onClick={() => trackEvent("advanced_mode_selected", { source: "hero" })}
-              >
-                Open advanced mode
-              </Link>
+              <p className="mt-5 max-w-2xl text-base leading-7 text-white/86 md:mt-6 md:text-lg md:leading-8">
+                Turn a plain-English brief into a print-ready PDF/X proof with CMYK output, crop marks, embedded vector fonts,
+                correct boxes, and a preflight gate before download.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[8px] bg-accent px-5 text-sm font-bold text-accent-ink shadow-[0_18px_50px_oklch(0.58_0.22_342_/_0.35)]"
+                  href="/app"
+                  onClick={() => trackEvent("dummy_proof_started", { source: "hero" })}
+                >
+                  Run a dummy proof
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+                <Link
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[8px] border border-white/28 bg-white/12 px-5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/18"
+                  href="/app?mode=advanced"
+                  onClick={() => trackEvent("advanced_mode_selected", { source: "hero" })}
+                >
+                  Open advanced mode
+                </Link>
+              </div>
             </div>
-            <div className="mt-8 grid max-w-xl grid-cols-2 gap-3 text-sm font-semibold text-white sm:grid-cols-3">
-              {["PDF/X-1a", "CMYK", "Bleed boxes", "Crop marks", "Vector text", "Preflight"].map((item) => (
-                <div key={item} className="flex items-center gap-2">
-                  <CheckCircle2 aria-hidden className="h-4 w-4 text-accent" />
-                  {item}
-                </div>
-              ))}
+
+            <div className="hidden border-y border-white/22 py-4 text-white sm:block">
+              <p className="text-xs font-bold uppercase text-white/70">Proof manifest</p>
+              <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4">
+                {proofMetrics.map(([label, value]) => (
+                  <div key={label} className="border-t border-white/18 pt-3">
+                    <p className="text-[11px] font-bold uppercase text-white/58">{label}</p>
+                    <p className="mt-1 font-display text-lg font-bold">{value}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-y border-border bg-surface" id="how-it-works">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 md:grid-cols-4">
+      <section className="border-b border-border bg-surface" id="how-it-works">
+        <div className="mx-auto grid max-w-7xl gap-0 px-4 py-12 md:grid-cols-4">
           {workflowCards.map(([title, body, Icon]) => (
-            <div key={title} className="rounded-[8px] border border-border bg-background p-5">
+            <div key={title} className="border-b border-border py-5 md:border-b-0 md:border-r md:px-6 md:last:border-r-0">
               <Icon aria-hidden className="h-5 w-5 text-accent" />
               <h2 className="mt-4 font-display text-xl font-bold text-surface-ink">{title}</h2>
-              <p className="mt-3 text-sm leading-6 text-muted">{body}</p>
+              <p className="mt-3 max-w-[16rem] text-sm leading-6 text-muted">{body}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="border-b border-border bg-background" id="pricing">
+      <section className="border-b border-border bg-background">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <FileCheck2 aria-hidden className="h-6 w-6 text-brand" />
+            <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">A production path, not another image generator.</h2>
+            <p className="mt-4 text-base leading-7 text-muted">
+              Most AI design tools stop at a raster preview. Trim Proof keeps the fun part upstream, then builds the boring
+              press rules every printer asks for.
+            </p>
+          </div>
+          <div className="divide-y divide-border border-y border-border">
+            {[
+              ["Creative output", "AI-generated imagery and decorative art"],
+              ["Layout contract", "Typed text blocks, trim size, safe area, bleed, crop marks"],
+              ["Preflight evidence", "PDF/X status, color profile, fonts, DPI, and box checks"],
+              ["Paid delivery", "Stripe-backed export credits or monthly advanced mode"]
+            ].map(([label, value]) => (
+              <div key={label} className="grid gap-2 py-4 sm:grid-cols-[180px_1fr]">
+                <p className="text-xs font-bold uppercase text-muted">{label}</p>
+                <p className="font-display text-xl font-bold text-surface-ink">{value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border bg-surface" id="pricing">
         <div className="mx-auto max-w-7xl px-4 py-16">
-          <div className="max-w-3xl">
+          <div className="grid gap-5 lg:grid-cols-[0.8fr_1fr] lg:items-end">
+            <div>
             <WalletCards aria-hidden className="h-6 w-6 text-brand" />
-            <h2 className="mt-4 font-display text-3xl font-bold text-surface-ink">Pay once for one file, or subscribe for repeat print work.</h2>
+              <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Pay once for one file, or subscribe for repeat print work.</h2>
+            </div>
             <p className="mt-4 text-base leading-7 text-muted">
               Trim Proof is usable before checkout, then paid advanced export is handled by Stripe. Small teams can buy
               one export credit for a single job or use the monthly plan when print-ready files are part of the weekly workflow.
             </p>
           </div>
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          <div className="mt-8 grid gap-0 overflow-hidden rounded-[8px] border border-border bg-background lg:grid-cols-3">
             {pricingPlans.map((plan) => (
-              <article key={plan.id} className="flex min-h-[340px] flex-col rounded-[8px] border border-border bg-surface p-5">
+              <article key={plan.id} className="flex min-h-[340px] flex-col border-b border-border p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
                 <div>
                   <h3 className="font-display text-2xl font-bold text-surface-ink">{plan.name}</h3>
                   <div className="mt-4 flex items-end gap-2">
@@ -337,21 +388,22 @@ export function MarketingSite() {
         <div className="grid gap-8 lg:grid-cols-[0.75fr_1fr]">
           <div>
             <SearchCheck aria-hidden className="h-6 w-6 text-brand" />
-            <h2 className="mt-4 font-display text-3xl font-bold text-surface-ink">Built around the searches print buyers actually make.</h2>
+            <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Built around the searches print buyers actually make.</h2>
             <p className="mt-4 text-base leading-7 text-muted">
               DataForSEO research showed demand around AI flyer generation, AI business cards, CMYK PDF conversion,
               PDF/X-1a, print-ready PDFs, and business cards with bleed. The product and content architecture target those
               jobs directly.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             {keywordTargets.map((keyword) => (
               <Link
                 key={keyword}
-                className="rounded-[8px] border border-border bg-surface p-4 font-semibold text-surface-ink transition hover:border-accent"
+                className="group flex min-h-14 items-center justify-between border-b border-border bg-surface/70 px-4 font-semibold text-surface-ink transition hover:bg-brand-soft/55"
                 href="/tools/print-ready-pdf-generator"
               >
-                {keyword}
+                <span>{keyword}</span>
+                <ArrowRight aria-hidden className="h-4 w-4 text-muted transition group-hover:translate-x-1 group-hover:text-brand" />
               </Link>
             ))}
           </div>
@@ -360,12 +412,12 @@ export function MarketingSite() {
 
       <section className="border-y border-border bg-surface" id="faq">
         <div className="mx-auto max-w-5xl px-4 py-16">
-          <h2 className="font-display text-3xl font-bold text-surface-ink">Answers for printers, designers, and small teams</h2>
-          <div className="mt-8 space-y-4">
+          <h2 className="font-display text-4xl font-bold text-surface-ink">Answers for printers, designers, and small teams</h2>
+          <div className="mt-8 divide-y divide-border border-y border-border">
             {answerBlocks.map((item) => (
-              <article key={item.question} className="rounded-[8px] border border-border bg-background p-5">
+              <article key={item.question} className="grid gap-3 py-6 lg:grid-cols-[0.42fr_0.58fr]">
                 <h3 className="font-display text-xl font-bold text-surface-ink">{item.question}</h3>
-                <p className="mt-3 text-base leading-7 text-muted">{item.answer}</p>
+                <p className="text-base leading-7 text-muted">{item.answer}</p>
               </article>
             ))}
           </div>
@@ -374,7 +426,7 @@ export function MarketingSite() {
 
       <section className="mx-auto max-w-4xl px-4 py-16 text-center">
         <BadgeCheck aria-hidden className="mx-auto h-7 w-7 text-success" />
-        <h2 className="mt-4 font-display text-3xl font-bold text-surface-ink">Get the launch notes and prepress checklist.</h2>
+        <h2 className="mt-4 font-display text-4xl font-bold text-surface-ink">Get the launch notes and prepress checklist.</h2>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted">
           Join the early list for product updates, SEO pages, print-profile notes, and the first production export tests.
         </p>

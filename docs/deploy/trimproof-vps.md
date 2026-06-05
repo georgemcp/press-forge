@@ -11,6 +11,7 @@ Production target:
 - Stripe prices: export credit `price_1TejgIRy14ye40TRwCxJSBu7`; monthly subscription `price_1TejgJRy14ye40TRgqMqHR9V`
 - Stripe Customer Portal configuration: `bpc_1TelBzRy14ye40TRGJb4wixa`
 - GA4 property: `properties/540372104`; web stream `15008052932`; measurement ID `G-9VNCX1HGN5`
+- Google Search Console: URL-prefix property `https://trimproof.com/` verified under `geomcpherson@gmail.com` on `2026-06-05`; domain property `trimproof.com` has DNS TXT verification pending Google propagation.
 - Transactional email: SendGrid from `launch@trimproof.com`; admin notifications to `george.mcpherson@rightawaygroup.com`
 - TLS: Let's Encrypt certificate at `/etc/letsencrypt/live/trimproof.com/`, expiring `2026-09-02` with scheduled auto-renewal
 
@@ -41,6 +42,12 @@ Production email DNS:
 - `s2._domainkey.trimproof.com` CNAME `s2.domainkey.u56539253.wl004.sendgrid.net`
 - Validation status on `2026-06-04`: `valid=true` for return-path and both DKIM records.
 
+Production Google DNS and files:
+
+- Search Console domain verification TXT on root: `google-site-verification=bd3Ho8LUomJBMjQUbjya7pEtTmAsqcXCapvzVBidFcw`
+- Search Console URL-prefix verification file: `/google43b9c98a02f6c033.html`
+- Sitemap submitted in Search Console for the URL-prefix property on `2026-06-05`: `https://trimproof.com/sitemap.xml`
+
 Verification:
 
 - `docker compose -f docker-compose.prod.yml ps`
@@ -54,6 +61,8 @@ Verification:
 - `curl -I http://trimproof.com`
 - `curl -I https://trimproof.com` after the certificate is issued
 - Browser-check `https://trimproof.com` and `https://trimproof.com/app` for `https://www.googletagmanager.com/gtag/js?id=G-9VNCX1HGN5`
+- Confirm `https://trimproof.com/google43b9c98a02f6c033.html` returns the Search Console verification file and `dig TXT trimproof.com` includes the domain verification token.
+- Confirm `https://trimproof.com/sitemap.xml` returns HTTP 200 with `application/xml` and remains listed in `robots.txt`.
 - Confirm `/api/health` reports `serverAnalyticsConfigured: true` when `GA4_API_SECRET` is set.
 - Confirm `/privacy` remains published before sending GA4 Measurement Protocol events.
 - Visit `/admin/login`, authenticate with the production admin password, and confirm `/admin` loads account, subscription, order, usage, margin, and readiness sections.
