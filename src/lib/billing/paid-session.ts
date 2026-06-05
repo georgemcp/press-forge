@@ -88,6 +88,8 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
         stripe_customer_id: customerId ?? null,
         stripe_payment_intent_id: stripeObjectId(session.payment_intent),
         stripe_subscription_id: subscriptionId ?? null,
+        amount_total_cents: session.amount_total ?? null,
+        currency: session.currency?.toUpperCase() ?? null,
         customer_email: getSessionCustomerEmail(session) ?? null,
         entitlement,
         checkout_mode: session.mode,

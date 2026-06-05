@@ -28,14 +28,27 @@ These values drive contribution margin reporting until exact provider COGS inges
 ## Current Views
 
 - KPIs: revenue, contribution profit, margin, subscriptions, accounts, paid orders, and proof usage.
-- Accounts: known emails from Supabase users, launch signups, and Stripe checkout orders.
+- Accounts: known emails from Supabase users, launch signups, Stripe checkout orders, and manually managed account rows.
+- Account workspaces: status, notes, last-contact date, account records, order actions, and an audit trail at `/admin/accounts/[email]`.
 - Subscriptions: active and expired subscription checkout records with Stripe dashboard links.
 - Order ledger: export credits and subscriptions by status.
 - Usage: generated proof folders, pass/fail status, provider hints, file count, and storage footprint.
+- Audit: recent admin actions from `admin_audit_events`.
 - Readiness: Supabase, Stripe, GA4 server events, email, OpenAI, Gemini, pricing, and margin assumptions.
+
+## Management Actions
+
+All management actions re-check the signed admin session server-side before mutating data.
+
+- Save account status, notes, and last-contact date.
+- Open a Stripe Customer Portal session for a customer.
+- Resend an access link for active paid orders.
+- Expire local order access.
+- Create a Stripe refund for orders with a payment intent and mark the order refunded.
+- Cancel a Stripe subscription and expire matching subscription access rows.
 
 ## Known Gaps
 
 - Recurring invoice revenue is inferred from active subscription run-rate; invoice-level MRR history requires persisting Stripe invoice events.
 - Exact AI provider costs are estimated per generated proof; exact OpenAI/Gemini cost ingestion should replace the configured proof-cost assumption.
-- Account management is read-first with Stripe dashboard links. Direct refund, comp credit, cancellation, and user-role actions should be added only after role-based admin users exist.
+- Role-based admin users should replace the shared admin password before adding multi-operator permissions or support-staff roles.

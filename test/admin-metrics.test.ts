@@ -24,6 +24,8 @@ function order(overrides: Partial<ExportOrderRow>): ExportOrderRow {
     stripe_customer_id: overrides.stripe_customer_id ?? "cus_test",
     stripe_payment_intent_id: overrides.stripe_payment_intent_id ?? null,
     stripe_subscription_id: overrides.stripe_subscription_id ?? null,
+    amount_total_cents: overrides.amount_total_cents ?? null,
+    currency: overrides.currency ?? "USD",
     customer_email: overrides.customer_email ?? "buyer@example.com",
     entitlement: overrides.entitlement ?? "export_credit",
     checkout_mode: overrides.checkout_mode ?? "payment",
@@ -53,6 +55,8 @@ describe("admin metrics", () => {
   it("maps order revenue and estimated Stripe fees from configured economics", () => {
     expect(getOrderRevenueCents(order({ entitlement: "export_credit", status: "paid" }), economics)).toBe(900);
     expect(getOrderRevenueCents(order({ entitlement: "subscription", status: "paid" }), economics)).toBe(2900);
+    expect(getOrderRevenueCents(order({ entitlement: "export_credit", status: "paid", amount_total_cents: 1200 }), economics)).toBe(1200);
+    expect(getOrderRevenueCents(order({ entitlement: "export_credit", status: "paid", amount_total_cents: 0 }), economics)).toBe(0);
     expect(getOrderRevenueCents(order({ entitlement: "subscription", status: "expired" }), economics)).toBe(0);
     expect(getEstimatedStripeFeeCents(900, economics)).toBe(56);
   });
@@ -100,6 +104,16 @@ describe("admin metrics", () => {
         }
       ],
       signups: [{ id: "signup-1", email: "lead@example.com", source: "launch", created_at: "2026-06-03T12:00:00Z", updated_at: "2026-06-03T12:00:00Z" }],
+      management: [
+        {
+          email: "lead@example.com",
+          status: "vip",
+          notes: "High-fit print shop.",
+          last_contact_at: "2026-06-04T12:00:00Z",
+          created_at: "2026-06-04T12:00:00Z",
+          updated_at: "2026-06-04T12:00:00Z"
+        }
+      ],
       orders: [order({ customer_email: "buyer@example.com", status: "paid" })]
     });
 
@@ -111,7 +125,9 @@ describe("admin metrics", () => {
     });
     expect(accounts.find((account) => account.email === "lead@example.com")).toMatchObject({
       accountSource: "signup",
-      revenueCents: 0
+      revenueCents: 0,
+      managementStatus: "vip",
+      managementNotes: "High-fit print shop."
     });
   });
 });

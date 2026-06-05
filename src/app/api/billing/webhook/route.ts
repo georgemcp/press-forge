@@ -71,6 +71,8 @@ export async function POST(request: Request) {
           stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
           stripe_payment_intent_id: stripeObjectId(session.payment_intent),
           stripe_subscription_id: stripeObjectId(session.subscription),
+          amount_total_cents: session.amount_total ?? null,
+          currency: session.currency?.toUpperCase() ?? null,
           customer_email: session.customer_details?.email ?? session.customer_email ?? null,
           entitlement,
           checkout_mode: session.mode,

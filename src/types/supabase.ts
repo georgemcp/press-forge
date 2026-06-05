@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_management: {
+        Row: {
+          created_at: string
+          email: string
+          last_contact_at: string | null
+          notes: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          last_contact_at?: string | null
+          notes?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          last_contact_at?: string | null
+          notes?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      admin_audit_events: {
+        Row: {
+          action: string
+          actor: string
+          created_at: string
+          id: string
+          metadata: Json
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       assets: {
         Row: {
           created_at: string
@@ -145,9 +202,11 @@ export type Database = {
       }
       export_orders: {
         Row: {
+          amount_total_cents: number | null
           checkout_mode: string
           consumed_at: string | null
           created_at: string
+          currency: string | null
           customer_email: string | null
           entitlement: string
           id: string
@@ -160,9 +219,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amount_total_cents?: number | null
           checkout_mode: string
           consumed_at?: string | null
           created_at?: string
+          currency?: string | null
           customer_email?: string | null
           entitlement: string
           id?: string
@@ -175,9 +236,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amount_total_cents?: number | null
           checkout_mode?: string
           consumed_at?: string | null
           created_at?: string
+          currency?: string | null
           customer_email?: string | null
           entitlement?: string
           id?: string

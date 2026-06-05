@@ -3,6 +3,7 @@ import type { Tables } from "@/types/supabase";
 export type ExportOrderRow = Tables<"export_orders">;
 export type EmailSignupRow = Tables<"email_signups">;
 export type UserRow = Tables<"users">;
+export type AccountManagementRow = Tables<"account_management">;
 
 export interface GeneratedProofJob {
   id: string;
@@ -26,10 +27,13 @@ export interface AdminEconomicsConfig {
 
 export interface AdminAccountSummary {
   email: string;
-  accountSource: "user" | "signup" | "order";
+  accountSource: "user" | "signup" | "order" | "managed";
   createdAt?: string;
   lastActivityAt?: string;
   stripeCustomerId?: string;
+  managementStatus?: string;
+  managementNotes?: string;
+  lastContactAt?: string;
   revenueCents: number;
   orderCount: number;
   activeSubscription: boolean;
@@ -72,6 +76,7 @@ export interface AdminMetricsInput {
   orders: ExportOrderRow[];
   signups: EmailSignupRow[];
   users: UserRow[];
+  management?: AccountManagementRow[];
   generatedProofs: GeneratedProofJob[];
   economics: AdminEconomicsConfig;
   periodDays?: number;
@@ -95,9 +100,12 @@ export function getAdminEconomicsConfig(): AdminEconomicsConfig {
   };
 }
 
-export function getOrderRevenueCents(order: Pick<ExportOrderRow, "entitlement" | "status">, economics: AdminEconomicsConfig) {
+export function getOrderRevenueCents(order: Pick<ExportOrderRow, "amount_total_cents" | "entitlement" | "status">, economics: AdminEconomicsConfig) {
   if (!revenueStatuses.has(order.status)) {
     return 0;
+  }
+  if (typeof order.amount_total_cents === "number" && order.amount_total_cents >= 0) {
+    return order.amount_total_cents;
   }
   return order.entitlement === "subscription" ? economics.subscriptionPriceCents : economics.exportPriceCents;
 }
@@ -121,17 +129,31 @@ function uniqueKey(...values: Array<string | null | undefined>) {
   return values.find((value) => value && value.trim().length > 0)?.trim().toLowerCase();
 }
 
-export function buildAdminAccountSummaries(input: Pick<AdminMetricsInput, "orders" | "signups" | "users" | "economics">) {
+export function normalizeAdminEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function getOrderAccountEmail(order: Pick<ExportOrderRow, "customer_email" | "stripe_customer_id" | "stripe_session_id">) {
+  const key = uniqueKey(order.customer_email, order.stripe_customer_id, order.stripe_session_id);
+  if (!key) {
+    return undefined;
+  }
+  return order.customer_email ? normalizeAdminEmail(order.customer_email) : `${key}@stripe.trimproof`;
+}
+
+export function buildAdminAccountSummaries(input: Pick<AdminMetricsInput, "orders" | "signups" | "users" | "management" | "economics">) {
   const accounts = new Map<string, AdminAccountSummary>();
 
   function ensureAccount(email: string, source: AdminAccountSummary["accountSource"], createdAt?: string) {
-    const normalized = email.trim().toLowerCase();
+    const normalized = normalizeAdminEmail(email);
     const existing = accounts.get(normalized);
     if (existing) {
       if (source === "user") {
         existing.accountSource = "user";
       } else if (source === "signup" && existing.accountSource === "order") {
         existing.accountSource = "signup";
+      } else if (source === "order" && existing.accountSource === "managed") {
+        existing.accountSource = "order";
       }
       if (!existing.createdAt || (createdAt && createdAt < existing.createdAt)) {
         existing.createdAt = createdAt;
@@ -165,11 +187,11 @@ export function buildAdminAccountSummaries(input: Pick<AdminMetricsInput, "order
   }
 
   for (const order of input.orders) {
-    const key = uniqueKey(order.customer_email, order.stripe_customer_id, order.stripe_session_id);
-    if (!key) {
+    const accountEmail = getOrderAccountEmail(order);
+    if (!accountEmail) {
       continue;
     }
-    const account = ensureAccount(order.customer_email ?? `${key}@stripe.trimproof`, "order", order.created_at);
+    const account = ensureAccount(accountEmail, "order", order.created_at);
     account.stripeCustomerId = order.stripe_customer_id ?? account.stripeCustomerId;
     account.orderCount += 1;
     account.revenueCents += getOrderRevenueCents(order, input.economics);
@@ -179,6 +201,16 @@ export function buildAdminAccountSummaries(input: Pick<AdminMetricsInput, "order
     account.refundedOrders += order.status === "refunded" ? 1 : 0;
     if (!account.lastActivityAt || order.updated_at > account.lastActivityAt) {
       account.lastActivityAt = order.updated_at;
+    }
+  }
+
+  for (const management of input.management ?? []) {
+    const account = ensureAccount(management.email, "managed", management.created_at);
+    account.managementStatus = management.status;
+    account.managementNotes = management.notes;
+    account.lastContactAt = management.last_contact_at ?? undefined;
+    if (!account.lastActivityAt || management.updated_at > account.lastActivityAt) {
+      account.lastActivityAt = management.updated_at;
     }
   }
 
@@ -207,6 +239,9 @@ export function summarizeAdminMetrics(input: AdminMetricsInput): AdminSummary {
   const estimatedProofCostsCents = periodProofs.length * input.economics.estimatedProofCostCents;
   const contributionProfitCents = grossRevenueCents - estimatedStripeFeesCents - estimatedProofCostsCents;
   const activeSubscriptions = accounts.filter((account) => account.activeSubscription).length;
+  const activeSubscriptionRunRate = input.orders
+    .filter((order) => order.entitlement === "subscription" && order.status === "paid")
+    .reduce((total, order) => total + getOrderRevenueCents(order, input.economics), 0);
   const newEmailSignups = input.signups.filter((signup) => isWithinPeriod(signup.created_at, start)).length;
 
   return {
@@ -221,7 +256,7 @@ export function summarizeAdminMetrics(input: AdminMetricsInput): AdminSummary {
     contributionProfitCents,
     contributionMargin: grossRevenueCents > 0 ? contributionProfitCents / grossRevenueCents : null,
     activeSubscriptions,
-    mrrCents: activeSubscriptions * input.economics.subscriptionPriceCents,
+    mrrCents: activeSubscriptionRunRate || activeSubscriptions * input.economics.subscriptionPriceCents,
     totalAccounts: accounts.length,
     paidAccounts: paidAccounts.length,
     emailSignups: input.signups.length,

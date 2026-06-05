@@ -11,6 +11,9 @@ import {
   buildAdminAccountSummaries,
   getAdminEconomicsConfig,
   summarizeAdminMetrics,
+  getOrderAccountEmail,
+  normalizeAdminEmail,
+  type AccountManagementRow,
   type AdminAccountSummary,
   type AdminSummary,
   type ExportOrderRow,
@@ -23,6 +26,7 @@ type UserRow = Tables<"users">;
 type ProjectRow = Tables<"projects">;
 type ExportRow = Tables<"exports">;
 type AssetRow = Tables<"assets">;
+type AdminAuditEventRow = Tables<"admin_audit_events">;
 
 export type AdminRange = "7d" | "30d" | "90d" | "all";
 
@@ -40,6 +44,9 @@ export interface AdminCenterData {
   orders: ExportOrderRow[];
   subscriptions: ExportOrderRow[];
   signups: EmailSignupRow[];
+  users: UserRow[];
+  accountManagement: AccountManagementRow[];
+  auditEvents: AdminAuditEventRow[];
   generatedProofs: GeneratedProofJob[];
   credits: CreditUsageRow[];
   projects: ProjectRow[];
@@ -56,6 +63,23 @@ export interface AdminCenterData {
     openaiConfigured: boolean;
     geminiConfigured: boolean;
   };
+  economics: ReturnType<typeof getAdminEconomicsConfig>;
+}
+
+export interface AdminAccountDetailData {
+  email: string;
+  summary?: AdminAccountSummary;
+  management?: AccountManagementRow;
+  orders: ExportOrderRow[];
+  subscriptions: ExportOrderRow[];
+  signups: EmailSignupRow[];
+  users: UserRow[];
+  credits: CreditUsageRow[];
+  projects: ProjectRow[];
+  exports: ExportRow[];
+  assets: AssetRow[];
+  auditEvents: AdminAuditEventRow[];
+  sourceErrors: string[];
   economics: ReturnType<typeof getAdminEconomicsConfig>;
 }
 
@@ -174,6 +198,9 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
       orders: [],
       subscriptions: [],
       signups: [],
+      users: [],
+      accountManagement: [],
+      auditEvents: [],
       generatedProofs,
       credits: [],
       projects: [],
@@ -194,20 +221,23 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
     };
   }
 
-  const [orders, signups, users, credits, projects, exports, assets] = await Promise.all([
+  const [orders, signups, users, credits, projects, exports, assets, accountManagement, auditEvents] = await Promise.all([
     fetchTable<ExportOrderRow>(supabase.from("export_orders").select("*").order("created_at", { ascending: false }).limit(5000), "export_orders", sourceErrors),
     fetchTable<EmailSignupRow>(supabase.from("email_signups").select("*").order("created_at", { ascending: false }).limit(5000), "email_signups", sourceErrors),
     fetchTable<UserRow>(supabase.from("users").select("*").order("created_at", { ascending: false }).limit(5000), "users", sourceErrors),
     fetchTable<CreditUsageRow>(supabase.from("credits_usage").select("*").order("created_at", { ascending: false }).limit(5000), "credits_usage", sourceErrors),
     fetchTable<ProjectRow>(supabase.from("projects").select("*").order("created_at", { ascending: false }).limit(5000), "projects", sourceErrors),
     fetchTable<ExportRow>(supabase.from("exports").select("*").order("created_at", { ascending: false }).limit(5000), "exports", sourceErrors),
-    fetchTable<AssetRow>(supabase.from("assets").select("*").order("created_at", { ascending: false }).limit(5000), "assets", sourceErrors)
+    fetchTable<AssetRow>(supabase.from("assets").select("*").order("created_at", { ascending: false }).limit(5000), "assets", sourceErrors),
+    fetchTable<AccountManagementRow>(supabase.from("account_management").select("*").order("updated_at", { ascending: false }).limit(5000), "account_management", sourceErrors),
+    fetchTable<AdminAuditEventRow>(supabase.from("admin_audit_events").select("*").order("created_at", { ascending: false }).limit(1000), "admin_audit_events", sourceErrors)
   ]);
 
   const summary = summarizeAdminMetrics({
     orders,
     signups,
     users,
+    management: accountManagement,
     generatedProofs,
     economics,
     periodDays: rangeDays(range)
@@ -216,10 +246,13 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
   return {
     range,
     summary,
-    accounts: buildAdminAccountSummaries({ orders, signups, users, economics }),
+    accounts: buildAdminAccountSummaries({ orders, signups, users, management: accountManagement, economics }),
     orders,
     subscriptions: orders.filter((order) => order.entitlement === "subscription"),
     signups,
+    users,
+    accountManagement,
+    auditEvents,
     generatedProofs,
     credits,
     projects,
@@ -237,5 +270,54 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
       geminiConfigured: creative.geminiConfigured
     },
     economics
+  };
+}
+
+function accountDetailTargets(email: string, orders: ExportOrderRow[]) {
+  const orderMatches = orders.filter((order) => getOrderAccountEmail(order) === email);
+  const targets = new Set<string>([email]);
+  for (const order of orderMatches) {
+    targets.add(order.id);
+    targets.add(order.stripe_session_id);
+    if (order.stripe_customer_id) {
+      targets.add(order.stripe_customer_id);
+    }
+    if (order.stripe_payment_intent_id) {
+      targets.add(order.stripe_payment_intent_id);
+    }
+    if (order.stripe_subscription_id) {
+      targets.add(order.stripe_subscription_id);
+    }
+  }
+  return targets;
+}
+
+export async function getAdminAccountDetailData(rawEmail: string): Promise<AdminAccountDetailData> {
+  const email = normalizeAdminEmail(rawEmail);
+  const data = await getAdminCenterData("all");
+  const users = data.users.filter((user) => normalizeAdminEmail(user.email) === email);
+  const userIds = new Set(users.map((user) => user.id));
+  const orders = data.orders.filter((order) => getOrderAccountEmail(order) === email);
+  const projectRows = data.projects.filter((project) => userIds.has(project.user_id));
+  const projectIds = new Set(projectRows.map((project) => project.id));
+  const exportRows = data.exports.filter((exportRow) => projectIds.has(exportRow.project_id));
+  const assetRows = data.assets.filter((asset) => projectIds.has(asset.project_id));
+  const targets = accountDetailTargets(email, orders);
+
+  return {
+    email,
+    summary: data.accounts.find((account) => account.email === email),
+    management: data.accountManagement.find((management) => normalizeAdminEmail(management.email) === email),
+    orders,
+    subscriptions: orders.filter((order) => order.entitlement === "subscription"),
+    signups: data.signups.filter((signup) => normalizeAdminEmail(signup.email) === email),
+    users,
+    credits: data.credits.filter((credit) => userIds.has(credit.user_id)),
+    projects: projectRows,
+    exports: exportRows,
+    assets: assetRows,
+    auditEvents: data.auditEvents.filter((event) => targets.has(event.target_id)).slice(0, 100),
+    sourceErrors: data.sourceErrors,
+    economics: data.economics
   };
 }

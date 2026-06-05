@@ -11,6 +11,7 @@ import {
   Layers3,
   LogOut,
   Mail,
+  NotebookPen,
   ReceiptText,
   ShieldCheck,
   TrendingUp,
@@ -19,11 +20,12 @@ import {
 } from "lucide-react";
 import { logoutAdmin } from "@/app/admin/actions";
 import { adminRanges, type AdminCenterData, type AdminRange } from "@/lib/admin/data";
+import { getOrderRevenueCents } from "@/lib/admin/metrics";
 
-function money(cents: number) {
+function money(cents: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency,
     maximumFractionDigits: cents % 100 === 0 ? 0 : 2
   }).format(cents / 100);
 }
@@ -61,11 +63,15 @@ function bytes(value: number) {
   return `${value} B`;
 }
 
+function label(value: string) {
+  return value.replaceAll("_", " ");
+}
+
 function statusClass(status: string) {
-  if (status === "paid" || status === "consumed" || status === "passed" || status === "active") {
+  if (status === "paid" || status === "consumed" || status === "passed" || status === "active" || status === "customer" || status === "vip") {
     return "border-success/30 bg-success/10 text-success";
   }
-  if (status === "refunded" || status === "failed" || status === "expired") {
+  if (status === "refunded" || status === "failed" || status === "expired" || status === "blocked" || status === "churn_risk") {
     return "border-danger/30 bg-danger/10 text-danger";
   }
   return "border-warning/30 bg-warning/10 text-surface-ink";
@@ -163,7 +169,7 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
             Live operating view for accounts, paid access, proof usage, estimated contribution margin, and production readiness. Revenue uses current product prices; profit is contribution profit after estimated Stripe fees and proof-generation COGS.
           </p>
           <nav className="flex flex-wrap gap-2 text-sm font-semibold">
-            {["KPIs", "Accounts", "Subscriptions", "Orders", "Usage", "Readiness"].map((item) => (
+            {["KPIs", "Accounts", "Subscriptions", "Orders", "Usage", "Audit", "Readiness"].map((item) => (
               <a className="rounded-[8px] border border-border bg-surface px-3 py-2 text-muted hover:text-surface-ink" href={`#${item.toLowerCase()}`} key={item}>
                 {item}
               </a>
@@ -194,12 +200,13 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
       </Section>
 
       <Section id="accounts" title="Accounts" aside={`${number(data.accounts.length)} known emails from users, signups, and orders`}>
-        <div className="overflow-hidden rounded-[8px] border border-border bg-surface">
+        <div className="max-w-full overflow-x-auto rounded-[8px] border border-border bg-surface">
           <table className="w-full min-w-[920px] border-collapse text-sm">
             <thead className="bg-surface-strong text-left text-xs uppercase text-muted">
               <tr>
                 <th className="px-3 py-3">Account</th>
                 <th className="px-3 py-3">Revenue</th>
+                <th className="px-3 py-3">Status</th>
                 <th className="px-3 py-3">Subscription</th>
                 <th className="px-3 py-3">Credits</th>
                 <th className="px-3 py-3">Orders</th>
@@ -216,6 +223,9 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
                   </td>
                   <td className="px-3 py-3 font-semibold">{money(account.revenueCents)}</td>
                   <td className="px-3 py-3">
+                    <Badge status={account.managementStatus ?? (account.activeSubscription ? "customer" : "lead")}>{label(account.managementStatus ?? (account.activeSubscription ? "customer" : "lead"))}</Badge>
+                  </td>
+                  <td className="px-3 py-3">
                     <Badge status={account.activeSubscription ? "active" : "expired"}>{account.activeSubscription ? "active" : "none"}</Badge>
                   </td>
                   <td className="px-3 py-3">{account.unusedCredits} unused · {account.consumedExports} used</td>
@@ -223,6 +233,7 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
                   <td className="px-3 py-3">{date(account.lastActivityAt)}</td>
                   <td className="px-3 py-3">
                     <div className="flex flex-col gap-1">
+                      <Link className="text-xs font-semibold text-brand hover:underline" href={`/admin/accounts/${encodeURIComponent(account.email)}`}>Open account</Link>
                       <StripeLink id={account.stripeCustomerId} kind="customers" />
                       <a className="text-xs font-semibold text-brand hover:underline" href={`mailto:${account.email}`}>Email</a>
                     </div>
@@ -231,7 +242,7 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
               ))}
               {!recentAccounts.length ? (
                 <tr>
-                  <td className="px-3 py-6 text-muted" colSpan={7}>No accounts yet.</td>
+                  <td className="px-3 py-6 text-muted" colSpan={8}>No accounts yet.</td>
                 </tr>
               ) : null}
             </tbody>
@@ -257,11 +268,11 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
             <p className="mt-2 text-sm text-muted">Expired or failed subscription access records.</p>
           </div>
         </div>
-        <OrderTable orders={data.subscriptions.slice(0, 10)} />
+        <OrderTable economics={data.economics} orders={data.subscriptions.slice(0, 10)} />
       </Section>
 
       <Section id="orders" title="Order Ledger" aside={`${number(data.orders.length)} checkout records`}>
-        <OrderTable orders={recentOrders} />
+        <OrderTable economics={data.economics} orders={recentOrders} />
       </Section>
 
       <Section id="usage" title="Usage" aside={`${number(data.generatedProofs.length)} generated proof folders on this server`}>
@@ -271,7 +282,7 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
           <KpiCard detail={`Estimated ${money(data.economics.estimatedProofCostCents)} per generated proof`} icon={Activity} title="Estimated proof COGS" value={money(summary.estimatedProofCostsCents)} />
           <KpiCard detail={`${number(data.credits.length)} ledger rows`} icon={CreditCard} title="Credit ledger" value={number(summary.unusedCredits)} />
         </div>
-        <div className="overflow-hidden rounded-[8px] border border-border bg-surface">
+        <div className="max-w-full overflow-x-auto rounded-[8px] border border-border bg-surface">
           <table className="w-full min-w-[850px] border-collapse text-sm">
             <thead className="bg-surface-strong text-left text-xs uppercase text-muted">
               <tr>
@@ -299,6 +310,44 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
               {!recentProofs.length ? (
                 <tr>
                   <td className="px-3 py-6 text-muted" colSpan={7}>No generated proofs found on this server.</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </Section>
+
+      <Section id="audit" title="Audit" aside={`${number(data.auditEvents.length)} recent admin events`}>
+        <div className="max-w-full overflow-x-auto rounded-[8px] border border-border bg-surface">
+          <table className="w-full min-w-[820px] border-collapse text-sm">
+            <thead className="bg-surface-strong text-left text-xs uppercase text-muted">
+              <tr>
+                <th className="px-3 py-3">Action</th>
+                <th className="px-3 py-3">Target</th>
+                <th className="px-3 py-3">Actor</th>
+                <th className="px-3 py-3">Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.auditEvents.slice(0, 12).map((event) => (
+                <tr className="border-t border-border" key={event.id}>
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-2 font-semibold text-surface-ink">
+                      <NotebookPen aria-hidden className="h-4 w-4 text-brand" />
+                      {event.action}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3">
+                    <div>{event.target_type}</div>
+                    <div className="font-mono text-xs text-muted">{event.target_id}</div>
+                  </td>
+                  <td className="px-3 py-3">{event.actor}</td>
+                  <td className="px-3 py-3">{date(event.created_at)}</td>
+                </tr>
+              ))}
+              {!data.auditEvents.length ? (
+                <tr>
+                  <td className="px-3 py-6 text-muted" colSpan={4}>No admin actions have been logged yet.</td>
                 </tr>
               ) : null}
             </tbody>
@@ -337,14 +386,15 @@ function ReadinessItem({ active, label, detail }: { active: boolean; label: stri
   );
 }
 
-function OrderTable({ orders }: { orders: AdminCenterData["orders"] }) {
+function OrderTable({ economics, orders }: { economics: AdminCenterData["economics"]; orders: AdminCenterData["orders"] }) {
   return (
-    <div className="overflow-hidden rounded-[8px] border border-border bg-surface">
+    <div className="max-w-full overflow-x-auto rounded-[8px] border border-border bg-surface">
       <table className="w-full min-w-[900px] border-collapse text-sm">
         <thead className="bg-surface-strong text-left text-xs uppercase text-muted">
           <tr>
             <th className="px-3 py-3">Customer</th>
             <th className="px-3 py-3">Type</th>
+            <th className="px-3 py-3">Amount</th>
             <th className="px-3 py-3">Status</th>
             <th className="px-3 py-3">Session</th>
             <th className="px-3 py-3">Proof job</th>
@@ -360,6 +410,7 @@ function OrderTable({ orders }: { orders: AdminCenterData["orders"] }) {
                 <div className="text-xs text-muted">{order.stripe_customer_id ?? "No customer ID"}</div>
               </td>
               <td className="px-3 py-3">{order.entitlement}</td>
+              <td className="px-3 py-3 font-semibold">{money(getOrderRevenueCents(order, economics), order.currency ?? "USD")}</td>
               <td className="px-3 py-3"><Badge status={order.status}>{order.status}</Badge></td>
               <td className="px-3 py-3 font-mono text-xs">{order.stripe_session_id}</td>
               <td className="px-3 py-3 font-mono text-xs">{order.proof_job_id ?? "n/a"}</td>
@@ -374,7 +425,7 @@ function OrderTable({ orders }: { orders: AdminCenterData["orders"] }) {
           ))}
           {!orders.length ? (
             <tr>
-              <td className="px-3 py-6 text-muted" colSpan={7}>No orders yet.</td>
+              <td className="px-3 py-6 text-muted" colSpan={8}>No orders yet.</td>
             </tr>
           ) : null}
         </tbody>
