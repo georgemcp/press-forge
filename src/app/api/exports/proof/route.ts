@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { generateProof } from "@/lib/print/proof";
+import { writeProofDeliveryManifest } from "@/lib/print/delivery-manifest";
 import { layoutSpecSchema } from "@/lib/print/layout-spec";
 import { sampleBusinessCardLayout } from "@/lib/print/sample-layout";
 import { claimExportCredit, finalizeExportCredit, releaseExportCredit, type PaidCheckoutSession, verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
@@ -66,16 +67,25 @@ export async function POST(request: Request) {
     const generatedRoot = process.env.TRIMPROOF_GENERATED_DIR ?? path.join(process.cwd(), ".trimproof-generated");
     const outputDir = path.join(generatedRoot, jobId);
     const proof = await generateProof(parsed.data, outputDir);
+    const mode = payload.mode === "advanced" ? "advanced" : "dummy";
+    const manifest = await writeProofDeliveryManifest(outputDir, mode);
     const fileBase = `/api/exports/proof/files/${jobId}`;
     if (paidSession?.entitlement === "export_credit") {
       await finalizeExportCredit(paidSession.id, jobId);
     }
+    const productionUrls = manifest.canDownloadProductionFiles
+      ? {
+          downloadUrl: `${fileBase}/${path.basename(proof.report.pdfPath)}`,
+          sourceUrl: `${fileBase}/${path.basename(proof.sourcePdfPath)}`,
+          svgUrl: `${fileBase}/${path.basename(proof.svgMasterPath)}`
+        }
+      : {};
     return NextResponse.json({
       jobId,
+      mode,
+      productionDownloadLocked: !manifest.canDownloadProductionFiles,
       report: proof.report,
-      downloadUrl: `${fileBase}/${path.basename(proof.report.pdfPath)}`,
-      sourceUrl: `${fileBase}/${path.basename(proof.sourcePdfPath)}`,
-      svgUrl: `${fileBase}/${path.basename(proof.svgMasterPath)}`,
+      ...productionUrls,
       reportUrl: `${fileBase}/${path.basename(proof.reportPath)}`,
       assetUrls: proof.assets.map((asset) => ({
         slotId: asset.slotId,

@@ -31,10 +31,13 @@ interface TrimProofWorkspaceProps {
 }
 
 interface ProofApiResponse {
+  mode: WorkspaceMode;
   report: PreflightReport;
-  downloadUrl: string;
-  sourceUrl: string;
-  svgUrl: string;
+  productionDownloadLocked?: boolean;
+  downloadUrl?: string;
+  sourceUrl?: string;
+  svgUrl?: string;
+  reportUrl?: string;
   assetUrls?: Array<{
     slotId: string;
     provider: "openai" | "gemini" | "recraft" | "deterministic";
@@ -289,7 +292,8 @@ function PreflightPanel({
   onCheckout,
   onManageSubscription,
   onSendAccessLink,
-  downloadUrl
+  downloadUrl,
+  productionDownloadLocked
 }: {
   mode: WorkspaceMode;
   paidSession?: PaidSession;
@@ -306,6 +310,7 @@ function PreflightPanel({
   onManageSubscription: () => void;
   onSendAccessLink: () => void;
   downloadUrl?: string;
+  productionDownloadLocked?: boolean;
 }) {
   const advancedLocked = mode === "advanced" && !paidSession;
   const checks = report?.checks ?? [
@@ -341,6 +346,11 @@ function PreflightPanel({
             <Download aria-hidden className="h-4 w-4" />
             Download PDF/X proof
           </a>
+        ) : null}
+        {productionDownloadLocked ? (
+          <div className="mt-2 rounded-[8px] border border-brand/30 bg-brand-soft px-3 py-2 text-xs font-semibold leading-5 text-brand">
+            Sample preflight complete. Buy an export credit or start Pro to unlock the production PDF/X download.
+          </div>
         ) : null}
       </div>
 
@@ -671,6 +681,7 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
             onSendAccessLink={sendAccessLink}
             paidSession={paidSession}
             portalPending={portalPending}
+            productionDownloadLocked={proof?.productionDownloadLocked}
             report={proof?.report}
             setBillingEmail={setBillingEmail}
           />

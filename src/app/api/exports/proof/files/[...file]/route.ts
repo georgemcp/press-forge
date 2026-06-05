@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { canServeProofFile } from "@/lib/print/delivery-manifest";
 
 export const runtime = "nodejs";
 
@@ -37,9 +38,13 @@ export async function GET(_request: Request, { params }: FileRouteContext) {
   }
 
   const generatedRoot = process.env.TRIMPROOF_GENERATED_DIR ?? path.join(process.cwd(), ".trimproof-generated");
-  const proofPath = path.join(generatedRoot, jobId, fileName);
+  const outputDir = path.join(generatedRoot, jobId);
+  const proofPath = path.join(outputDir, fileName);
 
   try {
+    if (!(await canServeProofFile(outputDir, fileName))) {
+      return NextResponse.json({ error: "Production proof downloads require advanced export access." }, { status: 403 });
+    }
     const bytes = await fs.readFile(proofPath);
     return new Response(bytes, {
       headers: {
