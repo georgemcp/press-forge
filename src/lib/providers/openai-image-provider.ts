@@ -12,7 +12,7 @@ export class OpenAiImageProvider implements CreativeProvider {
     }
 
     const client = new OpenAI({ apiKey });
-    const model = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-2";
+    const model = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5";
     const result = await client.images.generate({
       model,
       prompt: slot.prompt,

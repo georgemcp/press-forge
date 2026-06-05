@@ -4,6 +4,9 @@ import { OpenAiImageProvider } from "./openai-image-provider";
 import type { CreativeProvider } from "./types";
 
 export function getCreativeProvider(slot: AssetSlot): CreativeProvider {
+  if (slot.providerHint === "openai") {
+    return new OpenAiImageProvider();
+  }
   if (slot.providerHint === "gemini" || slot.kind === "background" || slot.kind === "photo") {
     return new GeminiImageProvider();
   }

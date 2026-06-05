@@ -10,6 +10,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     spec,
     source: "deterministic-brief-parser",
-    note: "The current production path converts the brief into validated LayoutSpec JSON without giving print-validity work to an image model."
+    note: "The parser keeps print geometry deterministic while creating model-routed asset slots for the proof renderer."
   });
 }

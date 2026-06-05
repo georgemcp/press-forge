@@ -12,10 +12,10 @@ export class GeminiImageProvider implements CreativeProvider {
     }
 
     const client = new GoogleGenAI({ apiKey });
-    const model = process.env.GEMINI_IMAGE_MODEL ?? "gemini-3-pro-image";
+    const model = process.env.GEMINI_IMAGE_MODEL ?? "gemini-3-pro-image-preview";
     const response = await client.models.generateContent({
       model,
-      contents: [{ role: "user", parts: [{ text: slot.prompt }] }]
+      contents: slot.prompt
     });
     const imagePart = response.candidates?.[0]?.content?.parts?.find((part) => "inlineData" in part);
     const data = imagePart && "inlineData" in imagePart ? imagePart.inlineData?.data : undefined;

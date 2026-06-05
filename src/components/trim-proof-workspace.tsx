@@ -34,7 +34,15 @@ interface ProofApiResponse {
   downloadUrl: string;
   sourceUrl: string;
   svgUrl: string;
+  assetUrls?: Array<{
+    slotId: string;
+    provider: "openai" | "gemini" | "recraft" | "deterministic";
+    url: string;
+    effectiveDpi: number;
+  }>;
 }
+
+type ProofAssetUrl = NonNullable<ProofApiResponse["assetUrls"]>[number];
 
 interface LayoutSpecApiResponse {
   spec: LayoutSpec;
@@ -73,15 +81,15 @@ function GuideLabel({ children, tone }: { children: React.ReactNode; tone: "blee
   return <span className={`rounded-[4px] border px-2 py-1 text-[11px] font-semibold uppercase tracking-normal ${colors[tone]}`}>{children}</span>;
 }
 
-function PrintPreview({ spec }: { spec: LayoutSpec }) {
+function PrintPreview({ spec, assetUrl, assetProvider }: { spec: LayoutSpec; assetUrl?: string; assetProvider?: ProofAssetUrl["provider"] }) {
   const brand = spec.textBlocks.find((block) => block.id === "brand")?.content ?? "TRIM PROOF";
   const tagline = spec.textBlocks.find((block) => block.id === "tagline")?.content ?? "AI creative, deterministic prepress.";
   const name = spec.textBlocks.find((block) => block.id === "name")?.content ?? "Mara Vale";
   const contact = spec.textBlocks.find((block) => block.id === "contact")?.content ?? "trimproof.com";
 
   return (
-    <section className="flex min-h-[520px] flex-1 flex-col border-y border-border bg-surface xl:min-h-[560px] xl:border-x xl:border-y-0">
-      <div className="flex min-h-14 flex-col gap-3 border-b border-border px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <section className="flex min-h-0 flex-1 flex-col border-y border-border bg-surface xl:border-x xl:border-y-0">
+      <div className="flex min-h-12 shrink-0 flex-col gap-2 border-b border-border px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Ruler aria-hidden className="h-4 w-4 text-accent" />
           <div>
@@ -90,27 +98,36 @@ function PrintPreview({ spec }: { spec: LayoutSpec }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {assetProvider ? <span className="rounded-[4px] border border-brand/40 bg-brand-soft px-2 py-1 text-[11px] font-semibold uppercase text-brand">{assetProvider}</span> : null}
           <GuideLabel tone="bleed">Bleed</GuideLabel>
           <GuideLabel tone="trim">Trim</GuideLabel>
           <GuideLabel tone="safe">Safe</GuideLabel>
         </div>
       </div>
 
-      <div className="print-grid flex flex-1 items-center justify-center p-4 sm:p-8">
-        <div className="relative aspect-[4/2.5] w-full max-w-[760px] border border-accent/80 bg-background p-[4.8%] shadow-[0_22px_70px_oklch(0.18_0.02_252_/_0.18)]">
+      <div className="print-grid flex min-h-0 flex-1 items-center justify-center p-3">
+        <div
+          className="relative aspect-[5/3] max-h-full w-[min(96%,calc((100vh-8rem)*1.66))] max-w-[860px] border border-accent/80 bg-background p-[4.8%] shadow-[0_18px_56px_oklch(0.18_0.02_252_/_0.15)]"
+          data-proof-card
+        >
           <div className="absolute inset-[4.8%] border border-dashed border-accent" />
           <div className="absolute inset-[9.6%] border border-surface-ink" />
           <div className="absolute inset-[15.2%] border border-dashed border-success" />
-          <div className="relative h-full border border-transparent bg-[oklch(0.98_0.008_84)] p-6 sm:p-10">
-            <div className="absolute bottom-6 right-6 top-6 w-2 bg-accent sm:bottom-8 sm:right-10 sm:top-8 sm:w-3" />
+          <div
+            className="relative h-full overflow-hidden border border-transparent bg-[oklch(0.98_0.008_84)] bg-cover bg-center p-5 sm:p-8"
+            data-proof-asset={assetUrl ? "ready" : "pending"}
+            style={assetUrl ? { backgroundImage: `linear-gradient(90deg, oklch(0.98 0.008 84 / 0.78), oklch(0.98 0.008 84 / 0.3)), url(${assetUrl})` } : undefined}
+          >
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,oklch(0.98_0.008_84_/_0.8),oklch(0.98_0.008_84_/_0.2))]" />
+            <div className="absolute bottom-5 right-5 top-5 w-2 bg-accent sm:bottom-7 sm:right-8 sm:top-7 sm:w-3" />
             <div className="flex h-full flex-col justify-between">
               <div>
-                <div className="font-display text-2xl font-bold tracking-normal text-surface-ink sm:text-4xl">{brand}</div>
-                <div className="mt-3 max-w-[360px] text-sm font-semibold text-muted sm:text-base">{tagline}</div>
+                <div className="relative font-display text-2xl font-bold tracking-normal text-surface-ink sm:text-3xl">{brand}</div>
+                <div className="relative mt-2 max-w-[360px] text-sm font-semibold text-muted">{tagline}</div>
               </div>
               <div>
-                <div className="font-display text-xl font-bold text-surface-ink sm:text-2xl">{name}</div>
-                <div className="mt-2 text-xs font-medium text-muted sm:text-sm">{contact}</div>
+                <div className="relative font-display text-lg font-bold text-surface-ink sm:text-xl">{name}</div>
+                <div className="relative mt-1 text-xs font-medium text-muted sm:text-sm">{contact}</div>
               </div>
             </div>
           </div>
@@ -134,21 +151,21 @@ function IntakePanel({
   setMode: (mode: WorkspaceMode) => void;
 }) {
   return (
-    <aside className="flex w-full shrink-0 flex-col bg-surface-strong/75 xl:w-[330px]">
-      <div className="border-b border-border p-5">
-        <div className="mb-4 flex items-center gap-2">
+    <aside className="flex w-full shrink-0 flex-col overflow-hidden bg-surface-strong/75 xl:w-[310px]">
+      <div className="shrink-0 border-b border-border p-4">
+        <div className="mb-3 flex items-center gap-2">
           <Sparkles aria-hidden className="h-4 w-4 text-accent" />
           <h2 className="font-display text-sm font-semibold text-surface-ink">Brief intake</h2>
         </div>
         <textarea
           value={brief}
           onChange={(event) => setBrief(event.target.value)}
-          className="min-h-32 w-full resize-none rounded-[8px] border border-border bg-surface p-3 text-sm leading-6 text-surface-ink shadow-sm"
+          className="h-[clamp(5.5rem,16vh,8.25rem)] w-full resize-none rounded-[8px] border border-border bg-surface p-3 text-sm leading-6 text-surface-ink shadow-sm"
           aria-label="Design brief"
         />
       </div>
 
-      <div className="space-y-5 p-5">
+      <div className="min-h-0 space-y-4 overflow-auto p-4">
         <div>
           <label className="text-xs font-semibold uppercase text-muted">Proof mode</label>
           <div className="mt-2 grid grid-cols-2 gap-2">
@@ -172,9 +189,6 @@ function IntakePanel({
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs leading-5 text-muted">
-            Dummy proof runs the sample preflight. Advanced mode exposes paid production export controls.
-          </p>
         </div>
 
         <div>
@@ -194,7 +208,7 @@ function IntakePanel({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <div className="rounded-[8px] border border-border bg-surface p-3">
             <div className="text-[11px] font-semibold uppercase text-muted">Bleed</div>
             <div className="mt-1 font-display text-xl font-bold text-surface-ink">0.125 in</div>
@@ -205,8 +219,8 @@ function IntakePanel({
           </div>
         </div>
 
-        <div className="rounded-[8px] border border-border bg-surface p-4">
-          <div className="mb-3 flex items-center gap-2">
+        <div className="rounded-[8px] border border-border bg-surface p-3">
+          <div className="mb-2 flex items-center gap-2">
             <Layers3 aria-hidden className="h-4 w-4 text-brand" />
             <h3 className="font-display text-sm font-semibold">LayoutSpec</h3>
           </div>
@@ -291,9 +305,9 @@ function PreflightPanel({
   ];
 
   return (
-    <aside className="flex w-full shrink-0 flex-col bg-surface-strong/75 xl:w-[360px]">
-      <div className="border-b border-border p-5">
-        <div className="mb-4 flex items-center justify-between">
+    <aside className="flex w-full shrink-0 flex-col overflow-hidden bg-surface-strong/75 xl:w-[330px]">
+      <div className="shrink-0 border-b border-border p-4">
+        <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileCheck2 aria-hidden className="h-4 w-4 text-success" />
             <h2 className="font-display text-sm font-semibold text-surface-ink">Preflight gate</h2>
@@ -311,7 +325,7 @@ function PreflightPanel({
         </button>
         {downloadUrl ? (
           <a
-            className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-4 text-sm font-semibold text-surface-ink"
+            className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-4 text-sm font-semibold text-surface-ink"
             href={downloadUrl}
           >
             <Download aria-hidden className="h-4 w-4" />
@@ -320,8 +334,8 @@ function PreflightPanel({
         ) : null}
       </div>
 
-      <div className="border-b border-border p-5">
-        <div className="mb-3 flex items-center gap-2">
+      <div className="shrink-0 border-b border-border p-4">
+        <div className="mb-2 flex items-center gap-2">
           <WalletCards aria-hidden className="h-4 w-4 text-brand" />
           <h3 className="font-display text-sm font-semibold text-surface-ink">Billing</h3>
         </div>
@@ -339,7 +353,7 @@ function PreflightPanel({
         />
         <div className="grid grid-cols-2 gap-2">
           <button
-            className="mt-3 inline-flex min-h-12 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(checkoutPending)}
             type="button"
             aria-label="Buy one export credit for nine dollars"
@@ -352,7 +366,7 @@ function PreflightPanel({
             </span>
           </button>
           <button
-            className="mt-3 inline-flex min-h-12 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(checkoutPending)}
             type="button"
             aria-label="Start Trim Proof Pro subscription for twenty nine dollars per month"
@@ -366,7 +380,7 @@ function PreflightPanel({
           </button>
         </div>
         <button
-          className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 inline-flex h-9 w-full items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
           disabled={Boolean(accessPending)}
           type="button"
           onClick={onSendAccessLink}
@@ -376,7 +390,7 @@ function PreflightPanel({
         </button>
         {paidSession?.entitlement === "subscription" ? (
           <button
-            className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-[8px] border border-brand/30 bg-brand-soft px-3 text-xs font-semibold text-brand disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 inline-flex h-9 w-full items-center justify-center gap-2 rounded-[8px] border border-brand/30 bg-brand-soft px-3 text-xs font-semibold text-brand disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(portalPending)}
             type="button"
             onClick={onManageSubscription}
@@ -385,7 +399,7 @@ function PreflightPanel({
             Manage subscription
           </button>
         ) : null}
-        <p className="mt-3 text-xs leading-5 text-muted">
+        <p className="mt-2 text-xs leading-5 text-muted">
           {paidSession
             ? paidSession.entitlement === "subscription"
               ? "Subscription verified. Advanced exports are unlocked for this session."
@@ -395,24 +409,30 @@ function PreflightPanel({
         {accessMessage ? <p className="mt-2 text-xs font-semibold text-brand">{accessMessage}</p> : null}
       </div>
 
-      <div className="space-y-3 overflow-auto p-5">
+      <div className="min-h-0 overflow-hidden p-4">
+        <div className="grid gap-1.5">
         {checks.map((check) => {
           const Icon = check.status === "passed" ? BadgeCheck : check.status === "failed" ? TriangleAlert : ShieldCheck;
           return (
-            <div key={check.id} className="rounded-[8px] border border-border bg-surface p-3">
-              <div className="flex items-start gap-3">
+            <div key={check.id} className="rounded-[8px] border border-border bg-surface px-2 py-1.5">
+              <div className="flex items-center gap-2">
                 <Icon
                   aria-hidden
-                  className={`mt-0.5 h-4 w-4 ${check.status === "passed" ? "text-success" : check.status === "failed" ? "text-danger" : "text-warning"}`}
+                  className={`h-3.5 w-3.5 shrink-0 ${check.status === "passed" ? "text-success" : check.status === "failed" ? "text-danger" : "text-warning"}`}
                 />
-                <div>
-                  <div className="text-sm font-semibold text-surface-ink">{check.label}</div>
-                  <p className="mt-1 text-xs leading-5 text-muted">{check.evidence}</p>
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-semibold text-surface-ink" title={check.label}>
+                    {check.label}
+                  </div>
+                  <p className="hidden truncate text-[10px] leading-3 text-muted 2xl:block" title={check.evidence}>
+                    {check.evidence}
+                  </p>
                 </div>
               </div>
             </div>
           );
         })}
+        </div>
       </div>
     </aside>
   );
@@ -598,35 +618,35 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
   }
 
   return (
-    <main className="min-h-screen p-2 text-foreground sm:p-4">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-[1500px] flex-col overflow-hidden rounded-[8px] border border-border bg-surface shadow-[0_24px_90px_oklch(0.18_0.02_252_/_0.12)]">
-        <header className="flex min-h-16 flex-col gap-3 border-b border-border bg-surface px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <main className="min-h-screen overflow-auto p-2 text-foreground xl:h-screen xl:overflow-hidden">
+      <div className="mx-auto flex min-h-[calc(100vh-1rem)] max-w-[1500px] flex-col overflow-hidden rounded-[8px] border border-border bg-surface shadow-[0_20px_70px_oklch(0.18_0.02_252_/_0.12)] xl:h-full">
+        <header className="flex min-h-14 shrink-0 flex-col gap-2 border-b border-border bg-surface px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="grid h-9 w-9 place-items-center rounded-[8px] bg-surface-ink text-white">
               <Box aria-hidden className="h-4 w-4" />
             </div>
             <div>
               <h1 className="font-display text-lg font-bold text-surface-ink">Trim Proof</h1>
-              <p className="text-xs font-medium text-muted">Creative AI upstream. Deterministic prepress downstream.</p>
+              <p className="text-xs font-medium text-muted">Model-made art. Deterministic PDF/X proofing.</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted sm:gap-3">
+            <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">GPT Image 1.5</span>
+            <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">Nano Banana Pro</span>
             <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">PDF/X-1a:2001</span>
-            <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">CMYK</span>
-            <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">Vector text</span>
           </div>
         </header>
 
         {error ? (
-          <div className="border-b border-danger/30 bg-danger/10 px-5 py-3 text-sm font-semibold text-danger">{error}</div>
+          <div className="shrink-0 border-b border-danger/30 bg-danger/10 px-4 py-2 text-sm font-semibold text-danger">{error}</div>
         ) : null}
         {sessionPending ? (
-          <div className="border-b border-brand/20 bg-brand-soft px-5 py-3 text-sm font-semibold text-brand">Verifying checkout session...</div>
+          <div className="shrink-0 border-b border-brand/20 bg-brand-soft px-4 py-2 text-sm font-semibold text-brand">Verifying checkout session...</div>
         ) : null}
 
-        <div className="flex flex-1 flex-col overflow-auto xl:flex-row xl:overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-visible xl:flex-row xl:overflow-hidden">
           <IntakePanel brief={brief} mode={mode} setBrief={setBrief} setMode={setMode} spec={spec} />
-          <PrintPreview spec={spec} />
+          <PrintPreview assetProvider={proof?.assetUrls?.[0]?.provider} assetUrl={proof?.assetUrls?.[0]?.url} spec={spec} />
           <PreflightPanel
             accessMessage={accessMessage}
             accessPending={accessPending}

@@ -36,5 +36,15 @@ describe("LayoutSpec schema", () => {
     expect(spec.textBlocks.find((block) => block.id === "brand")?.content).toBe("BARE GETAWAYS");
     expect(spec.textBlocks.find((block) => block.id === "contact")?.content).toContain("trips@baregetaways.com");
     expect(spec.textBlocks.find((block) => block.id === "tagline")?.content).toBe("Premium work, prepared for print.");
+    expect(spec.assetSlots).toHaveLength(1);
+    expect(spec.assetSlots[0]?.providerHint).toBe("gemini");
+  });
+
+  it("extracts brands when a brief starts with the company name", () => {
+    const spec = deriveLayoutSpecFromBrief({
+      brief: "bare getaways business card"
+    });
+
+    expect(spec.textBlocks.find((block) => block.id === "brand")?.content).toBe("BARE GETAWAYS");
   });
 });

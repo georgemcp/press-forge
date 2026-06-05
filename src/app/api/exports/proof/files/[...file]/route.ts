@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const allowedFilePattern = /^(?:trimproof-business-card\.(?:source\.pdf|pdfx\.pdf|master\.svg)|preflight-report\.json)$/;
+const allowedFilePattern = /^(?:trimproof-business-card\.(?:source\.pdf|pdfx\.pdf|master\.svg)|asset-[a-z0-9-]+\.png|preflight-report\.json)$/;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function getContentType(fileName: string) {
@@ -16,6 +16,9 @@ function getContentType(fileName: string) {
   }
   if (fileName.endsWith(".json")) {
     return "application/json; charset=utf-8";
+  }
+  if (fileName.endsWith(".png")) {
+    return "image/png";
   }
   return "application/octet-stream";
 }
@@ -41,7 +44,7 @@ export async function GET(_request: Request, { params }: FileRouteContext) {
     return new Response(bytes, {
       headers: {
         "Content-Type": getContentType(fileName),
-        "Content-Disposition": `attachment; filename="${fileName}"`,
+        "Content-Disposition": `${fileName.endsWith(".pdf") ? "attachment" : "inline"}; filename="${fileName}"`,
         "Cache-Control": "private, max-age=900"
       }
     });

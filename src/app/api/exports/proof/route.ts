@@ -49,7 +49,13 @@ export async function POST(request: Request) {
       downloadUrl: `${fileBase}/${path.basename(proof.report.pdfPath)}`,
       sourceUrl: `${fileBase}/${path.basename(proof.sourcePdfPath)}`,
       svgUrl: `${fileBase}/${path.basename(proof.svgMasterPath)}`,
-      reportUrl: `${fileBase}/${path.basename(proof.reportPath)}`
+      reportUrl: `${fileBase}/${path.basename(proof.reportPath)}`,
+      assetUrls: proof.assets.map((asset) => ({
+        slotId: asset.slotId,
+        provider: asset.provider,
+        url: `${fileBase}/${path.basename(asset.filePath)}`,
+        effectiveDpi: asset.effectiveDpi
+      }))
     });
   } catch (error) {
     return NextResponse.json(

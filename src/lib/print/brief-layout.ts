@@ -1,4 +1,4 @@
-import { layoutSpecSchema, type CmykColor, type LayoutSpec, type TextBlock } from "./layout-spec";
+import { layoutSpecSchema, type AssetSlot, type CmykColor, type LayoutSpec, type TextBlock } from "./layout-spec";
 import { sampleBusinessCardLayout } from "./sample-layout";
 
 interface BriefLayoutInput {
@@ -91,7 +91,13 @@ function extractBrand(brief: string) {
 
   const forMatch = brief.match(/\bfor\s+(?:a|an|the)?\s*([A-Za-z0-9&'. -]{2,48})(?:,| with| that| to |$)/i)?.[1];
   const candidate = forMatch ? rejectGeneric(cleanupCandidate(forMatch)) : undefined;
-  return candidate ? titleCase(candidate) : "Trim Proof";
+  if (candidate) {
+    return titleCase(candidate);
+  }
+
+  const leadingProductMatch = brief.match(/^([A-Za-z0-9&'. -]{2,48})\s+(?:business card|flyer|postcard|letterhead)\b/i)?.[1];
+  const leadingCandidate = leadingProductMatch ? rejectGeneric(cleanupCandidate(leadingProductMatch)) : undefined;
+  return leadingCandidate ? titleCase(leadingCandidate) : "Trim Proof";
 }
 
 function extractPersonName(brief: string) {
@@ -175,6 +181,30 @@ function updateTextBlocks(blocks: TextBlock[], values: Record<string, string>, p
   });
 }
 
+function createAssetSlots(brief: string, brand: string, tagline: string): AssetSlot[] {
+  const style = brief || `Premium print-ready identity proof for ${brand}.`;
+  return [
+    {
+      id: "background-art",
+      kind: "background",
+      prompt: [
+        "Create a professional full-bleed business card background image for commercial printing.",
+        `Brand context: ${brand}.`,
+        `Mood: ${tagline}.`,
+        `Creative brief: ${style}.`,
+        "No text, no letters, no numbers, no logo, no watermark, no mockup, no paper shadows.",
+        "Leave calm negative space on the left half for vector typography and use refined print-production texture."
+      ].join(" "),
+      providerHint: "gemini",
+      x: -0.125,
+      y: -0.125,
+      width: 3.75,
+      height: 2.25,
+      minimumDpi: 300
+    }
+  ];
+}
+
 export function deriveLayoutSpecFromBrief(input: BriefLayoutInput): LayoutSpec {
   const brief = normalizeBrief(input.brief);
   const brand = extractBrand(brief);
@@ -187,6 +217,7 @@ export function deriveLayoutSpecFromBrief(input: BriefLayoutInput): LayoutSpec {
     ...sampleBusinessCardLayout,
     palette,
     styleDirection: brief || sampleBusinessCardLayout.styleDirection,
-    textBlocks: updateTextBlocks(sampleBusinessCardLayout.textBlocks, { brand, personName, contact, tagline }, palette)
+    textBlocks: updateTextBlocks(sampleBusinessCardLayout.textBlocks, { brand, personName, contact, tagline }, palette),
+    assetSlots: createAssetSlots(brief, brand, tagline)
   });
 }

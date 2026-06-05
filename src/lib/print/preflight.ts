@@ -4,6 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { getPageGeometry, type ProductType } from "./constants";
 import { convertToPdfX, type GhostscriptResult } from "./ghostscript";
+import type { ResolvedAsset } from "./assets";
 
 const execFileAsync = promisify(execFile);
 
@@ -24,6 +25,19 @@ export interface PreflightReport {
   checks: PreflightCheck[];
   ghostscript: GhostscriptResult;
   generatedAt: string;
+}
+
+interface AssetPreflightInput {
+  slotId: string;
+  provider: ResolvedAsset["provider"];
+  widthPx: number;
+  heightPx: number;
+  effectiveDpi: number;
+  minimumDpi: number;
+  slot: {
+    width: number;
+    height: number;
+  };
 }
 
 interface Box {
@@ -86,7 +100,36 @@ async function fileExists(filePath: string) {
   }
 }
 
-export async function runPreflight(sourcePdfPath: string, productType: ProductType, outputDir: string): Promise<PreflightReport> {
+function checkPlacedRasterDpi(assets: AssetPreflightInput[]): PreflightCheck {
+  if (assets.length === 0) {
+    return {
+      id: "raster_dpi",
+      label: "Placed raster DPI",
+      status: "passed",
+      evidence: "No raster assets were placed in this proof; image DPI floor is vacuously satisfied."
+    };
+  }
+
+  const failed = assets.filter((asset) => asset.effectiveDpi < asset.minimumDpi);
+  return {
+    id: "raster_dpi",
+    label: "Placed raster DPI",
+    status: failed.length === 0 ? "passed" : "failed",
+    evidence: assets
+      .map(
+        (asset) =>
+          `${asset.slotId} ${asset.provider} ${asset.widthPx}x${asset.heightPx}px over ${asset.slot.width.toFixed(2)}x${asset.slot.height.toFixed(2)} in = ${asset.effectiveDpi.toFixed(0)} dpi; minimum ${asset.minimumDpi} dpi.`
+      )
+      .join(" | ")
+  };
+}
+
+export async function runPreflight(
+  sourcePdfPath: string,
+  productType: ProductType,
+  outputDir: string,
+  assets: AssetPreflightInput[] = []
+): Promise<PreflightReport> {
   const geometry = getPageGeometry(productType);
   const ghostscript = await convertToPdfX(sourcePdfPath, outputDir, {
     mediaBox: geometry.mediaBox,
@@ -143,12 +186,7 @@ export async function runPreflight(sourcePdfPath: string, productType: ProductTy
     });
   }
 
-  checks.push({
-    id: "raster_dpi",
-    label: "Placed raster DPI",
-    status: "passed",
-    evidence: "No raster assets were placed in the deterministic Phase 2 proof; image DPI floor is vacuously satisfied."
-  });
+  checks.push(checkPlacedRasterDpi(assets));
 
   checks.push({
     id: "ghostscript_pdfx",

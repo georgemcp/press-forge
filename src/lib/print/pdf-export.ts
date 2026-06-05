@@ -4,6 +4,7 @@ import fontkit from "@pdf-lib/fontkit";
 import { cmyk, PDFDocument, PDFPage, rgb } from "pdf-lib";
 import { getPageGeometry, inchesToPoints } from "./constants";
 import type { CmykColor, LayoutSpec, TextBlock } from "./layout-spec";
+import type { ResolvedAsset } from "./assets";
 
 export interface PdfExportResult {
   sourcePdfPath: string;
@@ -14,6 +15,7 @@ export interface PdfExportResult {
 interface PdfExportOptions {
   outputDir: string;
   fileBaseName?: string;
+  assets?: ResolvedAsset[];
 }
 
 function toPdfCmyk(color: CmykColor) {
@@ -83,10 +85,17 @@ function drawCropMarks(page: PDFPage, spec: LayoutSpec) {
   }
 }
 
-function createSvgMaster(spec: LayoutSpec) {
+function createSvgMaster(spec: LayoutSpec, assets: ResolvedAsset[] = []) {
   const geometry = getPageGeometry(spec.productType);
   const width = geometry.mediaBox.width;
   const height = geometry.mediaBox.height;
+  const assetImages = assets
+    .map((asset) => {
+      const x = geometry.trim.x + inchesToPoints(asset.slot.x);
+      const y = height - geometry.trim.y - inchesToPoints(asset.slot.y) - inchesToPoints(asset.slot.height);
+      return `<image href="${path.basename(asset.filePath)}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${inchesToPoints(asset.slot.width).toFixed(2)}" height="${inchesToPoints(asset.slot.height).toFixed(2)}" preserveAspectRatio="xMidYMid slice"/>`;
+    })
+    .join("\n");
   const text = spec.textBlocks
     .map((block) => {
       const x = geometry.trim.x + inchesToPoints(block.x);
@@ -97,6 +106,7 @@ function createSvgMaster(spec: LayoutSpec) {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <rect x="${geometry.bleedBox.x}" y="${height - geometry.bleedBox.y - geometry.bleedBox.height}" width="${geometry.bleedBox.width}" height="${geometry.bleedBox.height}" fill="${svgColor(spec.palette.paper)}"/>
+  ${assetImages}
   <rect x="${geometry.trim.x + geometry.trim.width - 22}" y="${height - geometry.trim.y - geometry.trim.height + 12}" width="8" height="${geometry.trim.height - 24}" fill="${svgColor(spec.palette.accent)}"/>
   <rect x="${geometry.safeBox.x}" y="${height - geometry.safeBox.y - geometry.safeBox.height}" width="${geometry.safeBox.width}" height="${geometry.safeBox.height}" fill="none" stroke="rgb(57 185 136)" stroke-dasharray="3 3" stroke-width="0.6"/>
   ${text}
@@ -129,6 +139,16 @@ export async function exportLayoutPdf(spec: LayoutSpec, options: PdfExportOption
     height: geometry.bleedBox.height,
     color: toPdfCmyk(spec.palette.paper)
   });
+
+  for (const asset of options.assets ?? []) {
+    const image = await pdfDoc.embedPng(asset.bytes);
+    page.drawImage(image, {
+      x: geometry.trim.x + inchesToPoints(asset.slot.x),
+      y: geometry.trim.y + inchesToPoints(asset.slot.y),
+      width: inchesToPoints(asset.slot.width),
+      height: inchesToPoints(asset.slot.height)
+    });
+  }
 
   page.drawRectangle({
     x: geometry.trim.x + geometry.trim.width - inchesToPoints(0.3),
@@ -178,7 +198,7 @@ export async function exportLayoutPdf(spec: LayoutSpec, options: PdfExportOption
 
   const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
   await fs.writeFile(sourcePdfPath, pdfBytes);
-  await fs.writeFile(svgMasterPath, createSvgMaster(spec));
+  await fs.writeFile(svgMasterPath, createSvgMaster(spec, options.assets));
 
   return {
     sourcePdfPath,
