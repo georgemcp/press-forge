@@ -215,6 +215,150 @@ export const toolPages: ToolPage[] = [
         answer: "Production exports can be sold as one-time export credits or through subscriptions using Stripe Price IDs."
       }
     ]
+  },
+  {
+    slug: "business-card-pdf-template",
+    title: "Business Card PDF Template",
+    metaDescription:
+      "Create a business card PDF template with 3.5 x 2 inch trim, 0.125 inch bleed, safe margins, crop marks, and preflight checks.",
+    h1: "Business card PDF template with bleed and preflight",
+    answer:
+      "A business card PDF template should define the final trim size, bleed, safe area, embedded fonts, and PDF/X export target. Trim Proof starts from a 3.5 by 2 inch business-card profile with 0.125 inch bleed and checks the finished file before download.",
+    keywords: ["business card PDF template", "business card PDF", "business card maker PDF", "business card with bleed"],
+    intent: "Use this page when you need a business-card PDF that is structured for print production, not just a flat design image.",
+    checks: ["3.5 x 2 inch trim size", "0.125 inch bleed", "Safe-area text placement", "Embedded vector fonts", "Crop marks when enabled", "PDF/X-1a preflight"],
+    steps: ["Describe the business card brief", "Keep important text inside the safe area", "Generate the proof", "Review bleed and trim guides", "Use advanced mode for the paid PDF/X export"],
+    relatedSlugs: ["ai-business-card-generator", "add-bleed-to-pdf-online", "add-crop-marks-to-pdf"],
+    sections: [
+      {
+        heading: "What a print-ready business card template includes",
+        body:
+          "A print-ready template includes more than width and height. It should preserve the TrimBox, BleedBox, crop marks, safe-area margin, embedded fonts, and a known PDF/X target so the printer can inspect the file."
+      },
+      {
+        heading: "Why the PDF matters more than the preview",
+        body:
+          "A preview can look correct while the PDF is missing bleed boxes or embedded fonts. Trim Proof uses the visible guide layer for review and the preflight gate to check the actual PDF structure."
+      }
+    ],
+    faq: [
+      {
+        question: "What size business card PDF does Trim Proof use?",
+        answer: "The default business-card profile uses a 3.5 by 2 inch trim size with 0.125 inch bleed on each edge."
+      },
+      {
+        question: "Can AI-generated art be used in the template?",
+        answer: "Yes. AI can create the background art, while final text stays as embedded vector fonts in the PDF."
+      }
+    ]
+  },
+  {
+    slug: "add-crop-marks-to-pdf",
+    title: "Add Crop Marks to PDF",
+    metaDescription:
+      "Add crop marks to PDF proof files while preserving trim, bleed, safe area, embedded fonts, and PDF/X preflight checks.",
+    h1: "Add crop marks to a PDF without losing bleed geometry",
+    answer:
+      "Crop marks show where the printer should cut the sheet, but they do not replace trim and bleed boxes. Trim Proof can generate crop marks from the product geometry and then preflight the PDF/X export.",
+    keywords: ["add crop marks to PDF", "crop marks PDF", "crop marks PDF generator", "crop marks and bleed PDF"],
+    intent: "Use this page when a printer asks for crop marks or when you need a visible cut guide around a print-ready PDF.",
+    checks: ["TrimBox dimensions", "BleedBox dimensions", "Crop marks outside trim", "Safe-area guide", "PDF/X subtype", "Embedded fonts"],
+    steps: ["Choose the product profile", "Keep artwork through the bleed edge", "Enable crop marks", "Generate the proof", "Review the preflight report before sending the file"],
+    relatedSlugs: ["add-bleed-to-pdf-online", "print-ready-pdf-generator", "pdf-preflight-checker"],
+    sections: [
+      {
+        heading: "Crop marks versus bleed",
+        body:
+          "Crop marks are visible printer guides. Bleed is extra artwork beyond the trim edge. A reliable print PDF usually needs both the visible marks and the underlying PDF box geometry."
+      },
+      {
+        heading: "How Trim Proof places crop marks",
+        body:
+          "Trim Proof derives crop marks from the selected product profile, so marks are positioned outside the final trim instead of being guessed by eye."
+      }
+    ],
+    faq: [
+      {
+        question: "Do all printers require crop marks?",
+        answer: "No. Some printers prefer files without marks, while others ask for them. Trim Proof keeps crop marks as an explicit export setting."
+      },
+      {
+        question: "Can crop marks fix missing bleed?",
+        answer: "No. Crop marks only show where to cut. Artwork still needs to extend into the bleed area."
+      }
+    ]
+  },
+  {
+    slug: "pdfx-1a-generator",
+    title: "PDF/X-1a Generator",
+    metaDescription:
+      "Generate PDF/X-1a proof files with CMYK-oriented output, embedded fonts, bleed boxes, crop marks, and preflight reporting.",
+    h1: "PDF/X-1a generator for print-ready proof exports",
+    answer:
+      "A PDF/X-1a generator should create a file with the expected PDF/X subtype, embedded fonts, defined trim and bleed boxes, and a print-oriented color workflow. Trim Proof generates PDF/X-1a proof exports and checks them with preflight before delivery.",
+    keywords: ["PDF/X-1a", "pdf x1a", "pdf x 1a", "PDF/X-1a generator", "pdf x generator"],
+    intent: "Use this page when a printer or production workflow asks for PDF/X-1a instead of a regular screen PDF.",
+    checks: ["PDF/X-1a subtype", "Compatibility level", "Embedded fonts", "CMYK-oriented output", "MediaBox, TrimBox, and BleedBox", "Placed raster DPI"],
+    steps: ["Create a structured LayoutSpec", "Generate or resolve creative assets", "Compose vector text and print boxes", "Convert to PDF/X-1a", "Run preflight and download only after checks pass"],
+    relatedSlugs: ["print-ready-pdf-generator", "pdf-to-cmyk-converter", "pdf-preflight-checker"],
+    sections: [
+      {
+        heading: "When PDF/X-1a is useful",
+        body:
+          "PDF/X-1a is a conservative print exchange target. It is useful when a printer wants a predictable PDF with embedded fonts and a CMYK-oriented workflow."
+      },
+      {
+        heading: "Why Trim Proof currently defaults to PDF/X-1a",
+        body:
+          "Trim Proof exposes a production-proven PDF/X-1a path because it passed live server preflight with the deployed Ghostscript toolchain. PDF/X-4 support should be enabled only after the production conversion path is upgraded and verified."
+      }
+    ],
+    faq: [
+      {
+        question: "Is PDF/X-1a the same as a normal PDF?",
+        answer: "No. PDF/X-1a is a print exchange standard with stricter requirements around fonts, output intent, and print production readiness."
+      },
+      {
+        question: "Does Trim Proof support PDF/X-4?",
+        answer: "The LayoutSpec can represent PDF/X-4, but the live production UI currently exposes the verified PDF/X-1a export path."
+      }
+    ]
+  },
+  {
+    slug: "rgb-to-cmyk-pdf",
+    title: "RGB to CMYK PDF",
+    metaDescription:
+      "Prepare RGB design briefs for CMYK-oriented print PDF output with explicit print profiles, PDF/X-1a export, and preflight checks.",
+    h1: "RGB to CMYK PDF preparation for print jobs",
+    answer:
+      "RGB to CMYK PDF preparation should use an explicit print profile and a preflighted export, not a visual-only color change. Trim Proof keeps the print profile visible in the LayoutSpec and converts final proofs through the deterministic prepress pipeline.",
+    keywords: ["RGB to CMYK PDF", "convert RGB PDF to CMYK online", "CMYK PDF converter", "pdf to cmyk"],
+    intent: "Use this page when screen-first artwork needs a print-oriented PDF workflow before production.",
+    checks: ["Selected print profile", "CMYK-oriented conversion step", "PDF/X-1a subtype", "Embedded fonts", "Raster image DPI", "Preflight report"],
+    steps: ["Choose the print product", "Select the output profile", "Generate the proof", "Review the PDF/X and DPI checks", "Send the checked PDF to the printer"],
+    relatedSlugs: ["pdf-to-cmyk-converter", "print-ready-pdf-generator", "pdfx-1a-generator"],
+    sections: [
+      {
+        heading: "Why RGB artwork changes in print",
+        body:
+          "RGB artwork is built for lit screens. Commercial print uses ink and paper, so the final PDF needs a print profile and a CMYK-oriented conversion path."
+      },
+      {
+        heading: "Print profile choices",
+        body:
+          "Trim Proof exposes US Web Coated SWOP, GRACoL2013, and FOGRA39 profile choices so the production intent is explicit instead of hidden in a generic export."
+      }
+    ],
+    faq: [
+      {
+        question: "Can every RGB color be reproduced in CMYK?",
+        answer: "No. Some bright screen colors sit outside common CMYK gamuts, so converted print colors may look different."
+      },
+      {
+        question: "Should I choose SWOP, GRACoL, or FOGRA?",
+        answer: "Use the profile requested by the printer when available. If no profile is specified, choose the profile that matches the region and press workflow."
+      }
+    ]
   }
 ];
 

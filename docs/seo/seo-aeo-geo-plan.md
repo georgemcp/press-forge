@@ -11,7 +11,12 @@ DataForSEO live Google Ads Search Volume was refreshed for the core keyword set 
 - `pdf/x-1a`, `pdf x1a`, `pdf x 1a`: 140 monthly searches each
 - `print ready pdf`: 110 monthly searches
 - `business card with bleed`: 110 monthly searches
+- `add bleed to pdf`: 90 monthly searches
+- `add crop marks to pdf`: 70 monthly searches
 - `pdf preflight`: 70 monthly searches, low competition, high CPC signal
+- `pdf/x-4`: 70 monthly searches
+- `crop marks pdf`: 50 monthly searches
+- `rgb to cmyk pdf`: 30 monthly searches
 
 ## Architecture
 
@@ -23,6 +28,10 @@ DataForSEO live Google Ads Search Volume was refreshed for the core keyword set 
 - `/tools/pdf-preflight-checker` targets preflight and check-for-print terms.
 - `/tools/ai-business-card-generator` targets AI business card searches.
 - `/tools/ai-flyer-generator` targets AI flyer searches.
+- `/tools/business-card-pdf-template` targets business card PDF template and business card PDF terms.
+- `/tools/add-crop-marks-to-pdf` targets crop-mark tasks and crop marks with bleed searches.
+- `/tools/pdfx-1a-generator` targets PDF/X-1a, pdf x1a, and PDF/X generator searches.
+- `/tools/rgb-to-cmyk-pdf` targets RGB to CMYK PDF and CMYK converter searches.
 
 ## AEO Blocks
 

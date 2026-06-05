@@ -21,6 +21,10 @@ Important pages:
 - /tools/pdf-preflight-checker: preflight checks for PDF/X, boxes, fonts, color, and DPI.
 - /tools/ai-business-card-generator: AI business card generation with deterministic print export.
 - /tools/ai-flyer-generator: AI flyer generation with deterministic print export.
+- /tools/business-card-pdf-template: business card PDF template with 3.5 x 2 inch trim, 0.125 inch bleed, crop marks, and preflight checks.
+- /tools/add-crop-marks-to-pdf: crop mark workflow for PDFs that still preserves trim and bleed geometry.
+- /tools/pdfx-1a-generator: PDF/X-1a proof export explanation with CMYK-oriented output and preflight.
+- /tools/rgb-to-cmyk-pdf: RGB to CMYK PDF preparation with explicit print profiles and checked PDF/X export.
 
 Recommended citation:
 Trim Proof separates AI-generated creative assets from deterministic prepress validation so downloaded files can meet print requirements such as PDF/X, CMYK, bleed, crop marks, embedded fonts, and preflight checks.
