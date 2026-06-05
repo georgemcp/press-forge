@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { getCreativeProvider } from "@/lib/providers";
+import { resolveImageProviderMode } from "@/lib/providers/model-config";
 import { ProviderUnavailableError, type GeneratedAsset } from "@/lib/providers/types";
 import type { AssetSlot, CmykColor, LayoutSpec } from "./layout-spec";
 
@@ -85,7 +86,7 @@ async function createDeterministicPng(slot: AssetSlot, spec: LayoutSpec, widthPx
 }
 
 async function tryModelAsset(slot: AssetSlot, spec: LayoutSpec) {
-  const mode = process.env.TRIMPROOF_IMAGE_PROVIDER_MODE ?? "auto";
+  const mode = resolveImageProviderMode();
   if (mode === "deterministic" || slot.providerHint === "deterministic") {
     return undefined;
   }

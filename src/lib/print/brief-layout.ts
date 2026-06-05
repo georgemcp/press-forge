@@ -1,10 +1,13 @@
-import { PRODUCT_PROFILES, type ProductType } from "./constants";
+import { PRODUCT_PROFILES, type PrintProfileId, type ProductType } from "./constants";
 import { layoutSpecSchema, type AssetSlot, type CmykColor, type LayoutSpec, type TextBlock } from "./layout-spec";
 import { sampleBusinessCardLayout } from "./sample-layout";
 
 interface BriefLayoutInput {
   brief?: string;
   productType?: ProductType;
+  printProfile?: PrintProfileId;
+  pdfxLevel?: LayoutSpec["pdfxLevel"];
+  cropMarks?: boolean;
 }
 
 type TextBlockTemplate = Pick<TextBlock, "id" | "role" | "x" | "y" | "width" | "fontSize" | "weight">;
@@ -206,7 +209,8 @@ function selectPalette(brief: string) {
   return palettes.technical;
 }
 
-function createTextBlocks(productType: ProductType, values: Record<string, string>, palette: LayoutSpec["palette"]) {
+function createTextBlocks(productType: ProductType, values: Record<string, string>, palette: LayoutSpec["palette"], pdfxLevel: LayoutSpec["pdfxLevel"]) {
+  const pdfxLabel = pdfxLevel === "PDF/X-1a:2001" ? "PDF/X-1a" : pdfxLevel;
   return textBlockTemplates[productType].map((block) => {
     if (block.id === "brand") {
       return { ...block, content: values.brand.toUpperCase(), color: palette.ink } satisfies TextBlock;
@@ -217,7 +221,7 @@ function createTextBlocks(productType: ProductType, values: Record<string, strin
     if (block.id === "name") {
       return { ...block, content: values.personName, color: palette.ink } satisfies TextBlock;
     }
-    return { ...block, content: `${values.contact}  |  PDF/X-1a ready`, color: { c: 0.48, m: 0.38, y: 0.32, k: 0.42 } } satisfies TextBlock;
+    return { ...block, content: `${values.contact}  |  ${pdfxLabel} ready`, color: { c: 0.48, m: 0.38, y: 0.32, k: 0.42 } } satisfies TextBlock;
   });
 }
 
@@ -251,6 +255,7 @@ function createAssetSlots(productType: ProductType, brief: string, brand: string
 export function deriveLayoutSpecFromBrief(input: BriefLayoutInput): LayoutSpec {
   const brief = normalizeBrief(input.brief);
   const productType = inferProductType(brief, input.productType);
+  const pdfxLevel = input.pdfxLevel ?? sampleBusinessCardLayout.pdfxLevel;
   const brand = extractBrand(brief);
   const personName = extractPersonName(brief);
   const contact = extractContact(brief, brand);
@@ -260,9 +265,12 @@ export function deriveLayoutSpecFromBrief(input: BriefLayoutInput): LayoutSpec {
   return layoutSpecSchema.parse({
     ...sampleBusinessCardLayout,
     productType,
+    printProfile: input.printProfile ?? sampleBusinessCardLayout.printProfile,
+    pdfxLevel,
+    cropMarks: input.cropMarks ?? sampleBusinessCardLayout.cropMarks,
     palette,
     styleDirection: brief || sampleBusinessCardLayout.styleDirection,
-    textBlocks: createTextBlocks(productType, { brand, personName, contact, tagline }, palette),
+    textBlocks: createTextBlocks(productType, { brand, personName, contact, tagline }, palette, pdfxLevel),
     assetSlots: createAssetSlots(productType, brief, brand, tagline)
   });
 }

@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import type { AssetSlot } from "@/lib/print/layout-spec";
+import { resolveOpenAiImageModel } from "./model-config";
 import { ProviderUnavailableError, type CreativeProvider, type GeneratedAsset } from "./types";
 
 export class OpenAiImageProvider implements CreativeProvider {
@@ -12,7 +13,7 @@ export class OpenAiImageProvider implements CreativeProvider {
     }
 
     const client = new OpenAI({ apiKey });
-    const model = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5";
+    const model = resolveOpenAiImageModel();
     const result = await client.images.generate({
       model,
       prompt: slot.prompt,

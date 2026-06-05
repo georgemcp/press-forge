@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import type { AssetSlot } from "@/lib/print/layout-spec";
+import { resolveGeminiImageModel } from "./model-config";
 import { ProviderUnavailableError, type CreativeProvider, type GeneratedAsset } from "./types";
 
 export class GeminiImageProvider implements CreativeProvider {
@@ -12,7 +13,7 @@ export class GeminiImageProvider implements CreativeProvider {
     }
 
     const client = new GoogleGenAI({ apiKey });
-    const model = process.env.GEMINI_IMAGE_MODEL ?? "gemini-3-pro-image-preview";
+    const model = resolveGeminiImageModel();
     const response = await client.models.generateContent({
       model,
       contents: slot.prompt

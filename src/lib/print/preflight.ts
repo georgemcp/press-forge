@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { getPageGeometry, type ProductType } from "./constants";
 import { convertToPdfX, type GhostscriptResult } from "./ghostscript";
 import type { ResolvedAsset } from "./assets";
+import type { LayoutSpec } from "./layout-spec";
 
 const execFileAsync = promisify(execFile);
 
@@ -22,6 +23,8 @@ export interface PreflightReport {
   pdfPath: string;
   pdfxPath?: string;
   productType: ProductType;
+  printProfile: LayoutSpec["printProfile"];
+  pdfxLevel: LayoutSpec["pdfxLevel"];
   checks: PreflightCheck[];
   ghostscript: GhostscriptResult;
   generatedAt: string;
@@ -126,16 +129,16 @@ function checkPlacedRasterDpi(assets: AssetPreflightInput[]): PreflightCheck {
 
 export async function runPreflight(
   sourcePdfPath: string,
-  productType: ProductType,
+  spec: Pick<LayoutSpec, "productType" | "printProfile" | "pdfxLevel">,
   outputDir: string,
   assets: AssetPreflightInput[] = []
 ): Promise<PreflightReport> {
-  const geometry = getPageGeometry(productType);
+  const geometry = getPageGeometry(spec.productType);
   const ghostscript = await convertToPdfX(sourcePdfPath, outputDir, {
     mediaBox: geometry.mediaBox,
     bleedBox: geometry.bleedBox,
     trim: geometry.trim
-  });
+  }, spec.printProfile);
   const pdfPath = ghostscript.outputPdfPath && !ghostscript.error && (await fileExists(ghostscript.outputPdfPath)) ? ghostscript.outputPdfPath : sourcePdfPath;
   const checks: PreflightCheck[] = [];
 
@@ -152,11 +155,12 @@ export async function runPreflight(
     checks.push(checkBoxDimensions(parseBox(pdfInfo, "BleedBox"), geometry.bleedBox.width, geometry.bleedBox.height, "BleedBox"));
     checks.push(checkBoxDimensions(parseBox(pdfInfo, "MediaBox"), geometry.mediaBox.width, geometry.mediaBox.height, "MediaBox"));
     const subtype = pdfInfo.match(/PDF subtype:\s+(.+)/)?.[1]?.trim();
+    const expectedSubtype = spec.pdfxLevel === "PDF/X-4" ? "PDF/X-4" : "PDF/X-1a";
     checks.push({
       id: "pdfx_subtype",
       label: "PDF/X subtype",
-      status: subtype?.includes("PDF/X") ? "passed" : ghostscript.error ? "needs_attention" : "failed",
-      evidence: subtype ? `pdfinfo reported ${subtype}.` : "pdfinfo did not report a PDF/X subtype."
+      status: subtype?.includes(expectedSubtype) ? "passed" : ghostscript.error ? "needs_attention" : "failed",
+      evidence: subtype ? `pdfinfo reported ${subtype}; expected ${spec.pdfxLevel}.` : "pdfinfo did not report a PDF/X subtype."
     });
   } catch (error) {
     checks.push({
@@ -203,7 +207,9 @@ export async function runPreflight(
     status,
     pdfPath,
     pdfxPath: ghostscript.outputPdfPath,
-    productType,
+    productType: spec.productType,
+    printProfile: spec.printProfile,
+    pdfxLevel: spec.pdfxLevel,
     checks,
     ghostscript,
     generatedAt: new Date().toISOString()

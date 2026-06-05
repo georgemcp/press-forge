@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { PDFDocument } from "pdf-lib";
+import { PRINT_PROFILES, type PrintProfileId } from "./constants";
 
 const execFileAsync = promisify(execFile);
 
@@ -35,6 +36,12 @@ interface PdfBoxes {
     height: number;
   };
 }
+
+const OUTPUT_CONDITION_IDENTIFIERS: Record<PrintProfileId, string> = {
+  USWebCoatedSWOP: "CGATS TR001",
+  GRACoL2013: "CGATS21-2-CRPC6",
+  FOGRA39: "FOGRA39"
+};
 
 async function commandExists(command: string) {
   try {
@@ -95,15 +102,24 @@ async function locatePdfxDefinition() {
   ].filter(Boolean) as string[]);
 }
 
-async function writePdfxDefinition(outputDir: string, iccPath?: string) {
+function postScriptString(value: string) {
+  return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+}
+
+async function writePdfxDefinition(outputDir: string, printProfile: PrintProfileId, iccPath?: string) {
   const definitionPath = await locatePdfxDefinition();
   if (!definitionPath) {
     return undefined;
   }
+  const profile = PRINT_PROFILES[printProfile];
+  const conditionIdentifier = OUTPUT_CONDITION_IDENTIFIERS[printProfile];
   const definition = await fs.readFile(definitionPath, "utf8");
   const patched = definition
     .replace(/PDF\/X-3:2002/g, "PDF/X-1a:2001")
-    .replace(/^\/ICCProfile .*$/m, iccPath ? `/ICCProfile (${iccPath}) def` : "");
+    .replace(/^\/ICCProfile .*$/m, iccPath ? `/ICCProfile (${postScriptString(iccPath)}) def` : "")
+    .replace(/^  \/OutputCondition .*$/m, `  /OutputCondition (${postScriptString(profile.market)})`)
+    .replace(/^  \/Info .*$/m, `  /Info (${postScriptString(profile.label)})`)
+    .replace(/^  \/OutputConditionIdentifier .*$/m, `  /OutputConditionIdentifier (${postScriptString(conditionIdentifier)})`);
   const customPath = path.join(outputDir, "PDFX_def.trimproof.ps");
   await fs.writeFile(customPath, patched);
   return customPath;
@@ -120,7 +136,7 @@ async function restorePageBoxes(pdfPath: string, boxes: PdfBoxes) {
   await fs.writeFile(pdfPath, await doc.save({ useObjectStreams: false }));
 }
 
-export async function convertToPdfX(sourcePdfPath: string, outputDir: string, boxes?: PdfBoxes): Promise<GhostscriptResult> {
+export async function convertToPdfX(sourcePdfPath: string, outputDir: string, boxes?: PdfBoxes, printProfile: PrintProfileId = "USWebCoatedSWOP"): Promise<GhostscriptResult> {
   const available = await commandExists("gs");
   if (!available) {
     return {
@@ -132,7 +148,7 @@ export async function convertToPdfX(sourcePdfPath: string, outputDir: string, bo
   await fs.mkdir(outputDir, { recursive: true });
   const outputPdfPath = path.join(outputDir, `${path.basename(sourcePdfPath, ".source.pdf")}.pdfx.pdf`);
   const iccPath = await locateCmykProfile();
-  const pdfxDefinitionPath = await writePdfxDefinition(outputDir, iccPath);
+  const pdfxDefinitionPath = await writePdfxDefinition(outputDir, printProfile, iccPath);
 
   const args = [
     "-dBATCH",

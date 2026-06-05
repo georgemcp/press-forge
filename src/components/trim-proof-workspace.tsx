@@ -19,7 +19,7 @@ import {
   WalletCards,
   TriangleAlert
 } from "lucide-react";
-import { PRODUCT_PROFILES, type ProductType } from "@/lib/print/constants";
+import { PRINT_PROFILES, PRODUCT_PROFILES, type PrintProfileId, type ProductType } from "@/lib/print/constants";
 import type { LayoutSpec } from "@/lib/print/layout-spec";
 import type { PreflightReport, PreflightStatus } from "@/lib/print/preflight";
 import { trackEvent } from "@/lib/analytics/events";
@@ -58,6 +58,7 @@ interface LayoutSpecApiResponse {
 
 type CheckoutMode = "payment" | "subscription";
 type WorkspaceMode = "dummy" | "advanced";
+type PdfxLevel = LayoutSpec["pdfxLevel"];
 
 interface PaidSession {
   id: string;
@@ -104,7 +105,7 @@ function PrintPreview({ spec, assetUrl, assetProvider }: { spec: LayoutSpec; ass
           <div>
             <h2 className="font-display text-sm font-semibold text-surface-ink">{productProfile.label} proof</h2>
             <p className="text-xs text-muted">
-              {productProfile.trimWidthIn} in x {productProfile.trimHeightIn} in trim, {productProfile.bleedIn} in bleed, PDF/X-1a target
+              {productProfile.trimWidthIn} in x {productProfile.trimHeightIn} in trim, {productProfile.bleedIn} in bleed, {spec.pdfxLevel} target
             </p>
           </div>
         </div>
@@ -168,7 +169,13 @@ function IntakePanel({
   mode,
   setMode,
   productType,
-  setProductType
+  setProductType,
+  printProfile,
+  setPrintProfile,
+  pdfxLevel,
+  setPdfxLevel,
+  cropMarks,
+  setCropMarks
 }: {
   spec: LayoutSpec;
   brief: string;
@@ -177,25 +184,31 @@ function IntakePanel({
   setMode: (mode: WorkspaceMode) => void;
   productType: ProductType;
   setProductType: (productType: ProductType) => void;
+  printProfile: PrintProfileId;
+  setPrintProfile: (printProfile: PrintProfileId) => void;
+  pdfxLevel: PdfxLevel;
+  setPdfxLevel: (pdfxLevel: PdfxLevel) => void;
+  cropMarks: boolean;
+  setCropMarks: (cropMarks: boolean) => void;
 }) {
   const productProfile = PRODUCT_PROFILES[productType];
 
   return (
     <aside className="flex w-full shrink-0 flex-col overflow-hidden bg-surface-strong/75 xl:w-[310px]">
-      <div className="shrink-0 border-b border-border p-4">
-        <div className="mb-3 flex items-center gap-2">
+      <div className="shrink-0 border-b border-border p-3">
+        <div className="mb-2 flex items-center gap-2">
           <Sparkles aria-hidden className="h-4 w-4 text-accent" />
           <h2 className="font-display text-sm font-semibold text-surface-ink">Brief intake</h2>
         </div>
         <textarea
           value={brief}
           onChange={(event) => setBrief(event.target.value)}
-          className="h-[clamp(5.5rem,16vh,8.25rem)] w-full resize-none rounded-[8px] border border-border bg-surface p-3 text-sm leading-6 text-surface-ink shadow-sm"
+          className="h-[clamp(4.5rem,12vh,6rem)] w-full resize-none rounded-[8px] border border-border bg-surface p-3 text-sm leading-5 text-surface-ink shadow-sm"
           aria-label="Design brief"
         />
       </div>
 
-      <div className="min-h-0 space-y-4 overflow-auto p-4">
+      <div className="min-h-0 space-y-3 overflow-auto p-3">
         <div>
           <label className="text-xs font-semibold uppercase text-muted">Proof mode</label>
           <div className="mt-2 grid grid-cols-2 gap-2">
@@ -205,7 +218,7 @@ function IntakePanel({
             ].map(([value, label]) => (
               <button
                 key={value}
-                className={`rounded-[8px] border px-3 py-2 text-left text-xs font-semibold ${
+                className={`rounded-[8px] border px-3 py-1.5 text-left text-xs font-semibold ${
                   mode === value ? "border-accent bg-accent/10 text-accent" : "border-border bg-surface text-muted"
                 }`}
                 type="button"
@@ -227,7 +240,7 @@ function IntakePanel({
             {(Object.keys(PRODUCT_PROFILES) as ProductType[]).map((product) => (
               <button
                 key={product}
-                className={`rounded-[8px] border px-3 py-2 text-left text-xs font-semibold ${
+                className={`rounded-[8px] border px-3 py-1.5 text-left text-xs font-semibold ${
                   productType === product ? "border-brand bg-brand-soft text-brand" : "border-border bg-surface text-muted"
                 }`}
                 type="button"
@@ -239,18 +252,69 @@ function IntakePanel({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-[8px] border border-border bg-surface p-3">
-            <div className="text-[11px] font-semibold uppercase text-muted">Bleed</div>
-            <div className="mt-1 font-display text-xl font-bold text-surface-ink">{productProfile.bleedIn} in</div>
+        {mode === "advanced" ? (
+          <div className="rounded-[8px] border border-brand/30 bg-brand-soft/60 p-3">
+            <h3 className="font-display text-sm font-semibold text-brand">Advanced export settings</h3>
+            <div className="mt-2 space-y-2 text-xs text-surface-ink">
+              <div>
+                <label className="font-semibold uppercase text-muted" htmlFor="pdfx-level">
+                  PDF/X target
+                </label>
+                <select
+                  id="pdfx-level"
+                  className="mt-1 h-8 w-full rounded-[8px] border border-border bg-surface px-2 text-xs font-semibold text-surface-ink"
+                  value={pdfxLevel}
+                  onChange={(event) => setPdfxLevel(event.target.value as PdfxLevel)}
+                >
+                  <option value="PDF/X-1a:2001">PDF/X-1a:2001</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-semibold uppercase text-muted" htmlFor="print-profile">
+                  Output profile
+                </label>
+                <select
+                  id="print-profile"
+                  className="mt-1 h-8 w-full rounded-[8px] border border-border bg-surface px-2 text-xs font-semibold text-surface-ink"
+                  value={printProfile}
+                  onChange={(event) => setPrintProfile(event.target.value as PrintProfileId)}
+                >
+                  {(Object.keys(PRINT_PROFILES) as PrintProfileId[]).map((profile) => (
+                    <option key={profile} value={profile}>
+                      {PRINT_PROFILES[profile].label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                aria-pressed={cropMarks}
+                className={`flex h-8 w-full items-center justify-between rounded-[8px] border px-3 text-xs font-semibold ${
+                  cropMarks ? "border-success bg-success/10 text-success" : "border-border bg-surface text-muted"
+                }`}
+                type="button"
+                onClick={() => setCropMarks(!cropMarks)}
+              >
+                <span>Crop marks</span>
+                <span>{cropMarks ? "On" : "Off"}</span>
+              </button>
+            </div>
           </div>
-          <div className="rounded-[8px] border border-border bg-surface p-3">
+        ) : null}
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-[8px] border border-border bg-surface p-2.5">
+            <div className="text-[11px] font-semibold uppercase text-muted">Bleed</div>
+            <div className="mt-1 font-display text-lg font-bold text-surface-ink">{productProfile.bleedIn} in</div>
+          </div>
+          <div className="rounded-[8px] border border-border bg-surface p-2.5">
             <div className="text-[11px] font-semibold uppercase text-muted">Min DPI</div>
-            <div className="mt-1 font-display text-xl font-bold text-surface-ink">300</div>
+            <div className="mt-1 font-display text-lg font-bold text-surface-ink">300</div>
           </div>
         </div>
 
-        <div className="rounded-[8px] border border-border bg-surface p-3">
+        <div className="rounded-[8px] border border-border bg-surface p-2.5">
           <div className="mb-2 flex items-center gap-2">
             <Layers3 aria-hidden className="h-4 w-4 text-brand" />
             <h3 className="font-display text-sm font-semibold">LayoutSpec</h3>
@@ -266,7 +330,11 @@ function IntakePanel({
             </div>
             <div className="flex justify-between">
               <span>Print profile</span>
-              <span className="font-semibold text-surface-ink">{spec.printProfile}</span>
+              <span className="font-semibold text-surface-ink">{PRINT_PROFILES[spec.printProfile].label}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Crop marks</span>
+              <span className="font-semibold text-surface-ink">{spec.cropMarks ? "On" : "Off"}</span>
             </div>
             <div className="flex justify-between">
               <span>Trim size</span>
@@ -277,25 +345,6 @@ function IntakePanel({
           </div>
         </div>
 
-        {mode === "advanced" ? (
-          <div className="rounded-[8px] border border-brand/30 bg-brand-soft/60 p-4">
-            <h3 className="font-display text-sm font-semibold text-brand">Advanced export settings</h3>
-            <div className="mt-3 space-y-2 text-xs text-surface-ink">
-              <div className="flex justify-between">
-                <span>PDF/X level</span>
-                <span className="font-semibold">{spec.pdfxLevel}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Output intent</span>
-                <span className="font-semibold">{spec.printProfile}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Billing model</span>
-                <span className="font-semibold">Credit or subscription</span>
-              </div>
-            </div>
-          </div>
-        ) : null}
       </div>
     </aside>
   );
@@ -496,6 +545,9 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
   const [sessionPending, setSessionPending] = useState(Boolean(checkoutSessionId));
   const [spec, setSpec] = useState(initialSpec);
   const [productType, setProductTypeState] = useState<ProductType>(initialSpec.productType);
+  const [printProfile, setPrintProfileState] = useState<PrintProfileId>(initialSpec.printProfile);
+  const [pdfxLevel, setPdfxLevelState] = useState<PdfxLevel>(initialSpec.pdfxLevel);
+  const [cropMarks, setCropMarksState] = useState(initialSpec.cropMarks);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -527,29 +579,57 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
     };
   }, [checkoutSessionId, checkoutState]);
 
-  function setProductType(product: ProductType) {
-    setProductTypeState(product);
+  async function refreshLayoutSpec(next: Partial<{ productType: ProductType; printProfile: PrintProfileId; pdfxLevel: PdfxLevel; cropMarks: boolean }> = {}) {
     setProof(undefined);
     setError(undefined);
-    void (async () => {
-      try {
-        const specResponse = await fetch("/api/layout-spec", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ brief, productType: product })
-        });
-        const specPayload = (await specResponse.json().catch(() => undefined)) as LayoutSpecApiResponse | undefined;
-        if (specResponse.ok && specPayload?.spec) {
-          setSpec(specPayload.spec);
-        } else {
-          setError(specPayload?.error ?? "Product layout refresh failed.");
-        }
-      } catch {
-        setError("Product layout refresh failed.");
+    try {
+      const specResponse = await fetch("/api/layout-spec", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          brief,
+          productType: next.productType ?? productType,
+          printProfile: next.printProfile ?? printProfile,
+          pdfxLevel: next.pdfxLevel ?? pdfxLevel,
+          cropMarks: next.cropMarks ?? cropMarks
+        })
+      });
+      const specPayload = (await specResponse.json().catch(() => undefined)) as LayoutSpecApiResponse | undefined;
+      if (specResponse.ok && specPayload?.spec) {
+        setSpec(specPayload.spec);
+        setProductTypeState(specPayload.spec.productType);
+        setPrintProfileState(specPayload.spec.printProfile);
+        setPdfxLevelState(specPayload.spec.pdfxLevel);
+        setCropMarksState(specPayload.spec.cropMarks);
+        return specPayload.spec;
       }
-    })();
+      setError(specPayload?.error ?? "Layout refresh failed.");
+    } catch {
+      setError("Layout refresh failed.");
+    }
+    return undefined;
+  }
+
+  function setProductType(product: ProductType) {
+    setProductTypeState(product);
+    void refreshLayoutSpec({ productType: product });
+  }
+
+  function setPrintProfile(profile: PrintProfileId) {
+    setPrintProfileState(profile);
+    void refreshLayoutSpec({ printProfile: profile });
+  }
+
+  function setPdfxLevel(level: PdfxLevel) {
+    setPdfxLevelState(level);
+    void refreshLayoutSpec({ pdfxLevel: level });
+  }
+
+  function setCropMarks(enabled: boolean) {
+    setCropMarksState(enabled);
+    void refreshLayoutSpec({ cropMarks: enabled });
   }
 
   function generateProof() {
@@ -561,27 +641,17 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
     startTransition(() => {
       void (async () => {
         try {
-          const specResponse = await fetch("/api/layout-spec", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ brief, productType })
-          });
-          const specPayload = (await specResponse.json().catch(() => undefined)) as LayoutSpecApiResponse | undefined;
-          if (!specResponse.ok || !specPayload?.spec) {
-            setError(specPayload?.error ?? "LayoutSpec generation failed.");
+          const refreshedSpec = await refreshLayoutSpec();
+          if (!refreshedSpec) {
             return;
           }
-          setSpec(specPayload.spec);
-          setProductTypeState(specPayload.spec.productType);
           trackEvent(mode === "dummy" ? "dummy_proof_started" : "proof_export_started", { mode });
           const response = await fetch("/api/exports/proof", {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({ brief, spec: specPayload.spec, mode, checkoutSessionId: paidSession?.id })
+            body: JSON.stringify({ brief, spec: refreshedSpec, mode, checkoutSessionId: paidSession?.id })
           });
           if (!response.ok) {
             const payload = (await response.json().catch(() => undefined)) as { error?: string } | undefined;
@@ -706,9 +776,9 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted sm:gap-3">
-            <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">GPT Image 1.5</span>
+            <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">GPT Image 2</span>
             <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">Nano Banana Pro</span>
-            <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">PDF/X-1a:2001</span>
+            <span className="rounded-[6px] border border-border bg-surface px-2.5 py-1">{spec.pdfxLevel}</span>
           </div>
         </header>
 
@@ -722,10 +792,16 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
         <div className="flex min-h-0 flex-1 flex-col overflow-visible xl:flex-row xl:overflow-hidden">
           <IntakePanel
             brief={brief}
+            cropMarks={cropMarks}
             mode={mode}
+            pdfxLevel={pdfxLevel}
+            printProfile={printProfile}
             productType={productType}
             setBrief={setBrief}
+            setCropMarks={setCropMarks}
             setMode={setMode}
+            setPdfxLevel={setPdfxLevel}
+            setPrintProfile={setPrintProfile}
             setProductType={setProductType}
             spec={spec}
           />

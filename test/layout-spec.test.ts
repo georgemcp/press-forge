@@ -83,4 +83,20 @@ describe("LayoutSpec schema", () => {
       height: 4.25
     });
   });
+
+  it("preserves advanced prepress settings while deriving a brief", () => {
+    const spec = deriveLayoutSpecFromBrief({
+      brief: "Bare Getaways flyer with warm Caribbean water",
+      productType: "flyer",
+      printProfile: "GRACoL2013",
+      pdfxLevel: "PDF/X-4",
+      cropMarks: false
+    });
+
+    expect(spec.productType).toBe("flyer");
+    expect(spec.printProfile).toBe("GRACoL2013");
+    expect(spec.pdfxLevel).toBe("PDF/X-4");
+    expect(spec.cropMarks).toBe(false);
+    expect(spec.textBlocks.find((block) => block.id === "contact")?.content).toContain("PDF/X-4 ready");
+  });
 });

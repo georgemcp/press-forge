@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isServerAnalyticsConfigured } from "@/lib/analytics/server-events";
 import { resolveEmailConfig } from "@/lib/email/transactional";
+import { getCreativeProviderStatus } from "@/lib/providers/model-config";
 
 export async function GET() {
   const emailConfig = resolveEmailConfig();
@@ -15,7 +16,8 @@ export async function GET() {
       supabaseConfigured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
       serverAnalyticsConfigured: isServerAnalyticsConfigured(),
       emailConfigured: Boolean(emailConfig),
-      emailProvider: emailConfig?.provider ?? null
+      emailProvider: emailConfig?.provider ?? null,
+      creativeProviders: getCreativeProviderStatus()
     },
     timestamp: new Date().toISOString()
   });

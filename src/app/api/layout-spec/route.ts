@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { PRODUCT_PROFILES, type ProductType } from "@/lib/print/constants";
+import { PRINT_PROFILES, PRODUCT_PROFILES, type PrintProfileId, type ProductType } from "@/lib/print/constants";
 import { deriveLayoutSpecFromBrief } from "@/lib/print/brief-layout";
+import type { LayoutSpec } from "@/lib/print/layout-spec";
 
 export const runtime = "nodejs";
 
@@ -8,9 +9,33 @@ function parseProductType(value: unknown): ProductType | undefined {
   return typeof value === "string" && value in PRODUCT_PROFILES ? (value as ProductType) : undefined;
 }
 
+function parsePrintProfile(value: unknown): PrintProfileId | undefined {
+  return typeof value === "string" && value in PRINT_PROFILES ? (value as PrintProfileId) : undefined;
+}
+
+function parsePdfxLevel(value: unknown): LayoutSpec["pdfxLevel"] | undefined {
+  return value === "PDF/X-1a:2001" ? value : undefined;
+}
+
+function parseCropMarks(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
+}
+
 export async function POST(request: Request) {
-  const payload = (await request.json().catch(() => ({}))) as { brief?: string; productType?: unknown };
-  const spec = deriveLayoutSpecFromBrief({ brief: payload.brief, productType: parseProductType(payload.productType) });
+  const payload = (await request.json().catch(() => ({}))) as {
+    brief?: string;
+    productType?: unknown;
+    printProfile?: unknown;
+    pdfxLevel?: unknown;
+    cropMarks?: unknown;
+  };
+  const spec = deriveLayoutSpecFromBrief({
+    brief: payload.brief,
+    productType: parseProductType(payload.productType),
+    printProfile: parsePrintProfile(payload.printProfile),
+    pdfxLevel: parsePdfxLevel(payload.pdfxLevel),
+    cropMarks: parseCropMarks(payload.cropMarks)
+  });
 
   return NextResponse.json({
     spec,

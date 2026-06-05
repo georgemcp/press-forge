@@ -27,7 +27,7 @@ export async function generateProof(input: LayoutSpec = sampleBusinessCardLayout
     fileBaseName: getProofFileBaseName(spec.productType),
     assets
   });
-  const report = await runPreflight(exportResult.sourcePdfPath, spec.productType, outputDir, assets);
+  const report = await runPreflight(exportResult.sourcePdfPath, spec, outputDir, assets);
   const reportPath = path.join(outputDir, "preflight-report.json");
   await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
 
