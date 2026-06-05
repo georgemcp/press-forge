@@ -11,7 +11,7 @@ Production target:
 - Stripe prices: export credit `price_1TejgIRy14ye40TRwCxJSBu7`; monthly subscription `price_1TejgJRy14ye40TRgqMqHR9V`
 - Stripe Customer Portal configuration: `bpc_1TelBzRy14ye40TRGJb4wixa`
 - GA4 property: `properties/540372104`; web stream `15008052932`; measurement ID `G-9VNCX1HGN5`
-- Google Search Console: URL-prefix property `https://trimproof.com/` verified under `geomcpherson@gmail.com` on `2026-06-05`; domain property `trimproof.com` has DNS TXT verification pending Google propagation.
+- Google Search Console: URL-prefix property `https://trimproof.com/` verified under `geomcpherson@gmail.com` on `2026-06-05`; sitemap `/sitemap.xml` reads as `Success` with 13 discovered pages. Domain TXT verification is published, but the optional domain property `trimproof.com` is not yet verified in Search Console.
 - Transactional email: SendGrid from `launch@trimproof.com`; admin notifications to `george.mcpherson@rightawaygroup.com`
 - TLS: Let's Encrypt certificate at `/etc/letsencrypt/live/trimproof.com/`, expiring `2026-09-02` with scheduled auto-renewal
 
@@ -46,7 +46,7 @@ Production Google DNS and files:
 
 - Search Console domain verification TXT on root: `google-site-verification=bd3Ho8LUomJBMjQUbjya7pEtTmAsqcXCapvzVBidFcw`
 - Search Console URL-prefix verification file: `/google43b9c98a02f6c033.html`
-- Sitemap submitted in Search Console for the URL-prefix property on `2026-06-05`: `https://trimproof.com/sitemap.xml`
+- Sitemap submitted in Search Console for the URL-prefix property on `2026-06-05`: `https://trimproof.com/sitemap.xml`; Search Console status: `Success`, last read `2026-06-05`, discovered pages `13`.
 
 Verification:
 
