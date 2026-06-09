@@ -2,25 +2,26 @@
 
 ## Environment Variables
 
-Production uses the `Trim Proof` GA4 property under the Right Away Home Services account:
+Production uses the `Trim Proof` GA4 property under the Bare Getaways LLC Google account:
 
-- Property ID: `540372104`
-- Web stream ID: `15008052932`
-- Measurement ID: `G-9VNCX1HGN5`
+- Account ID: `363848520`
+- Property ID: `499598107`
+- Web stream ID: `15016978016`
+- Measurement ID: `G-20N2FZHDHV`
 
 Set these after the production domain and analytics property exist:
 
 ```bash
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-9VNCX1HGN5
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-20N2FZHDHV
 NEXT_PUBLIC_GTM_CONTAINER_ID=GTM-...
-GA4_PROPERTY_ID=540372104
-GOOGLE_ANALYTICS_PROPERTY_ID=540372104
+GA4_PROPERTY_ID=499598107
+GOOGLE_ANALYTICS_PROPERTY_ID=499598107
 GA4_API_SECRET=...
 NEXT_PUBLIC_APP_URL=https://trimproof.com
 ```
 
 `NEXT_PUBLIC_GA_MEASUREMENT_ID` and `NEXT_PUBLIC_GTM_CONTAINER_ID` must be available during the Docker build as well as at runtime. Static marketing pages are generated at build time.
-`GA4_API_SECRET` is server-only. `GA4_MEASUREMENT_PROTOCOL_API_SECRET` is also accepted as an alias. The production Measurement Protocol secret was created for the Trim Proof web stream on 2026-06-05 after the `/privacy` disclosure page was live; keep the secret only in production/server env.
+`GA4_API_SECRET` is server-only. `GA4_MEASUREMENT_PROTOCOL_API_SECRET` is also accepted as an alias. The production Measurement Protocol secret was created for the Bare Getaways-owned Trim Proof web stream on 2026-06-06 after the `/privacy` disclosure page was live; keep the secret only in production/server env.
 
 ## Events
 

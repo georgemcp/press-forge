@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { PRINT_PROFILES, PRODUCT_PROFILES, type PrintProfileId, type ProductType } from "@/lib/print/constants";
 import { deriveLayoutSpecFromBrief } from "@/lib/print/brief-layout";
 import type { LayoutSpec } from "@/lib/print/layout-spec";
@@ -22,6 +23,11 @@ function parseCropMarks(value: unknown): boolean | undefined {
 }
 
 export async function POST(request: Request) {
+  const account = await getAccountSessionFromCookies();
+  if (!account) {
+    return NextResponse.json({ error: "Create an account before using Trim Proof." }, { status: 401 });
+  }
+
   const payload = (await request.json().catch(() => ({}))) as {
     brief?: string;
     productType?: unknown;

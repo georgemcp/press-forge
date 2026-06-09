@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
+import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
 import { getAppUrl, getStripeClient } from "@/lib/billing/stripe";
 
@@ -24,6 +25,11 @@ function getPortalErrorStatus(error: unknown) {
 }
 
 export async function POST(request: Request) {
+  const account = await getAccountSessionFromCookies();
+  if (!account) {
+    return NextResponse.json({ error: "Sign in before opening subscription management." }, { status: 401 });
+  }
+
   const stripe = getStripeClient();
   if (!stripe) {
     return NextResponse.json(
@@ -44,6 +50,9 @@ export async function POST(request: Request) {
     const paidSession = await verifyPaidCheckoutSession(parsed.data.sessionId);
     if (!paidSession) {
       return NextResponse.json({ error: "Checkout session could not be verified." }, { status: 402 });
+    }
+    if (paidSession.customerEmail && paidSession.customerEmail.trim().toLowerCase() !== account.email) {
+      return NextResponse.json({ error: "This subscription belongs to a different account email." }, { status: 403 });
     }
     if (paidSession.entitlement !== "subscription") {
       return NextResponse.json({ error: "Subscription management is only available for Trim Proof Pro customers." }, { status: 403 });

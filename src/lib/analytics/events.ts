@@ -5,7 +5,7 @@ type AnalyticsWindow = Window & {
   gtag?: (...args: unknown[]) => void;
 };
 
-export type TrimProofEvent =
+export type PressForgeEvent =
   | "dummy_proof_started"
   | "advanced_mode_selected"
   | "proof_export_started"
@@ -13,9 +13,17 @@ export type TrimProofEvent =
   | "checkout_started"
   | "checkout_verified"
   | "subscription_portal_started"
-  | "email_signup_submitted";
+  | "email_signup_submitted"
+  | "brief_enhance_started"
+  | "brief_enhance_completed"
+  | "design_generation_started"
+  | "design_generation_completed"
+  | "reference_image_uploaded";
 
-export function trackEvent(event: TrimProofEvent, params: Record<string, string | number | boolean | undefined> = {}) {
+/** @deprecated Use PressForgeEvent instead */
+export type TrimProofEvent = PressForgeEvent;
+
+export function trackEvent(event: PressForgeEvent, params: Record<string, string | number | boolean | undefined> = {}) {
   if (typeof window === "undefined") {
     return;
   }

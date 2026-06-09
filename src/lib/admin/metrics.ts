@@ -20,6 +20,7 @@ export interface GeneratedProofJob {
 export interface AdminEconomicsConfig {
   exportPriceCents: number;
   subscriptionPriceCents: number;
+  proMonthlyExportLimit: number;
   stripeFeeBps: number;
   stripeFixedFeeCents: number;
   estimatedProofCostCents: number;
@@ -30,6 +31,12 @@ export interface AdminAccountSummary {
   accountSource: "user" | "signup" | "order" | "managed";
   createdAt?: string;
   lastActivityAt?: string;
+  fullName?: string;
+  companyName?: string;
+  role?: string;
+  monthlyPrintJobs?: string;
+  primaryUseCase?: string;
+  planInterest?: string;
   stripeCustomerId?: string;
   managementStatus?: string;
   managementNotes?: string;
@@ -92,8 +99,9 @@ function parsePositiveInteger(value: string | undefined, fallback: number) {
 
 export function getAdminEconomicsConfig(): AdminEconomicsConfig {
   return {
-    exportPriceCents: parsePositiveInteger(process.env.TRIMPROOF_EXPORT_PRICE_CENTS, 900),
-    subscriptionPriceCents: parsePositiveInteger(process.env.TRIMPROOF_SUBSCRIPTION_PRICE_CENTS, 2900),
+    exportPriceCents: parsePositiveInteger(process.env.TRIMPROOF_EXPORT_PRICE_CENTS, 1200),
+    subscriptionPriceCents: parsePositiveInteger(process.env.TRIMPROOF_SUBSCRIPTION_PRICE_CENTS, 4900),
+    proMonthlyExportLimit: parsePositiveInteger(process.env.TRIMPROOF_PRO_MONTHLY_EXPORT_LIMIT, 15),
     stripeFeeBps: parsePositiveInteger(process.env.TRIMPROOF_STRIPE_FEE_BPS, 290),
     stripeFixedFeeCents: parsePositiveInteger(process.env.TRIMPROOF_STRIPE_FIXED_FEE_CENTS, 30),
     estimatedProofCostCents: parsePositiveInteger(process.env.TRIMPROOF_ESTIMATED_PROOF_COST_CENTS, 18)
@@ -178,6 +186,12 @@ export function buildAdminAccountSummaries(input: Pick<AdminMetricsInput, "order
 
   for (const user of input.users) {
     const account = ensureAccount(user.email, "user", user.created_at);
+    account.fullName = user.full_name ?? account.fullName;
+    account.companyName = user.company_name ?? account.companyName;
+    account.role = user.role ?? account.role;
+    account.monthlyPrintJobs = user.monthly_print_jobs ?? account.monthlyPrintJobs;
+    account.primaryUseCase = user.primary_use_case ?? account.primaryUseCase;
+    account.planInterest = user.plan_interest ?? account.planInterest;
     account.stripeCustomerId = user.stripe_customer_id ?? account.stripeCustomerId;
     account.activeSubscription ||= user.subscription_status === "active";
   }

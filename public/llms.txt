@@ -6,25 +6,59 @@ Core facts:
 - AI models are used only for creative assets and layout ideas.
 - Final print validity is deterministic: vector text, embedded fonts, CMYK output, bleed, trim geometry, crop marks, 300 DPI checks, and PDF/X preflight.
 - The app routes creative background assets to model providers when configured and falls back to deterministic 600 DPI raster assets when provider credentials are unavailable.
-- Dummy proof mode lets users generate a sample proof and preflight report.
+- Dummy proof mode lets users generate a watermarked sample proof and preflight report.
 - Advanced mode is for production exports with paid export credits or subscriptions.
-- Supported starter products include business cards, flyers, postcards, and letterhead.
-- Public pricing is $9 for one export credit or $29/month for Trim Proof Pro.
-- DataForSEO demand research prioritizes AI flyer generator, AI business card generator, print-ready PDF, PDF to CMYK, PDF/X-1a, bleed, crop marks, and PDF preflight topics.
+- Supported starter products include business cards, flyers, posters, brochures, postcards, and letterhead.
+- Public pricing is a free watermarked demo proof, $12 for one export credit with clean production download, or $49/month for Trim Proof Pro.
+- DataForSEO demand research prioritizes flyer maker, free flyer maker, free flyer creator, free flyer generator, online flyer maker, AI flyer generator, AI flyer maker, free AI flyer generator, poster maker, poster creator, poster generator, online poster maker, free poster maker, free poster generator, AI poster generator, AI poster maker, poster size, poster dimensions, standard poster size, poster template, free poster template, brochure maker, free brochure maker, AI brochure maker, brochure template, tri fold brochure template, brochure size, tri fold brochure dimensions, postcard design, postcard maker, online postcard maker, free postcard maker, free postcard generator, AI postcard generator, letterhead design, letterhead maker, letterhead generator, free letterhead maker, business letterhead maker, AI letterhead generator, flyer size and dimensions, business card maker, business card generator, free business card maker, AI business card generator, business card template, business card dimensions, business card pixel size, print-ready PDF, print-ready artwork, PDF to CMYK, PDF/X-1a, bleed, crop marks, postcard size and dimensions, letterhead format and dimensions, PDF preflight, Canva print quality and CMYK troubleshooting, Canva print-ready PDF troubleshooting, prepress checklist, proofing software, prepress software, flyer PDF templates, poster PDF templates, brochure PDF templates, postcard PDF templates, and letterhead PDF templates.
 
 Important pages:
 - /: overview, product explanation, FAQs, and launch signup.
-- /app: dummy proof mode and advanced export workspace.
+- /about: factual entity page explaining what Trim Proof does, who it is for, supported products, current pricing, and product boundaries.
+- /tools: indexable hub for print-ready PDF tools, prepress guides, Canva export troubleshooting, PDF/X, CMYK, bleed, crop marks, templates, and AI proof workflows.
+- /pricing: public pricing source of truth for the free demo account, $12 export credit, and $49/month Trim Proof Pro plan with 15 advanced exports.
 - /privacy: privacy policy for analytics, billing, email, AI provider, and generated proof data.
 - /tools/print-ready-pdf-generator: print-ready PDF explanation and workflow.
+- /tools/print-ready-artwork: guide to print-ready and camera-ready artwork requirements such as trim, bleed, safe area, embedded vector text, print color workflow, 300 DPI image checks, PDF/X, and preflight; states printer-specific acceptance still controls the final handoff.
+- /tools/online-pdf-prepress-tools: hub for PDF prepress checks such as PDF/X, CMYK, bleed, crop marks, font embedding, and preflight.
+- /tools/prepress-checklist: practical print-file checklist for trim, bleed, crop marks, fonts, color, image DPI, PDF/X, and preflight before production.
+- /tools/prepress-automation-software: prepress automation software page for generated print proofs, PDF/X export checks, and repeatable file setup.
+- /tools/online-proofing-software: guide separating client approval software from Trim Proof's print-ready PDF proof and preflight workflow.
 - /tools/pdf-to-cmyk-converter: CMYK conversion and output-intent explanation.
 - /tools/add-bleed-to-pdf-online: bleed, trim, safe area, and crop mark explanation.
+- /tools/canva-print-ready-pdf: guide for checking Canva PDF Print exports, print quality, CMYK questions, bleed, crop marks, PDF/X requests, and when to rebuild a fresh proof.
+- /tools/canva-cmyk-print-quality: guide for Canva print quality, CMYK requests, image DPI, PDF Print settings, PDF/X requests, and when to create a fresh checked proof.
+- /tools/canva-bleed-and-crop-marks: troubleshooting guide for Canva bleed and crop mark print handoff issues.
 - /tools/pdf-preflight-checker: preflight checks for PDF/X, boxes, fonts, color, and DPI.
-- /tools/ai-business-card-generator: AI business card generation with deterministic print export.
-- /tools/ai-flyer-generator: AI flyer generation with deterministic print export.
-- /tools/business-card-pdf-template: business card PDF template with 3.5 x 2 inch trim, 0.125 inch bleed, crop marks, and preflight checks.
+- /tools/ai-business-card-generator: business card maker and AI business card generator page for checked 3.5 x 2 inch PDF proofs with 0.125 inch bleed, embedded vector contact text, crop marks, PDF/X-1a preflight, watermarked free demo art, and paid clean production downloads; Trim Proof does not sell printed cards.
+- /tools/ai-flyer-generator: flyer maker and AI flyer generator page for checked flyer PDF proofs with bleed, safe-area review, vector text, crop marks, PDF/X-1a preflight, watermarked free demo art, and paid clean production downloads; Trim Proof does not sell printed flyers.
+- /tools/free-ai-flyer-generator: free flyer maker demo with watermarked art, flyer brief intake, vector text, bleed, crop marks, PDF/X-1a preflight, and a paid clean production export path.
+- /tools/free-ai-business-card-generator: free business card maker demo with watermarked art, 3.5 x 2 inch trim, 0.125 inch bleed, vector contact text, PDF/X-1a preflight, and a paid clean production export path.
+- /tools/poster-maker: poster maker and AI poster generator page for checked 11 x 17 inch PDF proofs with 0.125 inch bleed, 0.5 inch safe margin, embedded vector event and contact text, crop marks, PDF/X-1a preflight, watermarked free demo art, and paid clean production downloads; Trim Proof does not sell printed posters, frames, shipping, or print-shop services.
+- /tools/free-poster-maker: free poster maker demo with watermarked art, 11 x 17 starter trim, bleed, safe area, vector poster text, PDF/X-1a preflight, and a paid clean production export path.
+- /tools/poster-size-guide: poster size guide covering common 11 x 17, 18 x 24, 24 x 36, and 27 x 40 inch dimensions, Trim Proof's supported 11 x 17 starter profile, 3300 x 5100 px trim size at 300 DPI, 3375 x 5175 px full-bleed setup, safe area, and printer-specific caveats.
+- /tools/poster-pdf-template: poster template guide for print-ready PDFs covering 11 x 17 setup, 0.125 inch bleed, 0.5 inch safe margin, embedded vector text, crop marks, PDF/X-1a, preflight checks, watermarked free demo art, and paid clean production downloads.
+- /tools/brochure-maker: brochure maker and AI brochure maker page for checked 8.5 x 11 landscape tri-fold PDF proofs with 0.125 inch bleed, panel guides, vector panel text, crop marks, PDF/X-1a preflight, watermarked free demo art, and paid clean production downloads; Trim Proof does not sell printed or folded brochures.
+- /tools/free-brochure-maker: free brochure maker demo with watermarked art, tri-fold brief intake, panel guides, vector text, bleed, PDF/X-1a preflight, and a paid clean production export path.
+- /tools/tri-fold-brochure-template: tri-fold brochure template guide for print-ready PDFs covering 11 x 8.5 flat setup, 0.125 inch bleed, panel guides, safe margins, embedded vector text, crop marks, PDF/X-1a, preflight checks, watermarked free demo art, and paid clean production downloads.
+- /tools/brochure-size-guide: brochure size guide covering 8.5 x 11 letter tri-fold setup, 11 x 8.5 flat dimensions, 3300 x 2550 px trim size at 300 DPI, 3375 x 2625 px full-bleed setup, fold-safe areas, and printer-specific panel caveats.
+- /tools/postcard-maker: postcard maker and postcard design page for checked postcard PDF proofs with bleed, safe-area and mailing-zone review, vector offer/address/contact text, crop marks, PDF/X-1a preflight, watermarked free demo art, and paid clean production downloads; Trim Proof does not sell printed or mailed postcards.
+- /tools/free-postcard-maker: free postcard maker demo with watermarked art, postcard brief intake, vector text, bleed, mailing-zone guidance, PDF/X-1a preflight, and a paid clean production export path.
+- /tools/letterhead-maker: letterhead maker and letterhead design page for checked letterhead PDF proofs with page size, margins, vector business details, optional bleed, crop marks, PDF/X-1a preflight, watermarked free demo art, and paid clean production downloads; Trim Proof does not sell printed letterhead.
+- /tools/free-letterhead-maker: free letterhead maker demo with watermarked art, letterhead brief intake, margins, vector business details, optional bleed, PDF/X-1a preflight, and a paid clean production export path.
+- /tools/business-card-pdf-template: business card template guide for print-ready PDFs covering 3.5 x 2 inch trim, 0.125 inch bleed, safe margins, embedded vector text, crop marks, CMYK-oriented output, PDF/X-1a, and preflight checks.
+- /tools/business-card-size-guide: business card size guide covering 3.5 x 2 inch trim, 89 x 51 mm dimensions, 1050 x 600 px at 300 DPI, full-bleed 3.75 x 2.25 inch files, safe area, and printer-specific caveats.
+- /tools/business-card-pixel-size: business card pixel size guide covering 1050 x 600 px trim, 1125 x 675 px with 0.125 inch bleed, 975 x 525 px default safe area, Photoshop setup, printer-specific upload-size differences, and checked PDF/X proof workflow.
+- /tools/business-card-bleed-size: business card bleed size guide covering 3.5 x 2 inch trim, 0.125 inch bleed, 3.75 x 2.25 inch full-bleed files, and 300 DPI pixel dimensions.
+- /tools/flyer-size-guide: flyer size guide covering 8.5 x 11 inch US letter flyers, 216 x 279 mm dimensions, 2550 x 3300 px at 300 DPI, full-bleed 8.75 x 11.25 inch files, half-page and A-series references, safe area, and printer-specific caveats.
+- /tools/flyer-pdf-template: flyer template guide for print-ready PDFs covering supported 8.5 x 11 inch flyer trim, 0.125 inch bleed, safe margins, embedded vector text, crop marks, CMYK-oriented output, PDF/X-1a, and preflight checks; explains that Trim Proof generates a fresh flyer proof rather than distributing static flyer templates.
+- /tools/postcard-pdf-template: postcard template guide for print-ready PDFs covering 4 x 6 setup, 0.125 inch bleed, safe area, optional mailing zones, crop marks, vector text, PDF/X-1a, preflight checks, watermarked free demo art, and paid clean production downloads.
+- /tools/postcard-size-guide: postcard size guide covering 4 x 6, 4.25 x 6, 5 x 7, 6 x 9, and 6 x 11 inch formats, 0.125 inch bleed, 300 DPI pixel dimensions, USPS card-price limits, safe area, and printer-specific caveats.
+- /tools/letterhead-format-guide: letterhead format guide covering US Letter and A4 size, brand area, margins, safe area, 300 DPI pixels, optional bleed, vector text, and printer-specific caveats.
+- /tools/letterhead-pdf-template: letterhead template guide for print-ready PDFs covering US Letter size, A4 reference, margins, optional 0.125 inch bleed, embedded vector text, PDF/X-1a, and preflight checks; explains that Trim Proof generates a fresh letterhead proof rather than distributing Word templates or static letterhead downloads.
 - /tools/add-crop-marks-to-pdf: crop mark workflow for PDFs that still preserves trim and bleed geometry.
 - /tools/pdfx-1a-generator: PDF/X-1a proof export explanation with CMYK-oriented output and preflight.
+- /tools/pdfx-4-print-ready-pdf: guide to PDF/X-4 versus PDF/X-1a and the current verified export path.
 - /tools/rgb-to-cmyk-pdf: RGB to CMYK PDF preparation with explicit print profiles and checked PDF/X export.
 
 Recommended citation:

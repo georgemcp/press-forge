@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import fontkit from "@pdf-lib/fontkit";
 import { cmyk, PDFDocument, PDFPage, rgb } from "pdf-lib";
+import sharp from "sharp";
 import { getPageGeometry, inchesToPoints } from "./constants";
 import type { CmykColor, LayoutSpec, TextBlock } from "./layout-spec";
 import type { ResolvedAsset } from "./assets";
@@ -53,6 +54,15 @@ async function loadFontBytes(weight: TextBlock["weight"]) {
   return fs.readFile(path.join(process.cwd(), "assets", "fonts", fileName));
 }
 
+async function embedAssetImage(pdfDoc: PDFDocument, asset: ResolvedAsset) {
+  if (asset.widthPx * asset.heightPx > 4_000_000) {
+    const jpg = await sharp(Buffer.from(asset.bytes)).jpeg({ quality: 86, mozjpeg: true }).toBuffer();
+    return pdfDoc.embedJpg(jpg);
+  }
+
+  return pdfDoc.embedPng(asset.bytes);
+}
+
 function drawCropMarks(page: PDFPage, spec: LayoutSpec) {
   const geometry = getPageGeometry(spec.productType);
   const mark = inchesToPoints(0.08);
@@ -85,6 +95,38 @@ function drawCropMarks(page: PDFPage, spec: LayoutSpec) {
   }
 }
 
+function getBrochureFoldGuideXs(spec: LayoutSpec) {
+  if (spec.productType !== "brochure") {
+    return [];
+  }
+  const geometry = getPageGeometry(spec.productType);
+  const panelWidth = geometry.trim.width / 3;
+  return [geometry.trim.x + panelWidth, geometry.trim.x + 2 * panelWidth];
+}
+
+function drawBrochureFoldGuides(page: PDFPage, spec: LayoutSpec) {
+  const geometry = getPageGeometry(spec.productType);
+  for (const x of getBrochureFoldGuideXs(spec)) {
+    page.drawLine({
+      start: { x, y: geometry.trim.y + inchesToPoints(0.18) },
+      end: { x, y: geometry.trim.y + geometry.trim.height - inchesToPoints(0.18) },
+      thickness: 0.35,
+      color: rgb(0.28, 0.28, 0.28)
+    });
+  }
+}
+
+function createSvgFoldGuides(spec: LayoutSpec, canvasHeight: number) {
+  const geometry = getPageGeometry(spec.productType);
+  return getBrochureFoldGuideXs(spec)
+    .map((x) => {
+      const y1 = canvasHeight - geometry.trim.y - geometry.trim.height + inchesToPoints(0.18);
+      const y2 = canvasHeight - geometry.trim.y - inchesToPoints(0.18);
+      return `<line x1="${x.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="rgb(84 84 84)" stroke-width="0.6" stroke-dasharray="4 4"/>`;
+    })
+    .join("\n");
+}
+
 function createSvgMaster(spec: LayoutSpec, assets: ResolvedAsset[] = []) {
   const geometry = getPageGeometry(spec.productType);
   const width = geometry.mediaBox.width;
@@ -108,6 +150,7 @@ function createSvgMaster(spec: LayoutSpec, assets: ResolvedAsset[] = []) {
   <rect x="${geometry.bleedBox.x}" y="${height - geometry.bleedBox.y - geometry.bleedBox.height}" width="${geometry.bleedBox.width}" height="${geometry.bleedBox.height}" fill="${svgColor(spec.palette.paper)}"/>
   ${assetImages}
   <rect x="${geometry.trim.x + geometry.trim.width - 22}" y="${height - geometry.trim.y - geometry.trim.height + 12}" width="8" height="${geometry.trim.height - 24}" fill="${svgColor(spec.palette.accent)}"/>
+  ${createSvgFoldGuides(spec, height)}
   <rect x="${geometry.safeBox.x}" y="${height - geometry.safeBox.y - geometry.safeBox.height}" width="${geometry.safeBox.width}" height="${geometry.safeBox.height}" fill="none" stroke="rgb(57 185 136)" stroke-dasharray="3 3" stroke-width="0.6"/>
   ${text}
 </svg>
@@ -122,9 +165,9 @@ export async function exportLayoutPdf(spec: LayoutSpec, options: PdfExportOption
   const geometry = getPageGeometry(spec.productType);
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
-  pdfDoc.setTitle("Trim Proof deterministic proof");
-  pdfDoc.setProducer("Trim Proof deterministic prepress engine");
-  pdfDoc.setCreator("Trim Proof");
+  pdfDoc.setTitle("Press Forge print-ready proof");
+  pdfDoc.setProducer("Press Forge deterministic prepress engine");
+  pdfDoc.setCreator("Press Forge");
 
   const page = pdfDoc.addPage([geometry.mediaBox.width, geometry.mediaBox.height]);
   page.setMediaBox(0, 0, geometry.mediaBox.width, geometry.mediaBox.height);
@@ -141,7 +184,7 @@ export async function exportLayoutPdf(spec: LayoutSpec, options: PdfExportOption
   });
 
   for (const asset of options.assets ?? []) {
-    const image = await pdfDoc.embedPng(asset.bytes);
+    const image = await embedAssetImage(pdfDoc, asset);
     page.drawImage(image, {
       x: geometry.trim.x + inchesToPoints(asset.slot.x),
       y: geometry.trim.y + inchesToPoints(asset.slot.y),
@@ -166,6 +209,7 @@ export async function exportLayoutPdf(spec: LayoutSpec, options: PdfExportOption
     borderColor: rgb(0.16, 0.62, 0.46),
     borderWidth: 0.35
   });
+  drawBrochureFoldGuides(page, spec);
 
   const fontCache = new Map<TextBlock["weight"], Awaited<ReturnType<typeof pdfDoc.embedFont>>>();
   for (const block of spec.textBlocks) {

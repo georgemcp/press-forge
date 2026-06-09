@@ -10,7 +10,7 @@ export interface ProofDeliveryManifest {
   createdAt: string;
 }
 
-const productionArtifactPattern = /^trimproof-(?:business-card|postcard|flyer|letterhead)\.(?:source\.pdf|pdfx\.pdf|master\.svg)$/;
+const productionArtifactPattern = /^pressforge-(?:business-card|postcard|flyer|poster|brochure|letterhead)\.(?:source\.pdf|pdfx\.pdf|master\.svg)$/;
 
 export function isProductionArtifact(fileName: string) {
   return productionArtifactPattern.test(fileName);

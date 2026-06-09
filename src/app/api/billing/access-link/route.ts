@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
+import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { getAppUrl } from "@/lib/billing/stripe";
 import { verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
 import { buildAccessLinkEmail } from "@/lib/billing/access-link-email";
@@ -57,13 +58,23 @@ async function findReusableOrder(email: string) {
 }
 
 export async function POST(request: Request) {
+  const account = await getAccountSessionFromCookies();
+  if (!account) {
+    return NextResponse.json({ error: "Sign in before requesting an access link." }, { status: 401 });
+  }
+
   const payload = await request.json().catch(() => undefined);
   const parsed = accessLinkSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json({ error: "Enter a valid billing email." }, { status: 400 });
   }
 
-  const email = normalizeEmail(parsed.data.email);
+  const requestedEmail = normalizeEmail(parsed.data.email);
+  if (requestedEmail !== account.email) {
+    return NextResponse.json({ error: "Access links can only be requested for the signed-in account email." }, { status: 403 });
+  }
+
+  const email = account.email;
   const { order, error } = await findReusableOrder(email);
   if (error) {
     return NextResponse.json({ error }, { status: 503 });

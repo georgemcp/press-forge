@@ -23,6 +23,11 @@ import { getAnalyticsAttribution } from "@/lib/analytics/attribution";
 
 const answerBlocks = [
   {
+    question: "What does Trim Proof do?",
+    answer:
+      "Trim Proof turns plain-English briefs for flyers, posters, brochures, business cards, postcards, and letterhead into print-ready PDF/X proofs with bleed, crop marks, embedded vector text, CMYK-oriented output, and preflight checks."
+  },
+  {
     question: "What is a print-ready PDF?",
     answer:
       "A print-ready PDF has the correct final size, bleed, crop marks, embedded fonts, high-resolution images, and a printer-safe color workflow. Trim Proof creates and checks those properties before a file is delivered."
@@ -35,22 +40,58 @@ const answerBlocks = [
   {
     question: "What is dummy proof mode?",
     answer:
-      "Dummy proof mode gives visitors a fast sample business-card proof so they can see the bleed, trim, safe area, crop marks, and preflight report without setting up a full production job."
+      "Dummy proof mode gives visitors a fast sample proof with watermarked art so they can see the bleed, trim, safe area, crop marks, and preflight report before paying for a clean production download."
   }
 ];
 
 const keywordTargets = [
-  "AI flyer generator",
-  "AI business card generator",
-  "print ready PDF",
-  "PDF/X-1a",
-  "convert PDF to CMYK",
-  "add bleed to PDF online",
-  "PDF preflight checker"
+  { label: "AI flyer generator", href: "/tools/ai-flyer-generator" },
+  { label: "AI flyer maker", href: "/tools/ai-flyer-generator" },
+  { label: "Flyer maker", href: "/tools/ai-flyer-generator" },
+  { label: "Free flyer maker", href: "/tools/free-ai-flyer-generator" },
+  { label: "Free AI flyer generator", href: "/tools/free-ai-flyer-generator" },
+  { label: "Business card maker", href: "/tools/ai-business-card-generator" },
+  { label: "Free business card maker", href: "/tools/free-ai-business-card-generator" },
+  { label: "AI business card generator", href: "/tools/ai-business-card-generator" },
+  { label: "Poster maker", href: "/tools/poster-maker" },
+  { label: "Free poster maker", href: "/tools/free-poster-maker" },
+  { label: "AI poster generator", href: "/tools/poster-maker" },
+  { label: "Poster size", href: "/tools/poster-size-guide" },
+  { label: "Poster template", href: "/tools/poster-pdf-template" },
+  { label: "Brochure maker", href: "/tools/brochure-maker" },
+  { label: "Free brochure maker", href: "/tools/free-brochure-maker" },
+  { label: "Tri-fold brochure template", href: "/tools/tri-fold-brochure-template" },
+  { label: "Brochure size", href: "/tools/brochure-size-guide" },
+  { label: "Print ready PDF", href: "/tools/print-ready-pdf-generator" },
+  { label: "Print-ready artwork", href: "/tools/print-ready-artwork" },
+  { label: "Convert PDF to CMYK", href: "/tools/pdf-to-cmyk-converter" },
+  { label: "Add bleed to PDF online", href: "/tools/add-bleed-to-pdf-online" },
+  { label: "PDF preflight checker", href: "/tools/pdf-preflight-checker" },
+  { label: "PDF/X-4", href: "/tools/pdfx-4-print-ready-pdf" },
+  { label: "Canva print quality", href: "/tools/canva-cmyk-print-quality" },
+  { label: "Canva print ready PDF", href: "/tools/canva-print-ready-pdf" },
+  { label: "Canva bleed and crop marks", href: "/tools/canva-bleed-and-crop-marks" },
+  { label: "Online prepress tools", href: "/tools/online-pdf-prepress-tools" },
+  { label: "Prepress checklist", href: "/tools/prepress-checklist" },
+  { label: "Prepress software", href: "/tools/prepress-automation-software" },
+  { label: "Proofing software", href: "/tools/online-proofing-software" },
+  { label: "Flyer size", href: "/tools/flyer-size-guide" },
+  { label: "Business card size", href: "/tools/business-card-size-guide" },
+  { label: "Business card pixel size", href: "/tools/business-card-pixel-size" },
+  { label: "Business card bleed size", href: "/tools/business-card-bleed-size" },
+  { label: "Flyer PDF template", href: "/tools/flyer-pdf-template" },
+  { label: "Postcard maker", href: "/tools/postcard-maker" },
+  { label: "Free postcard maker", href: "/tools/free-postcard-maker" },
+  { label: "Postcard template", href: "/tools/postcard-pdf-template" },
+  { label: "Postcard size", href: "/tools/postcard-size-guide" },
+  { label: "Letterhead maker", href: "/tools/letterhead-maker" },
+  { label: "Free letterhead maker", href: "/tools/free-letterhead-maker" },
+  { label: "Letterhead format", href: "/tools/letterhead-format-guide" },
+  { label: "Letterhead template", href: "/tools/letterhead-pdf-template" }
 ];
 
 const proofMetrics = [
-  ["Trim", "3.5 x 2 in"],
+  ["Trim", "starter profiles"],
   ["Bleed", "0.125 in"],
   ["Images", "300 DPI gate"],
   ["Text", "Vector embedded"],
@@ -59,7 +100,7 @@ const proofMetrics = [
 ];
 
 const workflowCards: Array<[string, string, LucideIcon]> = [
-  ["01 Brief", "Plain-English job intake for cards, flyers, postcards, and letterhead.", Sparkles],
+  ["01 Brief", "Plain-English job intake for cards, flyers, posters, brochures, postcards, and letterhead.", Sparkles],
   ["02 Creative", "Image models create decorative art while final text stays deterministic.", Layers3],
   ["03 Geometry", "Trim, bleed, safe area, crop marks, ICC profile, and boxes are built exactly.", Ruler],
   ["04 Gate", "PDF/X, fonts, color, and DPI checks decide whether the file is safe to export.", ShieldCheck]
@@ -70,31 +111,31 @@ const pricingPlans = [
     id: "dummy",
     name: "Dummy proof",
     price: "$0",
-    cadence: "sample",
-    body: "See bleed, trim, safe-area guides, crop marks, and a preflight report before paying.",
-    cta: "Run dummy proof",
-    href: "/app",
-    features: ["Sample business-card proof", "Preflight report", "No account required"]
+    cadence: "account demo",
+    body: "Create a free account, then see bleed, trim, safe-area guides, crop marks, and a preflight report.",
+    cta: "Create demo account",
+    href: "/signup?intent=demo&next=/app",
+    features: ["Account required", "Sample business-card proof", "Preflight report"]
   },
   {
     id: "export",
     name: "Export credit",
-    price: "$9",
+    price: "$12",
     cadence: "per export",
     body: "Unlock one advanced PDF/X export when a specific job needs a printer-ready file.",
     cta: "Buy export credit",
-    href: "/app?mode=advanced",
+    href: "/signup?intent=single_export&next=/app%3Fmode%3Dadvanced",
     features: ["PDF/X-1a export", "CMYK conversion", "Credit consumed on generated proof"]
   },
   {
     id: "pro",
     name: "Trim Proof Pro",
-    price: "$29",
+    price: "$49",
     cadence: "per month",
-    body: "Use advanced mode for repeat print work without buying one credit at a time.",
+    body: "Use advanced mode for recurring print work without buying one credit at a time.",
     cta: "Start Pro",
-    href: "/app?mode=advanced",
-    features: ["Subscription checkout", "Advanced export controls", "Built for frequent jobs"]
+    href: "/signup?intent=pro&next=/app%3Fmode%3Dadvanced",
+    features: ["15 advanced exports per month", "Subscription checkout", "Built for frequent jobs"]
   }
 ];
 
@@ -121,12 +162,12 @@ function JsonLd() {
           "@type": "AggregateOffer",
           priceCurrency: "USD",
           lowPrice: "0",
-          highPrice: "29",
+          highPrice: "49",
           offerCount: 3,
           offers: [
             { "@type": "Offer", name: "Dummy proof", price: "0", priceCurrency: "USD" },
-            { "@type": "Offer", name: "Export credit", price: "9", priceCurrency: "USD" },
-            { "@type": "Offer", name: "Trim Proof Pro", price: "29", priceCurrency: "USD" }
+            { "@type": "Offer", name: "Export credit", price: "12", priceCurrency: "USD" },
+            { "@type": "Offer", name: "Trim Proof Pro", price: "49", priceCurrency: "USD" }
           ]
         }
       },
@@ -145,10 +186,10 @@ function JsonLd() {
         "@type": "HowTo",
         name: "How to create a print-ready PDF with Trim Proof",
         step: [
-          { "@type": "HowToStep", name: "Write a brief", text: "Describe the business card, flyer, postcard, or letterhead you need." },
-          { "@type": "HowToStep", name: "Choose a proof mode", text: "Use dummy proof mode for a fast sample or advanced mode for full PDF/X export controls." },
+          { "@type": "HowToStep", name: "Write a brief", text: "Describe the business card, flyer, poster, brochure, postcard, or letterhead you need." },
+          { "@type": "HowToStep", name: "Choose a proof mode", text: "Use dummy proof mode for a fast watermarked sample or advanced mode for full PDF/X export controls." },
           { "@type": "HowToStep", name: "Run preflight", text: "Trim Proof checks trim, bleed, fonts, color workflow, image DPI, and PDF/X status." },
-          { "@type": "HowToStep", name: "Download the file", text: "Download the validated file after the preflight gate passes or is flagged for review." }
+          { "@type": "HowToStep", name: "Download the file", text: "Use paid advanced export to download the clean production PDF/X file after the preflight gate passes or is flagged for review." }
         ]
       }
     ]
@@ -224,16 +265,17 @@ export function MarketingSite() {
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-semibold text-muted md:flex">
             <a href="#how-it-works">How it works</a>
-            <a href="#pricing">Pricing</a>
+            <Link href="/pricing">Pricing</Link>
             <a href="#seo-pages">Tools</a>
+            <Link href="/about">About</Link>
             <a href="#faq">FAQ</a>
           </nav>
           <Link
             className="inline-flex h-10 items-center justify-center gap-2 rounded-[8px] bg-surface-ink px-4 text-sm font-semibold text-white"
-            href="/app"
+            href="/signup?intent=demo&next=/app"
             onClick={() => trackEvent("dummy_proof_started", { source: "nav" })}
           >
-            Try dummy proof
+            Create account
             <ArrowRight aria-hidden className="h-4 w-4" />
           </Link>
         </div>
@@ -257,27 +299,27 @@ export function MarketingSite() {
                 AI upstream <MoveRight aria-hidden className="h-3.5 w-3.5" /> deterministic prepress downstream
               </p>
               <h1 className="max-w-4xl font-display text-[clamp(2.65rem,7.4vw,6.4rem)] font-bold leading-[0.92] text-white">
-                Trim Proof makes AI art press-ready.
+                AI print-ready PDF generator for flyers, posters, brochures, and business cards.
             </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-white/86 md:mt-6 md:text-lg md:leading-8">
-                Turn a plain-English brief into a print-ready PDF/X proof with CMYK output, crop marks, embedded vector fonts,
-                correct boxes, and a preflight gate before download.
+                Trim Proof turns a plain-English print brief into a checked PDF/X proof with CMYK output, crop marks,
+                embedded vector fonts, correct boxes, and a preflight gate before download.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-[8px] bg-accent px-5 text-sm font-bold text-accent-ink shadow-[0_18px_50px_oklch(0.58_0.22_342_/_0.35)]"
-                  href="/app"
+                  href="/signup?intent=demo&next=/app"
                   onClick={() => trackEvent("dummy_proof_started", { source: "hero" })}
                 >
-                  Run a dummy proof
+                  Create demo account
                   <ArrowRight aria-hidden className="h-4 w-4" />
                 </Link>
                 <Link
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-[8px] border border-white/28 bg-white/12 px-5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/18"
-                  href="/app?mode=advanced"
+                  href="/signup?intent=pro&next=/app%3Fmode%3Dadvanced"
                   onClick={() => trackEvent("advanced_mode_selected", { source: "hero" })}
                 >
-                  Open advanced mode
+                  Start advanced mode
                 </Link>
               </div>
             </div>
@@ -324,7 +366,7 @@ export function MarketingSite() {
               ["Creative output", "AI-generated imagery and decorative art"],
               ["Layout contract", "Typed text blocks, trim size, safe area, bleed, crop marks"],
               ["Preflight evidence", "PDF/X status, color profile, fonts, DPI, and box checks"],
-              ["Paid delivery", "Stripe-backed export credits or monthly advanced mode"]
+              ["Paid delivery", "Stripe-backed export credits or Pro with 15 monthly exports"]
             ].map(([label, value]) => (
               <div key={label} className="grid gap-2 py-4 sm:grid-cols-[180px_1fr]">
                 <p className="text-xs font-bold uppercase text-muted">{label}</p>
@@ -390,19 +432,22 @@ export function MarketingSite() {
             <SearchCheck aria-hidden className="h-6 w-6 text-brand" />
             <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Built around the searches print buyers actually make.</h2>
             <p className="mt-4 text-base leading-7 text-muted">
-              DataForSEO research showed demand around AI flyer generation, AI business cards, CMYK PDF conversion,
-              PDF/X-1a, print-ready PDFs, and business cards with bleed. The product and content architecture target those
-              jobs directly.
+              DataForSEO research refreshed on June 6 and June 7, 2026 showed demand around AI flyer generation, AI
+              flyer makers, flyer size, poster maker, free poster maker, poster size, poster templates, AI poster
+              generator, AI business cards, CMYK PDF conversion, PDF/X-1a, print-ready PDFs, Canva print quality and
+              CMYK questions, prepress checklists, proofing software, prepress software, brochures, postcards, letterhead format,
+              and business cards with bleed. The product and content architecture target those jobs
+              directly.
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
             {keywordTargets.map((keyword) => (
               <Link
-                key={keyword}
+                key={keyword.label}
                 className="group flex min-h-14 items-center justify-between border-b border-border bg-surface/70 px-4 font-semibold text-surface-ink transition hover:bg-brand-soft/55"
-                href="/tools/print-ready-pdf-generator"
+                href={keyword.href}
               >
-                <span>{keyword}</span>
+                <span>{keyword.label}</span>
                 <ArrowRight aria-hidden className="h-4 w-4 text-muted transition group-hover:translate-x-1 group-hover:text-brand" />
               </Link>
             ))}
@@ -439,10 +484,19 @@ export function MarketingSite() {
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm font-semibold text-muted sm:flex-row sm:items-center sm:justify-between">
           <span>Trim Proof. AI creative upstream, deterministic prepress downstream.</span>
           <div className="flex gap-4">
+            <Link className="transition hover:text-surface-ink" href="/about">
+              About
+            </Link>
+            <Link className="transition hover:text-surface-ink" href="/tools">
+              Tools
+            </Link>
+            <Link className="transition hover:text-surface-ink" href="/pricing">
+              Pricing
+            </Link>
             <Link className="transition hover:text-surface-ink" href="/privacy">
               Privacy
             </Link>
-            <Link className="transition hover:text-surface-ink" href="/app">
+            <Link className="transition hover:text-surface-ink" href="/signup?intent=demo&next=/app">
               App
             </Link>
           </div>

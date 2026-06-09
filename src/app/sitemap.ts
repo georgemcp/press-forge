@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
+import { getSiteOrigin } from "@/lib/seo/site-url";
 import { toolPages } from "@/lib/seo/tool-pages";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const host = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const host = getSiteOrigin();
   const now = new Date();
   return [
     {
@@ -12,10 +13,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1
     },
     {
-      url: `${host}/app`,
+      url: `${host}/about`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.65
+    },
+    {
+      url: `${host}/tools`,
       lastModified: now,
       changeFrequency: "weekly",
-      priority: 0.8
+      priority: 0.85
+    },
+    {
+      url: `${host}/pricing`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7
     },
     {
       url: `${host}/privacy`,

@@ -11,14 +11,49 @@ export interface PaidCheckoutSession {
   customerEmail?: string;
   subscriptionId?: string;
   subscriptionStatus?: string;
+  subscriptionPeriodStart?: string;
+  subscriptionPeriodEnd?: string;
   consumed?: boolean;
 }
 
 const activeSubscriptionStatuses = new Set(["active", "trialing"]);
 const unavailableExportCreditStatuses = new Set(["processing", "consumed", "refunded", "expired"]);
+const countedSubscriptionUsageStatuses = ["processing", "completed"];
+
+function parsePositiveInteger(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : fallback;
+}
+
+export function getSubscriptionMonthlyExportLimit() {
+  return parsePositiveInteger(process.env.TRIMPROOF_PRO_MONTHLY_EXPORT_LIMIT, 15);
+}
 
 function getSessionCustomerEmail(session: Stripe.Checkout.Session) {
   return session.customer_details?.email ?? session.customer_email ?? undefined;
+}
+
+function unixTimestampToIso(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? new Date(value * 1000).toISOString() : undefined;
+}
+
+function fallbackMonthlyPeriod(now = new Date()) {
+  const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const periodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  return {
+    periodStart: periodStart.toISOString(),
+    periodEnd: periodEnd.toISOString()
+  };
+}
+
+function subscriptionPeriod(subscription: Stripe.Subscription) {
+  const record = subscription as unknown as Record<string, unknown>;
+  const periodStart = unixTimestampToIso(record.current_period_start);
+  const periodEnd = unixTimestampToIso(record.current_period_end);
+  if (periodStart && periodEnd) {
+    return { periodStart, periodEnd };
+  }
+  return fallbackMonthlyPeriod();
 }
 
 export async function verifyPaidCheckoutSession(sessionId?: string): Promise<PaidCheckoutSession | undefined> {
@@ -44,6 +79,8 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
   const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
   let subscriptionId: string | undefined;
   let subscriptionStatus: string | undefined;
+  let subscriptionPeriodStart: string | undefined;
+  let subscriptionPeriodEnd: string | undefined;
   if (session.mode === "subscription") {
     subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
     if (!subscriptionId) {
@@ -54,6 +91,9 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
     if (!activeSubscriptionStatuses.has(subscription.status)) {
       throw new Error("Subscription is not active.");
     }
+    const period = subscriptionPeriod(subscription);
+    subscriptionPeriodStart = period.periodStart;
+    subscriptionPeriodEnd = period.periodEnd;
   }
 
   const supabase = createServiceSupabaseClient();
@@ -78,6 +118,8 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
         customerEmail: getSessionCustomerEmail(session),
         subscriptionId,
         subscriptionStatus,
+        subscriptionPeriodStart,
+        subscriptionPeriodEnd,
         consumed
       };
     }
@@ -109,8 +151,87 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
     customerEmail: getSessionCustomerEmail(session),
     subscriptionId,
     subscriptionStatus,
+    subscriptionPeriodStart,
+    subscriptionPeriodEnd,
     consumed
   };
+}
+
+export async function claimSubscriptionExport(session: PaidCheckoutSession, userId: string, proofJobId: string) {
+  const supabase = createServiceSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase service client is required to claim subscription exports.");
+  }
+  if (!session.subscriptionId) {
+    throw new Error("Subscription export is missing a Stripe subscription ID.");
+  }
+
+  const fallbackPeriod = fallbackMonthlyPeriod();
+  const periodStart = session.subscriptionPeriodStart ?? fallbackPeriod.periodStart;
+  const periodEnd = session.subscriptionPeriodEnd ?? fallbackPeriod.periodEnd;
+  const limit = getSubscriptionMonthlyExportLimit();
+  const { count, error: countError } = await supabase
+    .from("subscription_export_usage")
+    .select("id", { count: "exact", head: true })
+    .eq("stripe_subscription_id", session.subscriptionId)
+    .gte("created_at", periodStart)
+    .lt("created_at", periodEnd)
+    .in("status", countedSubscriptionUsageStatuses);
+
+  if (countError) {
+    throw new Error(countError.message);
+  }
+  if ((count ?? 0) >= limit) {
+    throw new Error(`This Pro subscription has reached its ${limit} advanced exports for the current billing month.`);
+  }
+
+  const { error } = await supabase.from("subscription_export_usage").insert({
+    user_id: userId,
+    stripe_subscription_id: session.subscriptionId,
+    stripe_session_id: session.id,
+    proof_job_id: proofJobId,
+    status: "processing",
+    period_start: periodStart,
+    period_end: periodEnd
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function finalizeSubscriptionExport(proofJobId: string) {
+  const supabase = createServiceSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase service client is required to finalize subscription exports.");
+  }
+
+  const { error } = await supabase
+    .from("subscription_export_usage")
+    .update({
+      status: "completed"
+    })
+    .eq("proof_job_id", proofJobId)
+    .eq("status", "processing");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function releaseSubscriptionExport(proofJobId: string) {
+  const supabase = createServiceSupabaseClient();
+  if (!supabase) {
+    return;
+  }
+
+  await supabase
+    .from("subscription_export_usage")
+    .update({
+      status: "failed"
+    })
+    .eq("proof_job_id", proofJobId)
+    .eq("status", "processing");
 }
 
 export async function claimExportCredit(sessionId: string, proofJobId: string) {

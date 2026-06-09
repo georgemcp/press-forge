@@ -140,13 +140,19 @@ export async function POST(request: Request) {
     if (charge.refunded && paymentIntentId) {
       await updateExportOrdersByPaymentIntentId(supabase, paymentIntentId, "refunded");
     }
+  } else if (event.type === "invoice.paid") {
+    const invoice = event.data.object;
+    const subscriptionId = invoiceSubscriptionId(invoice);
+    if (subscriptionId) {
+      await updateExportOrdersBySubscriptionId(supabase, subscriptionId, "paid");
+    }
   } else if (event.type === "invoice.payment_failed") {
     const invoice = event.data.object;
     const subscriptionId = invoiceSubscriptionId(invoice);
     if (subscriptionId) {
       await updateExportOrdersBySubscriptionId(supabase, subscriptionId, "expired");
     }
-  } else if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+  } else if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
     const subscription = event.data.object;
     await updateExportOrdersBySubscriptionId(supabase, subscription.id, exportOrderStatusForSubscription(subscription.status));
   }

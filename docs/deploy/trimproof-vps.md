@@ -8,11 +8,11 @@ Production target:
 - App directory: `/opt/trimproof`
 - Local app port behind nginx: `3047`
 - Supabase project: `justcsfgntvtbxprcnoh`
-- Stripe prices: export credit `price_1TejgIRy14ye40TRwCxJSBu7`; monthly subscription `price_1TejgJRy14ye40TRgqMqHR9V`
+- Stripe prices: export credit `price_1TfLrqRy14ye40TRZGwCYsyi`; monthly subscription `price_1TfLrqRy14ye40TRwqtdoH7W`
 - Stripe Customer Portal configuration: `bpc_1TelBzRy14ye40TRGJb4wixa`
-- GA4 property: `properties/540372104`; web stream `15008052932`; measurement ID `G-9VNCX1HGN5`
-- Google Search Console: URL-prefix property `https://trimproof.com/` verified under `geomcpherson@gmail.com` on `2026-06-05`; sitemap `/sitemap.xml` reads as `Success` with 13 discovered pages. Domain TXT verification is published, but the optional domain property `trimproof.com` is not yet verified in Search Console.
-- Transactional email: SendGrid from `launch@trimproof.com`; admin notifications to `george.mcpherson@rightawaygroup.com`
+- GA4 property: `properties/499598107` in the Bare Getaways LLC Google account; web stream `15016978016`; measurement ID `G-20N2FZHDHV`
+- Google Search Console: domain property `trimproof.com` verified under the Bare Getaways Google account on `2026-06-06` by DNS provider verification; sitemap `/sitemap.xml` reads as `Success`, last read `2026-06-06`, with 23 discovered pages.
+- Transactional email: SendGrid from `launch@trimproof.com`; replies to `support@trimproof.com`; admin notifications and admin login use `george.mcpherson@baregetaways.com`
 - TLS: Let's Encrypt certificate at `/etc/letsencrypt/live/trimproof.com/`, expiring `2026-09-02` with scheduled auto-renewal
 
 The app is deployed with Docker Compose. Nginx terminates public HTTP/HTTPS and proxies to the app container on `127.0.0.1:3047`.
@@ -32,7 +32,7 @@ Required production env:
 - `EMAIL_PROVIDER`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, `TRIMPROOF_ADMIN_EMAIL`, and either `RESEND_API_KEY` or `SENDGRID_API_KEY` when transactional signup email is live
 - `OPENAI_API_KEY` and/or `GEMINI_API_KEY` when creative image providers are enabled
 - `OPENAI_IMAGE_MODEL=gpt-image-2` and `GEMINI_IMAGE_MODEL=gemini-3-pro-image` for the current premium creative model defaults
-- `TRIMPROOF_EXPORT_PRICE_CENTS`, `TRIMPROOF_SUBSCRIPTION_PRICE_CENTS`, `TRIMPROOF_STRIPE_FEE_BPS`, `TRIMPROOF_STRIPE_FIXED_FEE_CENTS`, and `TRIMPROOF_ESTIMATED_PROOF_COST_CENTS` when admin contribution-margin assumptions need to differ from defaults
+- `TRIMPROOF_EXPORT_PRICE_CENTS`, `TRIMPROOF_SUBSCRIPTION_PRICE_CENTS`, `TRIMPROOF_PRO_MONTHLY_EXPORT_LIMIT`, `TRIMPROOF_STRIPE_FEE_BPS`, `TRIMPROOF_STRIPE_FIXED_FEE_CENTS`, and `TRIMPROOF_ESTIMATED_PROOF_COST_CENTS` when admin contribution-margin assumptions need to differ from defaults
 
 Production email DNS:
 
@@ -45,22 +45,24 @@ Production email DNS:
 Production Google DNS and files:
 
 - Search Console domain verification TXT on root: `google-site-verification=bd3Ho8LUomJBMjQUbjya7pEtTmAsqcXCapvzVBidFcw`
+- Google Workspace domain verification TXT on root: `google-site-verification=Ndt3tGj37UhmgAO5WXtEHubtioeRvj-yve6TAOIoz0E`
 - Search Console URL-prefix verification file: `/google43b9c98a02f6c033.html`
-- Sitemap submitted in Search Console for the URL-prefix property on `2026-06-05`: `https://trimproof.com/sitemap.xml`; Search Console status: `Success`, last read `2026-06-05`, discovered pages `13`.
+- Sitemap submitted in Search Console for the Bare Getaways domain property: `https://trimproof.com/sitemap.xml`; Search Console status: `Success`, last read `2026-06-06`, discovered pages `23`.
 
 Verification:
 
 - `docker compose -f docker-compose.prod.yml ps`
 - `curl http://127.0.0.1:3047/api/health`
 - Confirm `/api/health` reports `stripeCheckoutConfigured`, `stripeWebhookConfigured`, and `stripePortalConfigured` as `true` before treating paid exports and subscription management as live.
-- Generate a proof in `/app` and verify the returned `/api/exports/proof/files/...` URL downloads a PDF.
-- Start a Checkout Session from `/app?mode=advanced` with a billing email and confirm Stripe opens a Trim Proof-branded hosted Checkout page.
-- Confirm the Stripe webhook endpoint is subscribed to `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_failed`, `charge.refunded`, `invoice.payment_failed`, `customer.subscription.updated`, and `customer.subscription.deleted` so paid access follows refunds, failed payments, and cancellations.
-- Submit `/api/billing/access-link` with a billing email and confirm active subscriptions or unused export credits receive an emailed `/app?mode=advanced&checkout=success&session_id=...` access link.
+- Visit `/app` in a fresh browser context and confirm it redirects to `/signup?next=...`; create an account before demo use.
+- Generate a signed-in demo proof in `/app` and verify demo art/previews are visibly watermarked while production PDF, source PDF, and SVG downloads remain locked.
+- Start a Checkout Session from signed-in `/app?mode=advanced` and confirm Stripe opens a Trim Proof-branded hosted Checkout page using the account email.
+- Confirm the Stripe webhook endpoint is subscribed to `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_failed`, `charge.refunded`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted` so paid access follows refunds, failed payments, recoveries, and cancellations.
+- Submit `/api/billing/access-link` while signed in and confirm active subscriptions or unused export credits receive an emailed `/app?mode=advanced&checkout=success&session_id=...` access link for that same account email.
 - For a paid subscription checkout session, submit `/api/billing/portal` and confirm Stripe opens subscription management with a return URL back to `/app`.
 - `curl -I http://trimproof.com`
 - `curl -I https://trimproof.com` after the certificate is issued
-- Browser-check `https://trimproof.com` and `https://trimproof.com/app` for `https://www.googletagmanager.com/gtag/js?id=G-9VNCX1HGN5`
+- Browser-check `https://trimproof.com` and `https://trimproof.com/app` for `https://www.googletagmanager.com/gtag/js?id=G-20N2FZHDHV`
 - Confirm `https://trimproof.com/google43b9c98a02f6c033.html` returns the Search Console verification file and `dig TXT trimproof.com` includes the domain verification token.
 - Confirm `https://trimproof.com/sitemap.xml` returns HTTP 200 with `application/xml` and remains listed in `robots.txt`.
 - Confirm `/api/health` reports `serverAnalyticsConfigured: true` when `GA4_API_SECRET` is set.

@@ -84,6 +84,38 @@ describe("LayoutSpec schema", () => {
     });
   });
 
+  it("infers poster geometry from the brief when no product is selected", () => {
+    const spec = deriveLayoutSpecFromBrief({
+      brief: "Brand: Bare Getaways; create a poster for a premium island event with warm Caribbean water"
+    });
+
+    expect(spec.productType).toBe("poster");
+    expect(spec.assetSlots[0]).toMatchObject({
+      x: -0.125,
+      y: -0.125,
+      width: 11.25,
+      height: 17.25
+    });
+    expect(spec.textBlocks.find((block) => block.id === "brand")?.content).toBe("BARE GETAWAYS");
+    expect(spec.textBlocks.find((block) => block.id === "brand")?.fontSize).toBeGreaterThan(50);
+  });
+
+  it("infers tri-fold brochure geometry from the brief when no product is selected", () => {
+    const spec = deriveLayoutSpecFromBrief({
+      brief: "Brand: Bare Getaways; create a tri-fold brochure for a premium island retreat with panel copy and booking details"
+    });
+
+    expect(spec.productType).toBe("brochure");
+    expect(spec.assetSlots[0]).toMatchObject({
+      x: -0.125,
+      y: -0.125,
+      width: 11.25,
+      height: 8.75
+    });
+    expect(spec.textBlocks.find((block) => block.id === "brand")?.content).toBe("BARE GETAWAYS");
+    expect(spec.textBlocks.find((block) => block.id === "brand")?.fontSize).toBeGreaterThan(30);
+  });
+
   it("preserves advanced prepress settings while deriving a brief", () => {
     const spec = deriveLayoutSpecFromBrief({
       brief: "Bare Getaways flyer with warm Caribbean water",

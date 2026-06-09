@@ -7,7 +7,7 @@ import { runPreflight, type PreflightReport } from "./preflight";
 import { sampleBusinessCardLayout } from "./sample-layout";
 
 function getProofFileBaseName(productType: LayoutSpec["productType"]) {
-  return `trimproof-${productType.replaceAll("_", "-")}`;
+  return `pressforge-${productType.replaceAll("_", "-")}`;
 }
 
 export interface ProofResult {
@@ -19,9 +19,19 @@ export interface ProofResult {
   assets: ResolvedAsset[];
 }
 
-export async function generateProof(input: LayoutSpec = sampleBusinessCardLayout, outputDir = path.join(process.cwd(), "artifacts", "proof")): Promise<ProofResult> {
+export interface GenerateProofOptions {
+  watermarkDemoArt?: boolean;
+}
+
+export async function generateProof(
+  input: LayoutSpec = sampleBusinessCardLayout,
+  outputDir = path.join(process.cwd(), "artifacts", "proof"),
+  options: GenerateProofOptions = {}
+): Promise<ProofResult> {
   const spec = layoutSpecSchema.parse(input);
-  const assets = await resolveLayoutAssets(spec, outputDir);
+  const assets = await resolveLayoutAssets(spec, outputDir, {
+    watermarkDemoArt: options.watermarkDemoArt
+  });
   const exportResult = await exportLayoutPdf(spec, {
     outputDir,
     fileBaseName: getProofFileBaseName(spec.productType),

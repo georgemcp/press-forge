@@ -2,7 +2,32 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { getToolPageMetadata } from "@/lib/seo/tool-page-metadata";
 import { getToolPage, toolPages, type ToolPage } from "@/lib/seo/tool-pages";
+
+const conversionPaths = [
+  {
+    name: "Create a demo account",
+    price: "$0",
+    body: "See a watermarked sample proof, bleed guides, crop marks, and preflight report before buying a clean export.",
+    href: "/signup?intent=demo&next=/app",
+    cta: "Create demo account"
+  },
+  {
+    name: "Buy one export credit",
+    price: "$12",
+    body: "Use advanced mode for one production PDF/X-1a export when a specific print job is ready.",
+    href: "/signup?intent=single_export&next=/app%3Fmode%3Dadvanced",
+    cta: "Buy export credit"
+  },
+  {
+    name: "Use Trim Proof Pro",
+    price: "$49/mo",
+    body: "Choose the subscription when repeat flyers, cards, postcards, or letterhead jobs need checked files.",
+    href: "/signup?intent=pro&next=/app%3Fmode%3Dadvanced",
+    cta: "Start Pro"
+  }
+];
 
 interface ToolPageProps {
   params: Promise<{
@@ -22,13 +47,7 @@ export async function generateMetadata({ params }: ToolPageProps): Promise<Metad
   if (!page) {
     return {};
   }
-  return {
-    title: page.title,
-    description: page.metaDescription,
-    alternates: {
-      canonical: `/tools/${page.slug}`
-    }
-  };
+  return getToolPageMetadata(page);
 }
 
 export default async function ToolLandingPage({ params }: ToolPageProps) {
@@ -37,6 +56,7 @@ export default async function ToolLandingPage({ params }: ToolPageProps) {
   if (!page) {
     notFound();
   }
+  const isGuide = page.pageType === "guide";
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -48,20 +68,33 @@ export default async function ToolLandingPage({ params }: ToolPageProps) {
           { "@type": "ListItem", position: 2, name: page.title, item: `https://trimproof.com/tools/${page.slug}` }
         ]
       },
-      {
-        "@type": "SoftwareApplication",
-        "@id": `https://trimproof.com/tools/${page.slug}#software`,
-        name: page.title,
-        applicationCategory: "DesignApplication",
-        operatingSystem: "Web",
-        description: page.answer,
-        offers: {
-          "@type": "AggregateOffer",
-          priceCurrency: "USD",
-          lowPrice: "0",
-          highPrice: "29"
-        }
-      },
+      isGuide
+        ? {
+            "@type": "Article",
+            "@id": `https://trimproof.com/tools/${page.slug}#article`,
+            headline: page.title,
+            description: page.answer,
+            about: page.keywords,
+            author: {
+              "@type": "Organization",
+              name: "Trim Proof",
+              url: "https://trimproof.com/"
+            }
+          }
+        : {
+            "@type": "SoftwareApplication",
+            "@id": `https://trimproof.com/tools/${page.slug}#software`,
+            name: page.title,
+            applicationCategory: "DesignApplication",
+            operatingSystem: "Web",
+            description: page.answer,
+            offers: {
+              "@type": "AggregateOffer",
+              priceCurrency: "USD",
+              lowPrice: "0",
+              highPrice: "49"
+            }
+          },
       {
         "@type": "HowTo",
         name: `How to use ${page.title}`,
@@ -97,8 +130,8 @@ export default async function ToolLandingPage({ params }: ToolPageProps) {
           <Link className="font-display text-lg font-bold text-surface-ink" href="/">
             Trim Proof
           </Link>
-          <Link className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-surface-ink px-4 text-sm font-semibold text-white" href="/app">
-            Try dummy proof
+          <Link className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-surface-ink px-4 text-sm font-semibold text-white" href="/signup?intent=demo&next=/app">
+            Create account
             <ArrowRight aria-hidden className="h-4 w-4" />
           </Link>
         </div>
@@ -118,12 +151,29 @@ export default async function ToolLandingPage({ params }: ToolPageProps) {
             </span>
           ))}
         </div>
+        <div className="mt-10 border-y border-border bg-surface">
+          <div className="grid gap-0 md:grid-cols-3">
+            {conversionPaths.map((path) => (
+              <article key={path.name} className="flex min-h-[220px] flex-col border-b border-border p-5 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
+                <div className="flex-1">
+                  <p className="text-xs font-bold uppercase text-brand">{path.price}</p>
+                  <h2 className="mt-2 font-display text-xl font-bold text-surface-ink">{path.name}</h2>
+                  <p className="mt-3 text-sm leading-6 text-muted">{path.body}</p>
+                </div>
+                <Link className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-[8px] bg-surface-ink px-4 text-sm font-bold text-white" href={path.href}>
+                  {path.cta}
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="border-y border-border bg-surface">
         <div className="mx-auto grid max-w-6xl gap-5 px-4 py-12 lg:grid-cols-2">
           <article className="rounded-[8px] border border-border bg-background p-5">
-            <h2 className="font-display text-2xl font-bold text-surface-ink">What Trim Proof checks</h2>
+            <h2 className="font-display text-2xl font-bold text-surface-ink">{isGuide ? "What this page covers" : "What Trim Proof checks"}</h2>
             <ul className="mt-5 grid gap-3 text-sm font-semibold text-surface-ink">
               {page.checks.map((check) => (
                 <li key={check} className="flex gap-2">
@@ -134,7 +184,7 @@ export default async function ToolLandingPage({ params }: ToolPageProps) {
             </ul>
           </article>
           <article className="rounded-[8px] border border-border bg-background p-5">
-            <h2 className="font-display text-2xl font-bold text-surface-ink">How the workflow runs</h2>
+            <h2 className="font-display text-2xl font-bold text-surface-ink">{isGuide ? "How to use this guidance" : "How the workflow runs"}</h2>
             <ol className="mt-5 grid gap-3 text-sm font-semibold text-surface-ink">
               {page.steps.map((step, index) => (
                 <li key={step} className="flex gap-3">
@@ -189,10 +239,13 @@ export default async function ToolLandingPage({ params }: ToolPageProps) {
             </article>
           ))}
         </div>
-        <div className="mt-8">
-          <Link className="inline-flex h-12 items-center gap-2 rounded-[8px] bg-accent px-5 text-sm font-bold text-accent-ink" href="/app?mode=advanced">
-            Open advanced mode
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <Link className="inline-flex h-12 items-center justify-center gap-2 rounded-[8px] bg-accent px-5 text-sm font-bold text-accent-ink" href="/signup?intent=demo&next=/app">
+            Create demo account
             <ArrowRight aria-hidden className="h-4 w-4" />
+          </Link>
+          <Link className="inline-flex h-12 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-5 text-sm font-bold text-surface-ink" href="/signup?intent=single_export&next=/app%3Fmode%3Dadvanced">
+            Buy one export credit
           </Link>
         </div>
       </section>
@@ -202,9 +255,14 @@ export default async function ToolLandingPage({ params }: ToolPageProps) {
           <Link className="transition hover:text-surface-ink" href="/">
             Trim Proof
           </Link>
-          <Link className="transition hover:text-surface-ink" href="/privacy">
-            Privacy
-          </Link>
+          <div className="flex gap-4">
+            <Link className="transition hover:text-surface-ink" href="/about">
+              About
+            </Link>
+            <Link className="transition hover:text-surface-ink" href="/privacy">
+              Privacy
+            </Link>
+          </div>
         </div>
       </footer>
     </main>

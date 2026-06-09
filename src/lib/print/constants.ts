@@ -28,6 +28,24 @@ export const PRODUCT_PROFILES = {
     safeMarginIn: 0.25,
     slugIn: 0.125
   },
+  poster: {
+    id: "poster",
+    label: "Poster",
+    trimWidthIn: 11,
+    trimHeightIn: 17,
+    bleedIn: 0.125,
+    safeMarginIn: 0.5,
+    slugIn: 0.125
+  },
+  brochure: {
+    id: "brochure",
+    label: "Tri-fold brochure",
+    trimWidthIn: 11,
+    trimHeightIn: 8.5,
+    bleedIn: 0.125,
+    safeMarginIn: 0.25,
+    slugIn: 0.125
+  },
   letterhead: {
     id: "letterhead",
     label: "Letterhead",

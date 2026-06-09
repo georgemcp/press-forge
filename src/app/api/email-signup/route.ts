@@ -35,26 +35,26 @@ function numericSessionId(value?: string) {
 function confirmationEmail(email: string) {
   const safeEmail = escapeHtml(email);
   const text = [
-    "You're on the Trim Proof launch list.",
+    "You're on the Press Forge launch list.",
     "",
-    "Trim Proof turns a plain-English print brief into a press-ready PDF workflow: bleed, trim, safe area, crop marks, vector text, CMYK conversion, and preflight reporting.",
+    "Press Forge is an AI-powered print design studio. Describe your vision, upload references, and let AI generate print-ready PDF/X files with bleed, crop marks, vector text, CMYK, and preflight validation.",
     "",
-    "Try the dummy proof at https://trimproof.com/app, or use advanced mode when you need a paid production export.",
+    "Create an account at https://pressforge.com/signup to start designing, or use advanced mode when you need a paid production export.",
     "",
-    "Trim Proof"
+    "Press Forge"
   ].join("\n");
 
   return {
     to: email,
-    subject: "You're on the Trim Proof launch list",
+    subject: "You're on the Press Forge launch list",
     text,
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937">
-        <h1 style="font-size:22px;margin:0 0 12px">You're on the Trim Proof launch list.</h1>
-        <p>Trim Proof turns a plain-English print brief into a press-ready PDF workflow: bleed, trim, safe area, crop marks, vector text, CMYK conversion, and preflight reporting.</p>
-        <p><a href="https://trimproof.com/app">Try the dummy proof</a>, or use advanced mode when you need a paid production export.</p>
+        <h1 style="font-size:22px;margin:0 0 12px">You're on the Press Forge launch list.</h1>
+        <p>Press Forge is an AI-powered print design studio. Describe your vision, upload references, and let AI generate print-ready PDF/X files with bleed, crop marks, vector text, CMYK, and preflight validation.</p>
+        <p><a href="https://pressforge.com/signup">Create an account</a> to start designing, or use advanced mode when you need a paid production export.</p>
         <p style="font-size:13px;color:#6b7280">Signup email: ${safeEmail}</p>
-        <p>Trim Proof</p>
+        <p>Press Forge</p>
       </div>
     `
   };

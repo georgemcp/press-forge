@@ -1,16 +1,31 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { generateProof } from "@/lib/print/proof";
 import { writeProofDeliveryManifest } from "@/lib/print/delivery-manifest";
 import { layoutSpecSchema } from "@/lib/print/layout-spec";
 import { sampleBusinessCardLayout } from "@/lib/print/sample-layout";
-import { claimExportCredit, finalizeExportCredit, releaseExportCredit, type PaidCheckoutSession, verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
+import {
+  claimExportCredit,
+  claimSubscriptionExport,
+  finalizeExportCredit,
+  finalizeSubscriptionExport,
+  releaseExportCredit,
+  releaseSubscriptionExport,
+  type PaidCheckoutSession,
+  verifyPaidCheckoutSession
+} from "@/lib/billing/paid-session";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const account = await getAccountSessionFromCookies();
+  if (!account) {
+    return NextResponse.json({ error: "Create an account before generating a Press Forge demo or export." }, { status: 401 });
+  }
+
   const payload = (await request.json().catch(() => ({}))) as {
     spec?: unknown;
     brief?: string;
@@ -33,9 +48,10 @@ export async function POST(request: Request) {
     );
   }
 
+  const mode = payload.mode === "advanced" ? "advanced" : "dummy";
   let paidSession: PaidCheckoutSession | undefined;
   try {
-    paidSession = payload.mode === "advanced" ? await verifyPaidCheckoutSession(payload.checkoutSessionId) : undefined;
+    paidSession = mode === "advanced" ? await verifyPaidCheckoutSession(payload.checkoutSessionId) : undefined;
   } catch (error) {
     return NextResponse.json(
       {
@@ -44,7 +60,7 @@ export async function POST(request: Request) {
       { status: 402 }
     );
   }
-  if (payload.mode === "advanced") {
+  if (mode === "advanced") {
     if (!paidSession) {
       return NextResponse.json({ error: "Advanced PDF/X export requires a paid checkout session." }, { status: 402 });
     }
@@ -55,6 +71,7 @@ export async function POST(request: Request) {
 
   const jobId = randomUUID();
   let claimedExportCredit = false;
+  let claimedSubscriptionExport = false;
   if (paidSession?.entitlement === "export_credit") {
     try {
       await claimExportCredit(paidSession.id, jobId);
@@ -67,17 +84,32 @@ export async function POST(request: Request) {
         { status: 402 }
       );
     }
+  } else if (paidSession?.entitlement === "subscription") {
+    try {
+      await claimSubscriptionExport(paidSession, account.userId, jobId);
+      claimedSubscriptionExport = true;
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error: error instanceof Error ? error.message : "This subscription export could not be claimed."
+        },
+        { status: 402 }
+      );
+    }
   }
 
   try {
     const generatedRoot = process.env.TRIMPROOF_GENERATED_DIR ?? path.join(process.cwd(), ".trimproof-generated");
     const outputDir = path.join(generatedRoot, jobId);
-    const proof = await generateProof(parsed.data, outputDir);
-    const mode = payload.mode === "advanced" ? "advanced" : "dummy";
+    const proof = await generateProof(parsed.data, outputDir, {
+      watermarkDemoArt: mode === "dummy"
+    });
     const manifest = await writeProofDeliveryManifest(outputDir, mode);
     const fileBase = `/api/exports/proof/files/${jobId}`;
     if (paidSession?.entitlement === "export_credit") {
       await finalizeExportCredit(paidSession.id, jobId);
+    } else if (paidSession?.entitlement === "subscription") {
+      await finalizeSubscriptionExport(jobId);
     }
     const productionUrls = manifest.canDownloadProductionFiles
       ? {
@@ -103,7 +135,7 @@ export async function POST(request: Request) {
       }
     });
     if (analytics.status === "failed") {
-      console.error("Trim Proof server analytics event failed", {
+      console.error("Press Forge server analytics event failed", {
         event: "proof_export_completed",
         provider: analytics.provider,
         reason: analytics.reason
@@ -116,6 +148,7 @@ export async function POST(request: Request) {
       productionDownloadLocked: !manifest.canDownloadProductionFiles,
       report: proof.report,
       analytics,
+      demoArtWatermarked: mode === "dummy",
       ...productionUrls,
       reportUrl: `${fileBase}/${path.basename(proof.reportPath)}`,
       assetUrls: proof.assets.map((asset) => ({
@@ -129,6 +162,9 @@ export async function POST(request: Request) {
   } catch (error) {
     if (claimedExportCredit && paidSession?.entitlement === "export_credit") {
       await releaseExportCredit(paidSession.id, jobId);
+    }
+    if (claimedSubscriptionExport && paidSession?.entitlement === "subscription") {
+      await releaseSubscriptionExport(jobId);
     }
     return NextResponse.json(
       {

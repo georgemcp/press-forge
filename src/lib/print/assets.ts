@@ -21,6 +21,10 @@ export interface ResolvedAsset {
   previewPath: string;
 }
 
+interface ResolveLayoutAssetsOptions {
+  watermarkDemoArt?: boolean;
+}
+
 function toRgb(color: CmykColor) {
   return {
     r: Math.round((1 - Math.min(1, color.c * (1 - color.k) + color.k)) * 255),
@@ -44,13 +48,25 @@ function targetDpi(slot: AssetSlot) {
   return Math.max(slot.minimumDpi, bounded);
 }
 
+function maxAssetPixels() {
+  const requested = Number(process.env.TRIMPROOF_MAX_ASSET_PIXELS ?? 18_000_000);
+  return Number.isFinite(requested) ? Math.max(1_000_000, Math.min(200_000_000, Math.round(requested))) : 18_000_000;
+}
+
 function targetSize(slot: AssetSlot) {
-  const dpi = targetDpi(slot);
+  const desiredDpi = targetDpi(slot);
+  const areaIn = Math.max(0.01, slot.width * slot.height);
+  const maxDpiByPixels = Math.floor(Math.sqrt(maxAssetPixels() / areaIn));
+  const dpi = Math.max(slot.minimumDpi, Math.min(desiredDpi, maxDpiByPixels));
   return {
     dpi,
     widthPx: Math.max(1, Math.ceil(slot.width * dpi)),
     heightPx: Math.max(1, Math.ceil(slot.height * dpi))
   };
+}
+
+function pngCompressionLevel(widthPx: number, heightPx: number) {
+  return widthPx * heightPx > 10_000_000 ? 6 : 9;
 }
 
 async function createDeterministicPng(slot: AssetSlot, spec: LayoutSpec, widthPx: number, heightPx: number) {
@@ -82,7 +98,7 @@ async function createDeterministicPng(slot: AssetSlot, spec: LayoutSpec, widthPx
   <metadata>${escapeXml(slot.prompt)}</metadata>
 </svg>`;
 
-  return sharp(Buffer.from(svg)).png({ compressionLevel: 9 }).toBuffer();
+  return sharp(Buffer.from(svg)).png({ compressionLevel: pngCompressionLevel(widthPx, heightPx) }).toBuffer();
 }
 
 async function tryModelAsset(slot: AssetSlot, spec: LayoutSpec) {
@@ -104,13 +120,20 @@ async function tryModelAsset(slot: AssetSlot, spec: LayoutSpec) {
   }
 }
 
-async function normalizeAsset(slot: AssetSlot, generated: GeneratedAsset | undefined, spec: LayoutSpec, outputDir: string): Promise<ResolvedAsset> {
+async function normalizeAsset(
+  slot: AssetSlot,
+  generated: GeneratedAsset | undefined,
+  spec: LayoutSpec,
+  outputDir: string,
+  options: ResolveLayoutAssetsOptions
+): Promise<ResolvedAsset> {
   const size = targetSize(slot);
   const rawBytes = generated?.bytes ? Buffer.from(generated.bytes) : await createDeterministicPng(slot, spec, size.widthPx, size.heightPx);
-  const png = await sharp(rawBytes)
+  const cleanPng = await sharp(rawBytes)
     .resize(size.widthPx, size.heightPx, { fit: "cover", position: "center" })
-    .png({ compressionLevel: 9 })
+    .png({ compressionLevel: pngCompressionLevel(size.widthPx, size.heightPx) })
     .toBuffer();
+  const png = await applyDemoWatermarkIfNeeded(cleanPng, size.widthPx, size.heightPx, options.watermarkDemoArt === true);
   const filePath = path.join(outputDir, `asset-${slot.id.replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}.png`);
   const previewPath = path.join(outputDir, `asset-${slot.id.replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}-preview.png`);
   const preview = await sharp(png)
@@ -140,13 +163,45 @@ async function normalizeAsset(slot: AssetSlot, generated: GeneratedAsset | undef
   };
 }
 
-export async function resolveLayoutAssets(spec: LayoutSpec, outputDir: string) {
+function createDemoWatermarkSvg(widthPx: number, heightPx: number) {
+  const fontSize = Math.max(32, Math.round(Math.min(widthPx, heightPx) / 16));
+  const repeat = Math.max(260, Math.round(fontSize * 8));
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthPx}" height="${heightPx}" viewBox="0 0 ${widthPx} ${heightPx}">
+  <defs>
+    <pattern id="demo-watermark" width="${repeat}" height="${repeat}" patternUnits="userSpaceOnUse" patternTransform="rotate(-32)">
+      <text x="${Math.round(repeat * 0.08)}" y="${Math.round(repeat * 0.46)}" fill="rgb(255 255 255)" fill-opacity="0.74" stroke="rgb(25 25 25)" stroke-opacity="0.32" stroke-width="1.2" font-family="sans-serif" font-size="${fontSize}" font-weight="800">PRESS FORGE DEMO</text>
+      <text x="${Math.round(repeat * 0.08)}" y="${Math.round(repeat * 0.62)}" fill="rgb(25 25 25)" fill-opacity="0.54" font-family="sans-serif" font-size="${Math.max(16, Math.round(fontSize * 0.38))}" font-weight="700">PAID EXPORT REMOVES WATERMARK</text>
+    </pattern>
+  </defs>
+  <rect width="${widthPx}" height="${heightPx}" fill="url(#demo-watermark)"/>
+  <rect x="${Math.round(widthPx * 0.04)}" y="${Math.round(heightPx * 0.04)}" width="${Math.round(widthPx * 0.92)}" height="${Math.max(3, Math.round(Math.min(widthPx, heightPx) * 0.012))}" fill="rgb(255 255 255)" fill-opacity="0.52"/>
+  <rect x="${Math.round(widthPx * 0.04)}" y="${Math.round(heightPx * 0.94)}" width="${Math.round(widthPx * 0.92)}" height="${Math.max(3, Math.round(Math.min(widthPx, heightPx) * 0.012))}" fill="rgb(25 25 25)" fill-opacity="0.2"/>
+</svg>`;
+}
+
+async function applyDemoWatermarkIfNeeded(png: Buffer, widthPx: number, heightPx: number, enabled: boolean) {
+  if (!enabled) {
+    return png;
+  }
+
+  return sharp(png)
+    .composite([
+      {
+        input: Buffer.from(createDemoWatermarkSvg(widthPx, heightPx)),
+        blend: "over"
+      }
+    ])
+    .png({ compressionLevel: pngCompressionLevel(widthPx, heightPx) })
+    .toBuffer();
+}
+
+export async function resolveLayoutAssets(spec: LayoutSpec, outputDir: string, options: ResolveLayoutAssetsOptions = {}) {
   await fs.mkdir(outputDir, { recursive: true });
   const assets: ResolvedAsset[] = [];
 
   for (const slot of spec.assetSlots) {
     const generated = await tryModelAsset(slot, spec);
-    assets.push(await normalizeAsset(slot, generated, spec, outputDir));
+    assets.push(await normalizeAsset(slot, generated, spec, outputDir, options));
   }
 
   return assets;

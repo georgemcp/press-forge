@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       account_management: {
@@ -417,27 +442,156 @@ export type Database = {
           },
         ]
       }
-      users: {
+      subscription_export_usage: {
         Row: {
           created_at: string
-          email: string
           id: string
+          period_end: string
+          period_start: string
+          proof_job_id: string
+          status: string
+          stripe_session_id: string
+          stripe_subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          proof_job_id: string
+          status?: string
+          stripe_session_id: string
+          stripe_subscription_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          proof_job_id?: string
+          status?: string
+          stripe_session_id?: string
+          stripe_subscription_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_export_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_designs: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          brief: string
+          enhanced_brief: Json | null
+          layout_spec: Json
+          design_rationale: string | null
+          product_type: string
+          reference_image_urls: string[] | null
+          iteration_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name?: string
+          brief?: string
+          enhanced_brief?: Json | null
+          layout_spec: Json
+          design_rationale?: string | null
+          product_type?: string
+          reference_image_urls?: string[] | null
+          iteration_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          brief?: string
+          enhanced_brief?: Json | null
+          layout_spec?: Json
+          design_rationale?: string | null
+          product_type?: string
+          reference_image_urls?: string[] | null
+          iteration_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_designs_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      users: {
+        Row: {
+          company_name: string | null
+          company_website: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          marketing_consent: boolean
+          monthly_print_jobs: string | null
+          onboarding_completed_at: string | null
+          phone: string | null
+          plan_interest: string | null
+          primary_use_case: string | null
+          role: string | null
           stripe_customer_id: string | null
           subscription_status: string
           updated_at: string
         }
         Insert: {
+          company_name?: string | null
+          company_website?: string | null
           created_at?: string
           email: string
+          full_name?: string | null
           id: string
+          marketing_consent?: boolean
+          monthly_print_jobs?: string | null
+          onboarding_completed_at?: string | null
+          phone?: string | null
+          plan_interest?: string | null
+          primary_use_case?: string | null
+          role?: string | null
           stripe_customer_id?: string | null
           subscription_status?: string
           updated_at?: string
         }
         Update: {
+          company_name?: string | null
+          company_website?: string | null
           created_at?: string
           email?: string
+          full_name?: string | null
           id?: string
+          marketing_consent?: boolean
+          monthly_print_jobs?: string | null
+          onboarding_completed_at?: string | null
+          phone?: string | null
+          plan_interest?: string | null
+          primary_use_case?: string | null
+          role?: string | null
           stripe_customer_id?: string | null
           subscription_status?: string
           updated_at?: string
@@ -578,6 +732,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

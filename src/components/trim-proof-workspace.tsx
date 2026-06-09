@@ -27,6 +27,7 @@ import { trackEvent } from "@/lib/analytics/events";
 import { getAnalyticsAttribution } from "@/lib/analytics/attribution";
 
 interface TrimProofWorkspaceProps {
+  accountEmail: string;
   checkoutSessionId?: string;
   checkoutState?: string;
   initialSpec: LayoutSpec;
@@ -37,6 +38,7 @@ interface ProofApiResponse {
   mode: WorkspaceMode;
   report: PreflightReport;
   productionDownloadLocked?: boolean;
+  demoArtWatermarked?: boolean;
   downloadUrl?: string;
   sourceUrl?: string;
   svgUrl?: string;
@@ -96,7 +98,17 @@ function GuideLabel({ children, tone }: { children: React.ReactNode; tone: "blee
   return <span className={`rounded-[4px] border px-2 py-1 text-[11px] font-semibold uppercase tracking-normal ${colors[tone]}`}>{children}</span>;
 }
 
-function PrintPreview({ spec, assetUrl, assetProvider }: { spec: LayoutSpec; assetUrl?: string; assetProvider?: ProofAssetUrl["provider"] }) {
+function PrintPreview({
+  spec,
+  assetUrl,
+  assetProvider,
+  demoArtWatermarked
+}: {
+  spec: LayoutSpec;
+  assetUrl?: string;
+  assetProvider?: ProofAssetUrl["provider"];
+  demoArtWatermarked?: boolean;
+}) {
   const productProfile = PRODUCT_PROFILES[spec.productType];
   const aspect = productProfile.trimWidthIn / productProfile.trimHeightIn;
   const brand = spec.textBlocks.find((block) => block.id === "brand")?.content ?? "TRIM PROOF";
@@ -117,6 +129,9 @@ function PrintPreview({ spec, assetUrl, assetProvider }: { spec: LayoutSpec; ass
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {demoArtWatermarked ? (
+            <span className="rounded-[4px] border border-brand/40 bg-brand-soft px-2 py-1 text-[11px] font-semibold uppercase text-brand">Watermarked demo</span>
+          ) : null}
           {assetProvider ? <span className="rounded-[4px] border border-brand/40 bg-brand-soft px-2 py-1 text-[11px] font-semibold uppercase text-brand">{assetProvider}</span> : null}
           <GuideLabel tone="bleed">Bleed</GuideLabel>
           <GuideLabel tone="trim">Trim</GuideLabel>
@@ -367,7 +382,6 @@ function PreflightPanel({
   portalPending,
   billingEmail,
   accessMessage,
-  setBillingEmail,
   onGenerate,
   onCheckout,
   onManageSubscription,
@@ -384,7 +398,6 @@ function PreflightPanel({
   portalPending?: boolean;
   billingEmail: string;
   accessMessage?: string;
-  setBillingEmail: (email: string) => void;
   onGenerate: () => void;
   onCheckout: (mode: CheckoutMode) => void;
   onManageSubscription: () => void;
@@ -429,7 +442,7 @@ function PreflightPanel({
         ) : null}
         {productionDownloadLocked ? (
           <div className="mt-2 rounded-[8px] border border-brand/30 bg-brand-soft px-3 py-2 text-xs font-semibold leading-5 text-brand">
-            Sample preflight complete. Buy an export credit or start Pro to unlock the production PDF/X download.
+            Demo art is watermarked and production files are locked. Buy an export credit or start Pro to download a clean PDF/X proof.
           </div>
         ) : null}
       </div>
@@ -440,42 +453,39 @@ function PreflightPanel({
           <h3 className="font-display text-sm font-semibold text-surface-ink">Billing</h3>
         </div>
         <label className="text-xs font-semibold uppercase text-muted" htmlFor="billing-email">
-          Billing email
+          Account email
         </label>
-        <input
+        <div
           id="billing-email"
-          className="mt-2 h-10 w-full rounded-[8px] border border-border bg-surface px-3 text-sm text-surface-ink"
-          inputMode="email"
-          placeholder="you@company.com"
-          type="email"
-          value={billingEmail}
-          onChange={(event) => setBillingEmail(event.target.value)}
-        />
+          className="mt-2 flex min-h-10 w-full items-center rounded-[8px] border border-border bg-surface px-3 text-sm font-semibold text-surface-ink"
+        >
+          {billingEmail}
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <button
             className="mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(checkoutPending)}
             type="button"
-            aria-label="Buy one export credit for nine dollars"
+            aria-label="Buy one export credit for twelve dollars"
             onClick={() => onCheckout("payment")}
           >
             {checkoutPending === "payment" ? <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> : <LockKeyhole aria-hidden className="h-3.5 w-3.5" />}
             <span className="flex flex-col text-left leading-tight">
               <span>Buy export</span>
-              <span className="text-[11px] text-muted">$9 one-time</span>
+              <span className="text-[11px] text-muted">$12 one-time</span>
             </span>
           </button>
           <button
             className="mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(checkoutPending)}
             type="button"
-            aria-label="Start Trim Proof Pro subscription for twenty nine dollars per month"
+            aria-label="Start Trim Proof Pro subscription for forty nine dollars per month"
             onClick={() => onCheckout("subscription")}
           >
             {checkoutPending === "subscription" ? <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck aria-hidden className="h-3.5 w-3.5" />}
             <span className="flex flex-col text-left leading-tight">
               <span>Start Pro</span>
-              <span className="text-[11px] text-muted">$29/month</span>
+              <span className="text-[11px] text-muted">$49/month</span>
             </span>
           </button>
         </div>
@@ -504,7 +514,7 @@ function PreflightPanel({
             ? paidSession.entitlement === "subscription"
               ? "Subscription verified. Advanced exports are unlocked for this session."
               : "Paid export credit verified. This credit is consumed when the PDF/X proof is generated."
-            : "Use the same billing email at checkout so Trim Proof can send access links for unused credits or subscriptions."}
+            : "Checkout, access links, and demo activity are tied to this signed-in account."}
         </p>
         {accessMessage ? <p className="mt-2 text-xs font-semibold text-brand">{accessMessage}</p> : null}
       </div>
@@ -538,7 +548,7 @@ function PreflightPanel({
   );
 }
 
-export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMode = "dummy", initialSpec }: TrimProofWorkspaceProps) {
+export function TrimProofWorkspace({ accountEmail, checkoutSessionId, checkoutState, initialMode = "dummy", initialSpec }: TrimProofWorkspaceProps) {
   const [mode, setMode] = useState<WorkspaceMode>(initialMode);
   const [brief, setBrief] = useState("Create a premium business card for a prepress automation studio. Keep all text vector and export PDF/X-1a.");
   const [proof, setProof] = useState<ProofApiResponse>();
@@ -546,7 +556,7 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
   const [checkoutPending, setCheckoutPending] = useState<CheckoutMode>();
   const [accessPending, setAccessPending] = useState(false);
   const [portalPending, setPortalPending] = useState(false);
-  const [billingEmail, setBillingEmail] = useState("");
+  const [billingEmail] = useState(accountEmail);
   const [accessMessage, setAccessMessage] = useState<string>();
   const [paidSession, setPaidSession] = useState<PaidSession>();
   const [sessionPending, setSessionPending] = useState(Boolean(checkoutSessionId));
@@ -682,10 +692,6 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
     setError(undefined);
     setAccessMessage(undefined);
     const email = billingEmail.trim().toLowerCase();
-    if (!email.includes("@")) {
-      setError("Enter a billing email first so Trim Proof can attach the checkout to your access link.");
-      return;
-    }
     setCheckoutPending(mode);
     trackEvent("checkout_started", { mode });
     try {
@@ -711,10 +717,6 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
     setError(undefined);
     setAccessMessage(undefined);
     const email = billingEmail.trim().toLowerCase();
-    if (!email.includes("@")) {
-      setError("Enter the billing email used for checkout first.");
-      return;
-    }
     setAccessPending(true);
     try {
       const response = await fetch("/api/billing/access-link", {
@@ -815,7 +817,12 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
             setProductType={setProductType}
             spec={spec}
           />
-          <PrintPreview assetProvider={proof?.assetUrls?.[0]?.provider} assetUrl={proof?.assetUrls?.[0]?.previewUrl ?? proof?.assetUrls?.[0]?.url} spec={spec} />
+          <PrintPreview
+            assetProvider={proof?.assetUrls?.[0]?.provider}
+            assetUrl={proof?.assetUrls?.[0]?.previewUrl ?? proof?.assetUrls?.[0]?.url}
+            demoArtWatermarked={proof?.demoArtWatermarked}
+            spec={spec}
+          />
           <PreflightPanel
             accessMessage={accessMessage}
             accessPending={accessPending}
@@ -832,7 +839,6 @@ export function TrimProofWorkspace({ checkoutSessionId, checkoutState, initialMo
             portalPending={portalPending}
             productionDownloadLocked={proof?.productionDownloadLocked}
             report={proof?.report}
-            setBillingEmail={setBillingEmail}
           />
         </div>
       </div>

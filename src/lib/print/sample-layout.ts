@@ -11,12 +11,12 @@ export const sampleBusinessCardLayout: LayoutSpec = {
     accent: { c: 0.02, m: 0.92, y: 0.18, k: 0.02 }
   },
   styleDirection:
-    "Exacting commercial print studio: warm paper, black ink, magenta calibration accent, and quiet production confidence.",
+    "Modern AI-powered print design studio: warm paper, rich ink, and precision prepress calibration.",
   textBlocks: [
     {
       id: "brand",
       role: "brand",
-      content: "TRIM PROOF",
+      content: "PRESS FORGE",
       x: 0.42,
       y: 1.36,
       width: 2.62,
@@ -27,7 +27,7 @@ export const sampleBusinessCardLayout: LayoutSpec = {
     {
       id: "tagline",
       role: "subhead",
-      content: "AI creative, deterministic prepress.",
+      content: "AI-powered print design studio.",
       x: 0.42,
       y: 1.04,
       width: 2.6,
@@ -49,7 +49,7 @@ export const sampleBusinessCardLayout: LayoutSpec = {
     {
       id: "contact",
       role: "contact",
-      content: "trimproof.com  |  PDF/X-1a ready",
+      content: "pressforge.com  |  PDF/X-1a ready",
       x: 0.42,
       y: 0.38,
       width: 2.4,

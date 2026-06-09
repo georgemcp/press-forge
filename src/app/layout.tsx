@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import { AnalyticsTags } from "@/components/analytics-tags";
+import { getSiteUrl } from "@/lib/seo/site-url";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -16,37 +17,37 @@ const body = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  metadataBase: getSiteUrl(),
   title: {
-    default: "Trim Proof | AI Print-Ready PDF Generator",
-    template: "%s | Trim Proof"
+    default: "Press Forge | AI Print Design Studio",
+    template: "%s | Press Forge"
   },
   description:
-    "Create print-ready PDF/X files from a plain-English brief with deterministic CMYK, bleed, crop marks, embedded vector fonts, and preflight checks.",
+    "Create print-ready designs with AI. Upload references, describe your vision, and get production-ready PDF/X files with CMYK, bleed, crop marks, and embedded fonts.",
   alternates: {
     canonical: "/"
   },
   openGraph: {
-    title: "Trim Proof | AI Print-Ready PDF Generator",
+    title: "Press Forge | AI Print Design Studio",
     description:
-      "Turn a design brief into a print-ready PDF/X file with deterministic prepress validation.",
+      "Describe your vision, upload references, and let AI generate print-ready designs with deterministic PDF/X export.",
     url: "/",
-    siteName: "Trim Proof",
+    siteName: "Press Forge",
     images: [
       {
         url: "/trim-proof-workspace-concept.png",
         width: 1440,
         height: 1000,
-        alt: "Trim Proof workspace with brief intake, print preview, preflight gate, and export controls."
+        alt: "Press Forge workspace with AI brief enhancement, design preview, chat panel, and export controls."
       }
     ],
     type: "website"
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trim Proof | AI Print-Ready PDF Generator",
+    title: "Press Forge | AI Print Design Studio",
     description:
-      "AI creative upstream. Deterministic PDF/X, CMYK, bleed, crop marks, and preflight downstream."
+      "AI-powered print design from brief to PDF/X. Upload references, chat with AI to iterate, export production-ready files."
   }
 };
 

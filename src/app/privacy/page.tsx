@@ -14,7 +14,7 @@ const sections = [
   {
     heading: "What Trim Proof collects",
     body:
-      "Trim Proof collects the information needed to run the service: print briefs you enter, generated proof metadata, selected product and prepress settings, billing email addresses, launch-list email addresses, checkout status, and operational logs for security and reliability."
+      "Trim Proof collects the information needed to run the service: account email, name, company, role, optional phone and website, print-volume/use-case details, print briefs you enter, generated proof metadata, selected product and prepress settings, billing email addresses, checkout status, and operational logs for security and reliability."
   },
   {
     heading: "Analytics and conversion measurement",
@@ -44,12 +44,12 @@ const sections = [
   {
     heading: "Your choices",
     body:
-      "You can avoid paid-account storage by using dummy proof mode without checkout. You can avoid launch-list email by not submitting the signup form. You can request access-link emails only when you want Trim Proof to find an active subscription or unused export credit tied to your billing email."
+      "Demo proof mode requires an account. You can avoid paid checkout storage by not buying an export credit or starting Pro. You can request access-link emails only for the signed-in account email tied to an active subscription or unused export credit."
   },
   {
     heading: "Contact",
     body:
-      "For privacy or data questions, contact Trim Proof at george.mcpherson@rightawaygroup.com."
+      "For privacy or data questions, contact Trim Proof at support@trimproof.com."
   }
 ];
 
@@ -61,8 +61,8 @@ export default function PrivacyPage() {
           <Link className="font-display text-lg font-bold text-surface-ink" href="/">
             Trim Proof
           </Link>
-          <Link className="text-sm font-semibold text-muted transition hover:text-surface-ink" href="/app">
-            Open app
+          <Link className="text-sm font-semibold text-muted transition hover:text-surface-ink" href="/signup?intent=demo&next=/app">
+            Create account
           </Link>
         </div>
       </header>

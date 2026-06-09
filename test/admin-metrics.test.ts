@@ -6,12 +6,14 @@ import {
   summarizeAdminMetrics,
   type AdminEconomicsConfig,
   type ExportOrderRow,
-  type GeneratedProofJob
+  type GeneratedProofJob,
+  type UserRow
 } from "@/lib/admin/metrics";
 
 const economics: AdminEconomicsConfig = {
-  exportPriceCents: 900,
-  subscriptionPriceCents: 2900,
+  exportPriceCents: 1200,
+  subscriptionPriceCents: 4900,
+  proMonthlyExportLimit: 15,
   stripeFeeBps: 290,
   stripeFixedFeeCents: 30,
   estimatedProofCostCents: 20
@@ -51,14 +53,35 @@ function proof(overrides: Partial<GeneratedProofJob>): GeneratedProofJob {
   };
 }
 
+function user(overrides: Partial<UserRow>): UserRow {
+  return {
+    id: overrides.id ?? "user-1",
+    email: overrides.email ?? "buyer@example.com",
+    stripe_customer_id: overrides.stripe_customer_id ?? null,
+    subscription_status: overrides.subscription_status ?? "none",
+    full_name: overrides.full_name ?? null,
+    company_name: overrides.company_name ?? null,
+    role: overrides.role ?? null,
+    company_website: overrides.company_website ?? null,
+    phone: overrides.phone ?? null,
+    monthly_print_jobs: overrides.monthly_print_jobs ?? null,
+    primary_use_case: overrides.primary_use_case ?? null,
+    plan_interest: overrides.plan_interest ?? null,
+    marketing_consent: overrides.marketing_consent ?? true,
+    onboarding_completed_at: overrides.onboarding_completed_at ?? null,
+    created_at: overrides.created_at ?? "2026-06-01T12:00:00Z",
+    updated_at: overrides.updated_at ?? "2026-06-01T12:00:00Z"
+  };
+}
+
 describe("admin metrics", () => {
   it("maps order revenue and estimated Stripe fees from configured economics", () => {
-    expect(getOrderRevenueCents(order({ entitlement: "export_credit", status: "paid" }), economics)).toBe(900);
-    expect(getOrderRevenueCents(order({ entitlement: "subscription", status: "paid" }), economics)).toBe(2900);
+    expect(getOrderRevenueCents(order({ entitlement: "export_credit", status: "paid" }), economics)).toBe(1200);
+    expect(getOrderRevenueCents(order({ entitlement: "subscription", status: "paid" }), economics)).toBe(4900);
     expect(getOrderRevenueCents(order({ entitlement: "export_credit", status: "paid", amount_total_cents: 1200 }), economics)).toBe(1200);
     expect(getOrderRevenueCents(order({ entitlement: "export_credit", status: "paid", amount_total_cents: 0 }), economics)).toBe(0);
     expect(getOrderRevenueCents(order({ entitlement: "subscription", status: "expired" }), economics)).toBe(0);
-    expect(getEstimatedStripeFeeCents(900, economics)).toBe(56);
+    expect(getEstimatedStripeFeeCents(1200, economics)).toBe(65);
   });
 
   it("summarizes revenue, margin, subscriptions, accounts, and proof usage", () => {
@@ -79,29 +102,27 @@ describe("admin metrics", () => {
       generatedProofs: [proof({ id: "passed" }), proof({ id: "failed", status: "failed" })]
     });
 
-    expect(summary.grossRevenueCents).toBe(3800);
-    expect(summary.exportRevenueCents).toBe(900);
-    expect(summary.subscriptionRevenueCents).toBe(2900);
+    expect(summary.grossRevenueCents).toBe(6100);
+    expect(summary.exportRevenueCents).toBe(1200);
+    expect(summary.subscriptionRevenueCents).toBe(4900);
     expect(summary.activeSubscriptions).toBe(1);
-    expect(summary.mrrCents).toBe(2900);
+    expect(summary.mrrCents).toBe(4900);
     expect(summary.generatedProofs).toBe(2);
     expect(summary.failedProofs).toBe(1);
     expect(summary.estimatedProofCostsCents).toBe(40);
-    expect(summary.contributionProfitCents).toBe(3590);
+    expect(summary.contributionProfitCents).toBe(5823);
   });
 
   it("builds account rows from users, signups, and orders", () => {
     const accounts = buildAdminAccountSummaries({
       economics,
       users: [
-        {
+        user({
           id: "user-1",
           email: "buyer@example.com",
           stripe_customer_id: "cus_existing",
-          subscription_status: "none",
-          created_at: "2026-06-01T12:00:00Z",
-          updated_at: "2026-06-01T12:00:00Z"
-        }
+          subscription_status: "none"
+        })
       ],
       signups: [{ id: "signup-1", email: "lead@example.com", source: "launch", created_at: "2026-06-03T12:00:00Z", updated_at: "2026-06-03T12:00:00Z" }],
       management: [
@@ -119,7 +140,7 @@ describe("admin metrics", () => {
 
     expect(accounts.find((account) => account.email === "buyer@example.com")).toMatchObject({
       accountSource: "user",
-      revenueCents: 900,
+      revenueCents: 1200,
       unusedCredits: 1,
       stripeCustomerId: "cus_test"
     });

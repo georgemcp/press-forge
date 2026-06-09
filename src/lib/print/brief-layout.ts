@@ -26,6 +26,18 @@ const textBlockTemplates: Record<ProductType, TextBlockTemplate[]> = {
     { id: "name", role: "headline", x: 0.78, y: 1.72, width: 3.6, fontSize: 23, weight: "bold" },
     { id: "contact", role: "contact", x: 0.8, y: 1.18, width: 6.8, fontSize: 12.5, weight: "regular" }
   ],
+  poster: [
+    { id: "brand", role: "brand", x: 0.85, y: 14.85, width: 9.1, fontSize: 54, weight: "bold" },
+    { id: "tagline", role: "subhead", x: 0.9, y: 13.62, width: 8.4, fontSize: 22, weight: "medium" },
+    { id: "name", role: "headline", x: 0.9, y: 2.2, width: 6.2, fontSize: 28, weight: "bold" },
+    { id: "contact", role: "contact", x: 0.92, y: 1.42, width: 9.1, fontSize: 14, weight: "regular" }
+  ],
+  brochure: [
+    { id: "brand", role: "brand", x: 0.55, y: 7.18, width: 4.6, fontSize: 34, weight: "bold" },
+    { id: "tagline", role: "subhead", x: 0.58, y: 6.55, width: 4.2, fontSize: 14, weight: "medium" },
+    { id: "name", role: "headline", x: 7.4, y: 1.18, width: 2.7, fontSize: 18, weight: "bold" },
+    { id: "contact", role: "contact", x: 0.6, y: 0.7, width: 9.8, fontSize: 10, weight: "regular" }
+  ],
   letterhead: [
     { id: "brand", role: "brand", x: 0.68, y: 10.12, width: 6.4, fontSize: 30, weight: "bold" },
     { id: "tagline", role: "subhead", x: 0.7, y: 9.52, width: 5.8, fontSize: 12.5, weight: "medium" },
@@ -40,7 +52,11 @@ const genericBrandPhrases = new Set([
   "business card",
   "premium business card",
   "flyer",
+  "poster",
   "postcard",
+  "brochure",
+  "trifold brochure",
+  "tri-fold brochure",
   "letterhead"
 ]);
 
@@ -83,7 +99,7 @@ function titleCase(value: string) {
 
 function cleanupCandidate(value: string) {
   return value
-    .replace(/\b(?:with|that|and|for|business card|flyer|postcard|letterhead)\b.*$/i, "")
+    .replace(/\b(?:with|that|and|for|business card|flyer|poster|postcard|brochure|trifold|tri-fold|letterhead)\b.*$/i, "")
     .replace(/[.,;:|]+$/g, "")
     .trim();
 }
@@ -124,9 +140,9 @@ function extractBrand(brief: string) {
     return titleCase(candidate);
   }
 
-  const leadingProductMatch = brief.match(/^([A-Za-z0-9&'. -]{2,48})\s+(?:business card|flyer|postcard|letterhead)\b/i)?.[1];
+  const leadingProductMatch = brief.match(/^([A-Za-z0-9&'. -]{2,48})\s+(?:business card|flyer|poster|postcard|brochure|trifold brochure|tri-fold brochure|letterhead)\b/i)?.[1];
   const leadingCandidate = leadingProductMatch ? rejectGeneric(cleanupCandidate(leadingProductMatch)) : undefined;
-  return leadingCandidate ? titleCase(leadingCandidate) : "Trim Proof";
+  return leadingCandidate ? titleCase(leadingCandidate) : "Press Forge";
 }
 
 function inferProductType(brief: string, requested?: ProductType): ProductType {
@@ -136,6 +152,12 @@ function inferProductType(brief: string, requested?: ProductType): ProductType {
   const lower = brief.toLowerCase();
   if (lower.includes("letterhead")) {
     return "letterhead";
+  }
+  if (lower.includes("poster")) {
+    return "poster";
+  }
+  if (lower.includes("brochure") || lower.includes("trifold") || lower.includes("tri-fold")) {
+    return "brochure";
   }
   if (lower.includes("flyer")) {
     return "flyer";

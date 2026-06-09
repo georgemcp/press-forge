@@ -219,7 +219,8 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
                 <tr className="border-t border-border" key={account.email}>
                   <td className="px-3 py-3">
                     <div className="font-semibold text-surface-ink">{account.email}</div>
-                    <div className="text-xs text-muted">{account.accountSource}</div>
+                    <div className="text-xs text-muted">{account.companyName ?? account.accountSource}</div>
+                    {account.role || account.monthlyPrintJobs ? <div className="text-xs text-muted">{[account.role, account.monthlyPrintJobs ? `${account.monthlyPrintJobs} jobs/mo` : undefined].filter(Boolean).join(" · ")}</div> : null}
                   </td>
                   <td className="px-3 py-3 font-semibold">{money(account.revenueCents)}</td>
                   <td className="px-3 py-3">
@@ -363,7 +364,7 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
           <ReadinessItem active={data.readiness.emailConfigured} detail={data.readiness.emailProvider ?? "No provider"} label="Email" />
           <ReadinessItem active={data.readiness.openaiConfigured} detail="GPT Image 2 route available" label="OpenAI" />
           <ReadinessItem active={data.readiness.geminiConfigured} detail="Nano Banana Pro route available" label="Gemini" />
-          <ReadinessItem active detail={`Export ${money(data.economics.exportPriceCents)} · Pro ${money(data.economics.subscriptionPriceCents)}`} label="Pricing model" />
+          <ReadinessItem active detail={`Export ${money(data.economics.exportPriceCents)} · Pro ${money(data.economics.subscriptionPriceCents)} · ${number(data.economics.proMonthlyExportLimit)} exports/mo`} label="Pricing model" />
           <ReadinessItem active detail={`Stripe ${data.economics.stripeFeeBps / 100}% + ${money(data.economics.stripeFixedFeeCents)} · proof ${money(data.economics.estimatedProofCostCents)}`} label="Margin assumptions" />
         </div>
       </Section>
