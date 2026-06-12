@@ -45,19 +45,21 @@ const answerBlocks = [
 ];
 
 const keywordTargets = [
-  { label: "AI flyer generator", href: "/tools/ai-flyer-generator" },
-  { label: "AI flyer maker", href: "/tools/ai-flyer-generator" },
+  { label: "Business card maker", href: "/tools/ai-business-card-generator" },
+  { label: "Business card creator", href: "/tools/ai-business-card-generator" },
+  { label: "Business card generator", href: "/tools/ai-business-card-generator" },
+  { label: "Poster size", href: "/tools/poster-size-guide" },
+  { label: "Business card size", href: "/tools/business-card-size-guide" },
+  { label: "Poster maker", href: "/tools/poster-maker" },
   { label: "Flyer maker", href: "/tools/ai-flyer-generator" },
   { label: "Free flyer maker", href: "/tools/free-ai-flyer-generator" },
   { label: "Free AI flyer generator", href: "/tools/free-ai-flyer-generator" },
-  { label: "Business card maker", href: "/tools/ai-business-card-generator" },
-  { label: "Free business card maker", href: "/tools/free-ai-business-card-generator" },
   { label: "AI business card generator", href: "/tools/ai-business-card-generator" },
-  { label: "Poster maker", href: "/tools/poster-maker" },
+  { label: "Free business card maker", href: "/tools/free-ai-business-card-generator" },
   { label: "Free poster maker", href: "/tools/free-poster-maker" },
   { label: "AI poster generator", href: "/tools/poster-maker" },
-  { label: "Poster size", href: "/tools/poster-size-guide" },
   { label: "Poster template", href: "/tools/poster-pdf-template" },
+  { label: "Postcard size", href: "/tools/postcard-size-guide" },
   { label: "Brochure maker", href: "/tools/brochure-maker" },
   { label: "Free brochure maker", href: "/tools/free-brochure-maker" },
   { label: "Tri-fold brochure template", href: "/tools/tri-fold-brochure-template" },
@@ -76,14 +78,12 @@ const keywordTargets = [
   { label: "Prepress software", href: "/tools/prepress-automation-software" },
   { label: "Proofing software", href: "/tools/online-proofing-software" },
   { label: "Flyer size", href: "/tools/flyer-size-guide" },
-  { label: "Business card size", href: "/tools/business-card-size-guide" },
   { label: "Business card pixel size", href: "/tools/business-card-pixel-size" },
   { label: "Business card bleed size", href: "/tools/business-card-bleed-size" },
   { label: "Flyer PDF template", href: "/tools/flyer-pdf-template" },
   { label: "Postcard maker", href: "/tools/postcard-maker" },
   { label: "Free postcard maker", href: "/tools/free-postcard-maker" },
   { label: "Postcard template", href: "/tools/postcard-pdf-template" },
-  { label: "Postcard size", href: "/tools/postcard-size-guide" },
   { label: "Letterhead maker", href: "/tools/letterhead-maker" },
   { label: "Free letterhead maker", href: "/tools/free-letterhead-maker" },
   { label: "Letterhead format", href: "/tools/letterhead-format-guide" },
@@ -432,12 +432,10 @@ export function MarketingSite() {
             <SearchCheck aria-hidden className="h-6 w-6 text-brand" />
             <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Built around the searches print buyers actually make.</h2>
             <p className="mt-4 text-base leading-7 text-muted">
-              DataForSEO research refreshed on June 6 and June 7, 2026 showed demand around AI flyer generation, AI
-              flyer makers, flyer size, poster maker, free poster maker, poster size, poster templates, AI poster
-              generator, AI business cards, CMYK PDF conversion, PDF/X-1a, print-ready PDFs, Canva print quality and
-              CMYK questions, prepress checklists, proofing software, prepress software, brochures, postcards, letterhead format,
-              and business cards with bleed. The product and content architecture target those jobs
-              directly.
+              DataForSEO research refreshed on June 12, 2026 across the United States and Canada showed the strongest
+              demand around business card maker and size terms, poster size and poster maker terms, flyer maker terms,
+              postcard size terms, brochure template demand, and letterhead format/template searches. The product and
+              content architecture target those jobs directly while keeping unsupported menu demand deferred.
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">

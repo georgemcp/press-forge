@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "seo:dataforseo-refresh": "tsx scripts/dataforseo-refresh.ts",
     "proof:pdf": "tsx scripts/generate-proof.ts",
     "worker": "tsx src/worker/index.ts"
   },

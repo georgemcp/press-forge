@@ -21,6 +21,7 @@ import {
 import { logoutAdmin } from "@/app/admin/actions";
 import { adminRanges, type AdminCenterData, type AdminRange } from "@/lib/admin/data";
 import { getOrderRevenueCents } from "@/lib/admin/metrics";
+import { SeoResearchSection } from "@/components/admin/seo-research-section";
 
 function money(cents: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", {
@@ -169,7 +170,7 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
             Live operating view for accounts, paid access, proof usage, estimated contribution margin, and production readiness. Revenue uses current product prices; profit is contribution profit after estimated Stripe fees and proof-generation COGS.
           </p>
           <nav className="flex flex-wrap gap-2 text-sm font-semibold">
-            {["KPIs", "Accounts", "Subscriptions", "Orders", "Usage", "Audit", "Readiness"].map((item) => (
+            {["KPIs", "SEO", "Accounts", "Subscriptions", "Orders", "Usage", "Audit", "Readiness"].map((item) => (
               <a className="rounded-[8px] border border-border bg-surface px-3 py-2 text-muted hover:text-surface-ink" href={`#${item.toLowerCase()}`} key={item}>
                 {item}
               </a>
@@ -197,6 +198,10 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
           <KpiCard detail={`${number(summary.passedProofs)} passed · ${number(summary.failedProofs)} failed in selected period`} icon={FileCheck2} title="Generated proofs" value={number(summary.generatedProofs)} />
           <KpiCard detail={`${number(summary.refundedOrders)} refunded · ${number(summary.expiredOrders)} expired orders`} icon={ReceiptText} title="Paid orders" value={number(summary.paidOrders)} />
         </div>
+      </Section>
+
+      <Section id="seo" title="North America SEO demand" aside={data.seoResearch ? `Refreshed ${date(data.seoResearch.generatedAt)} · DataForSEO live search volume` : "Live DataForSEO research file missing"}>
+        <SeoResearchSection research={data.seoResearch} />
       </Section>
 
       <Section id="accounts" title="Accounts" aside={`${number(data.accounts.length)} known emails from users, signups, and orders`}>

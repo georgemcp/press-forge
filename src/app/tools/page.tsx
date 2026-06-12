@@ -48,6 +48,16 @@ const toolGroups = [
     ]
   },
   {
+    title: "Supported product size guides",
+    description: "Dimension, format, bleed, pixel, margin, panel, and safe-area guides for supported flyer, poster, brochure, card, postcard, and letterhead proofs.",
+    slugs: ["flyer-size-guide", "poster-size-guide", "brochure-size-guide", "business-card-size-guide", "business-card-pixel-size", "business-card-bleed-size", "postcard-size-guide", "letterhead-format-guide"]
+  },
+  {
+    title: "Supported product templates",
+    description: "Starter-product pages for formats Trim Proof currently supports.",
+    slugs: ["business-card-pdf-template", "flyer-pdf-template", "poster-pdf-template", "tri-fold-brochure-template", "postcard-pdf-template", "letterhead-pdf-template"]
+  },
+  {
     title: "Prepress checks",
     description: "File-prep checks for print geometry, color, PDF standards, and preflight evidence.",
     slugs: [
@@ -65,16 +75,6 @@ const toolGroups = [
     title: "Bleed, crop marks, and Canva exports",
     description: "Troubleshooting for edge-to-edge artwork, Canva handoffs, printer requests, and export settings.",
     slugs: ["add-bleed-to-pdf-online", "add-crop-marks-to-pdf", "canva-print-ready-pdf", "canva-cmyk-print-quality", "canva-bleed-and-crop-marks"]
-  },
-  {
-    title: "Supported product templates",
-    description: "Starter-product pages for formats Trim Proof currently supports.",
-    slugs: ["business-card-pdf-template", "flyer-pdf-template", "poster-pdf-template", "tri-fold-brochure-template", "postcard-pdf-template", "letterhead-pdf-template"]
-  },
-  {
-    title: "Supported product size guides",
-    description: "Dimension, format, bleed, pixel, margin, panel, and safe-area guides for supported flyer, poster, brochure, card, postcard, and letterhead proofs.",
-    slugs: ["flyer-size-guide", "poster-size-guide", "brochure-size-guide", "business-card-size-guide", "business-card-pixel-size", "business-card-bleed-size", "postcard-size-guide", "letterhead-format-guide"]
   },
   {
     title: "Proofing and software research",

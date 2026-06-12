@@ -6,6 +6,7 @@ import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { resolveEmailConfig } from "@/lib/email/transactional";
 import { deliveryManifestFileName, type ProofDeliveryManifest } from "@/lib/print/delivery-manifest";
 import { getCreativeProviderStatus } from "@/lib/providers/model-config";
+import type { DataForSeoResearchFile } from "@/lib/seo/dataforseo-research";
 import type { Tables } from "@/types/supabase";
 import {
   buildAdminAccountSummaries,
@@ -53,6 +54,7 @@ export interface AdminCenterData {
   exports: ExportRow[];
   assets: AssetRow[];
   sourceErrors: string[];
+  seoResearch?: DataForSeoResearchFile;
   readiness: {
     supabaseConfigured: boolean;
     stripeConfigured: boolean;
@@ -177,6 +179,7 @@ export function parseAdminRange(value: string | string[] | undefined): AdminRang
 export async function getAdminCenterData(range: AdminRange): Promise<AdminCenterData> {
   const economics = getAdminEconomicsConfig();
   const sourceErrors: string[] = [];
+  const seoResearch = await readJsonFile<DataForSeoResearchFile>(path.join(process.cwd(), "src/data/seo/dataforseo-live-research.json"));
   const supabase = createServiceSupabaseClient();
   const generatedProofs = await readGeneratedProofInventory();
   const emailConfig = resolveEmailConfig();
@@ -207,6 +210,7 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
       exports: [],
       assets: [],
       sourceErrors: ["Supabase service client is not configured."],
+      seoResearch,
       readiness: {
         supabaseConfigured: false,
         stripeConfigured: Boolean(getStripeClient()),
@@ -259,6 +263,7 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
     exports,
     assets,
     sourceErrors,
+    seoResearch,
     readiness: {
       supabaseConfigured: true,
       stripeConfigured: Boolean(getStripeClient()),
