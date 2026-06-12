@@ -761,16 +761,17 @@ export const toolPages: ToolPage[] = [
   },
   {
     slug: "free-ai-flyer-generator",
-    title: "Free Flyer Maker Demo",
+    title: "Free Flyer Maker Demo with AI",
     metaDescription:
-      "Try a free flyer maker demo with watermarked art, bleed, crop marks, vector text, preflight, and paid clean PDF/X-1a export.",
-    h1: "Free flyer maker demo with a print-ready export path",
+      "Try a free AI flyer maker demo with watermarked art, bleed, crop marks, vector text, preflight, and paid clean PDF/X-1a export.",
+    h1: "Free AI flyer maker demo with a print-ready export path",
     answer:
-      "A free flyer maker should make the paid boundary clear before you spend time on a real print job. Trim Proof lets you test a watermarked flyer proof first, then unlock a clean checked PDF/X-1a export when the file is ready for print. The demo covers flyer brief intake, bleed, safe area, vector text, crop marks when requested, CMYK-oriented output, and preflight evidence.",
+      "A free AI flyer maker should make the paid boundary clear before you spend time on a real print job. Trim Proof lets you test a watermarked flyer proof first, then unlock a clean checked PDF/X-1a export when the file is ready for print. The demo covers flyer brief intake, bleed, safe area, vector text, crop marks when requested, CMYK-oriented output, and preflight evidence.",
     keywords: [
       "free flyer maker",
       "free flyer creator",
       "free flyer generator",
+      "free AI flyer maker",
       "flyer maker free",
       "free AI flyer generator",
       "AI flyer generator",
@@ -816,15 +817,16 @@ export const toolPages: ToolPage[] = [
   },
   {
     slug: "free-ai-business-card-generator",
-    title: "Free Business Card Maker Demo",
+    title: "Free Business Card Maker Demo with AI",
     metaDescription:
-      "Try a free business card maker demo with watermarked art, 3.5 x 2 trim, 0.125 inch bleed, vector text, preflight, and paid clean PDF/X export.",
-    h1: "Free business card maker demo for print-ready proofs",
+      "Try a free AI business card maker demo with watermarked art, 3.5 x 2 trim, 0.125 inch bleed, vector text, preflight, and paid clean PDF/X export.",
+    h1: "Free AI business card maker demo for print-ready proofs",
     answer:
-      "A free business card maker should make the paid boundary clear before you spend time on a real job. Trim Proof lets you test a watermarked business-card proof first, then unlock a clean checked PDF/X-1a export when the file is ready for print. The demo covers 3.5 x 2 inch trim, 0.125 inch bleed, safe area, embedded vector text, and preflight evidence.",
+      "A free AI business card maker should make the paid boundary clear before you spend time on a real job. Trim Proof lets you test a watermarked business-card proof first, then unlock a clean checked PDF/X-1a export when the file is ready for print. The demo covers 3.5 x 2 inch trim, 0.125 inch bleed, safe area, embedded vector text, and preflight evidence.",
     keywords: [
       "free business card maker",
       "free business card generator",
+      "free AI business card maker",
       "free AI business card generator",
       "AI business card generator",
       "AI business card maker",
@@ -1493,16 +1495,17 @@ export const toolPages: ToolPage[] = [
   },
   {
     slug: "free-poster-maker",
-    title: "Free Poster Maker Demo",
+    title: "Free Poster Maker Demo with AI",
     metaDescription:
-      "Try a free poster maker demo with watermarked art, 11 x 17 trim, bleed, safe area, vector text, preflight, and paid clean PDF/X export.",
-    h1: "Free poster maker demo with a print-ready export path",
+      "Try a free AI poster maker demo with watermarked art, 11 x 17 trim, bleed, safe area, vector text, preflight, and paid clean PDF/X export.",
+    h1: "Free AI poster maker demo with a print-ready export path",
     answer:
-      "A free poster maker should make the paid boundary clear before you spend time on a real print job. Trim Proof lets you test a watermarked poster proof first, then unlock a clean checked PDF/X-1a export when the file is ready for production. The demo covers poster brief intake, 11 x 17 inch starter trim, bleed, safe area, vector title and event text, crop marks when requested, CMYK-oriented output, and preflight evidence.",
+      "A free AI poster maker should make the paid boundary clear before you spend time on a real print job. Trim Proof lets you test a watermarked poster proof first, then unlock a clean checked PDF/X-1a export when the file is ready for production. The demo covers poster brief intake, 11 x 17 inch starter trim, bleed, safe area, vector title and event text, crop marks when requested, CMYK-oriented output, and preflight evidence.",
     keywords: [
       "free poster maker",
       "free poster creator",
       "free poster generator",
+      "free AI poster maker",
       "poster maker free",
       "free AI poster generator",
       "AI poster generator",
