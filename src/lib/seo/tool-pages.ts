@@ -362,7 +362,7 @@ export const toolPages: ToolPage[] = [
     intent: "Use this page when the artwork reaches the cut edge and the printer needs extra image area outside the final trim size.",
     checks: ["0.125 inch default bleed for starter products", "Separate TrimBox and BleedBox", "Safe-area guide", "Crop marks", "Artwork placed through the bleed edge"],
     steps: ["Confirm the final trim size", "Extend background artwork into bleed", "Keep important text inside the safe area", "Generate crop marks if requested", "Run preflight before downloading the PDF"],
-    relatedSlugs: ["canva-print-ready-pdf", "canva-cmyk-print-quality", "canva-bleed-and-crop-marks"],
+    relatedSlugs: ["canva-print-ready-pdf", "canva-cmyk-print-quality", "canva-bleed-and-crop-marks", "add-crop-marks-to-pdf"],
     sections: [
       {
         heading: "How much bleed should a file have?",
@@ -399,7 +399,7 @@ export const toolPages: ToolPage[] = [
     intent: "Use this page when a Canva design looks right on screen but the print handoff is missing bleed, crop marks, CMYK-oriented output, or proof evidence.",
     checks: ["Printer-requested bleed amount", "PDF Print export settings", "Crop marks setting", "Color profile setting", "High-resolution artwork", "Safe-area text placement"],
     steps: ["Read the printer's file specifications", "Check whether Canva exported bleed and crop marks", "Confirm important text sits inside the safe area", "Confirm color and resolution settings are acceptable", "Create a fresh Trim Proof proof when the file needs deterministic print geometry"],
-    relatedSlugs: ["canva-print-ready-pdf", "canva-cmyk-print-quality", "add-bleed-to-pdf-online"],
+    relatedSlugs: ["canva-print-ready-pdf", "canva-cmyk-print-quality", "add-bleed-to-pdf-online", "add-crop-marks-to-pdf"],
     sections: [
       {
         heading: "Why Canva files get questioned by printers",
@@ -436,7 +436,7 @@ export const toolPages: ToolPage[] = [
     intent: "Use this page when a Canva design looks finished, but the printer or client is asking whether the PDF is truly ready for commercial printing.",
     checks: ["PDF Print versus standard PDF export", "Printer-requested bleed", "Crop marks when requested", "CMYK or printer-accepted color workflow", "Image quality and placed DPI", "Safe-area text placement", "PDF/X requirement"],
     steps: ["Read the printer's file specifications", "Check whether Canva PDF Print matches those settings", "Confirm bleed, crop marks, safe area, color, and image quality", "Check whether the printer requested PDF/X-1a or another PDF/X level", "Create a fresh Trim Proof proof when the file needs deterministic print geometry and preflight evidence"],
-    relatedSlugs: ["canva-cmyk-print-quality", "canva-bleed-and-crop-marks", "pdf-to-cmyk-converter"],
+    relatedSlugs: ["canva-cmyk-print-quality", "canva-bleed-and-crop-marks", "pdf-to-cmyk-converter", "add-bleed-to-pdf-online", "add-crop-marks-to-pdf"],
     sections: [
       {
         heading: "What to check in a Canva print PDF",
@@ -2795,7 +2795,7 @@ export const toolPages: ToolPage[] = [
     intent: "Use this page when a printer asks for crop marks or when you need a visible cut guide around a print-ready PDF.",
     checks: ["TrimBox dimensions", "BleedBox dimensions", "Crop marks outside trim", "Safe-area guide", "PDF/X subtype", "Embedded fonts"],
     steps: ["Choose the product profile", "Keep artwork through the bleed edge", "Enable crop marks", "Generate the proof", "Review the preflight report before sending the file"],
-    relatedSlugs: ["add-bleed-to-pdf-online", "print-ready-pdf-generator", "pdf-preflight-checker"],
+    relatedSlugs: ["add-bleed-to-pdf-online", "canva-bleed-and-crop-marks", "print-ready-pdf-generator", "pdf-preflight-checker"],
     sections: [
       {
         heading: "Crop marks versus bleed",
