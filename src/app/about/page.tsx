@@ -6,7 +6,7 @@ import { getSiteOrigin } from "@/lib/seo/site-url";
 export const metadata: Metadata = {
   title: "About Trim Proof",
   description:
-    "Trim Proof creates print-ready PDF/X proofs from plain-English briefs, with deterministic checks for bleed, crop marks, CMYK-oriented output, vector text, DPI, and preflight.",
+    "Trim Proof creates print-ready PDF/X proofs from plain-English briefs, with deterministic checks for bleed, crop marks, CMYK-oriented output, vector text, DPI, and preflight for supported starter products including menus.",
   alternates: {
     canonical: "/about"
   },
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     description:
       "AI creative upstream. Deterministic PDF/X, CMYK, bleed, crop marks, vector text, and preflight downstream.",
     url: "/about",
-    siteName: "Press Forge",
+    siteName: "Trim Proof",
     type: "website",
     images: [
       {
@@ -30,13 +30,13 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "About Trim Proof",
     description:
-      "Trim Proof turns plain-English print briefs into checked PDF/X proofs for supported starter products.",
+      "Trim Proof turns plain-English print briefs into checked PDF/X proofs for supported starter products including menus.",
     images: ["/trim-proof-workspace-concept.png"]
   }
 };
 
 const supportedFacts = [
-  ["Supported products", "Business cards, flyers, posters, brochures, postcards, and letterhead."],
+  ["Supported products", "Business cards, flyers, menus, posters, brochures, postcards, and letterhead."],
   ["Demo path", "A free account can create a watermarked sample proof and preflight report."],
   ["Paid export path", "$12 one-export credit or $49/month Trim Proof Pro for clean production downloads."],
   ["Current verified export", "PDF/X-1a-oriented production export with preflight checks."],
@@ -63,7 +63,7 @@ const faq = [
   {
     question: "What does Trim Proof do?",
     answer:
-      "Trim Proof turns plain-English briefs for flyers, posters, brochures, business cards, postcards, and letterhead into print-ready PDF/X proofs with bleed, crop marks, embedded vector text, CMYK-oriented output, and preflight checks."
+      "Trim Proof turns plain-English briefs for flyers, posters, menus, brochures, business cards, postcards, and letterhead into print-ready PDF/X proofs with bleed, crop marks, embedded vector text, CMYK-oriented output, and preflight checks."
   },
   {
     question: "Who is Trim Proof for?",
@@ -175,7 +175,7 @@ export default function AboutPage() {
           <FileCheck2 aria-hidden className="h-7 w-7 text-brand" />
           <p className="mt-5 text-sm font-bold uppercase text-brand">About Trim Proof</p>
           <h1 className="mt-3 font-display text-5xl font-bold leading-[1.04] text-surface-ink">
-            A print-ready PDF proof engine for generated flyers, posters, brochures, cards, postcards, and letterhead.
+            A print-ready PDF proof engine for generated flyers, posters, menus, brochures, cards, postcards, and letterhead.
           </h1>
         </div>
         <div className="border-y border-border bg-surface p-5">
@@ -204,7 +204,7 @@ export default function AboutPage() {
             <h2 className="mt-4 font-display text-3xl font-bold text-surface-ink">Who should use it</h2>
             <p className="mt-4 text-base leading-7 text-muted">
               Use Trim Proof when a simple print job needs a clearer path from brief to checked PDF: a flyer for an
-              event, a poster for a campaign, a tri-fold brochure, a business card with bleed, a postcard layout, or letterhead that needs printer-friendly margins
+              event, a poster for a campaign, a menu for a restaurant or cafe, a tri-fold brochure, a business card with bleed, a postcard layout, or letterhead that needs printer-friendly margins
               and embedded vector text.
             </p>
           </article>

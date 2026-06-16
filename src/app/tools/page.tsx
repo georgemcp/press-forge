@@ -7,7 +7,7 @@ import { getToolPage, toolPages, type ToolPage } from "@/lib/seo/tool-pages";
 export const metadata: Metadata = {
   title: "Print-Ready PDF Tools and Prepress Guides",
   description:
-    "Browse Trim Proof tools and guides for print-ready PDFs, AI flyers, AI posters, AI brochures, AI business cards, postcard makers, letterhead makers, CMYK, bleed, crop marks, PDF/X, Canva exports, and preflight.",
+    "Browse Trim Proof tools and guides for print-ready PDFs, AI flyers, AI posters, AI menus, AI brochures, AI business cards, postcard makers, letterhead makers, CMYK, bleed, crop marks, PDF/X, Canva exports, and preflight.",
   alternates: {
     canonical: "/tools"
   },
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     description:
       "A crawlable hub for Trim Proof's print-ready PDF tools, Canva guides, prepress checks, templates, and AI print-proof workflows.",
     url: "/tools",
-    siteName: "Press Forge",
+    siteName: "Trim Proof",
     type: "website"
   },
   twitter: {
@@ -56,6 +56,11 @@ const toolGroups = [
     title: "Supported product templates",
     description: "Starter-product pages for formats Trim Proof currently supports.",
     slugs: ["business-card-pdf-template", "flyer-pdf-template", "poster-pdf-template", "tri-fold-brochure-template", "postcard-pdf-template", "letterhead-pdf-template"]
+  },
+  {
+    title: "Supported menu pages",
+    description: "Single-sheet menu maker and template pages for print-ready menu briefs.",
+    slugs: ["menu-maker", "free-menu-maker", "menu-pdf-template"]
   },
   {
     title: "Prepress checks",
@@ -159,7 +164,7 @@ export default function ToolsIndexPage() {
             </p>
           </div>
           <p className="mt-5 max-w-3xl text-base leading-7 text-muted">
-            Browse the researched pages below by job. Trim Proof currently supports generated proofs for flyers, posters, brochures, business cards, postcards, and letterhead. It is not a universal repair tool for every existing PDF or a client approval suite.
+            Browse the researched pages below by job. Trim Proof currently supports generated proofs for flyers, posters, menus, brochures, business cards, postcards, and letterhead. It is not a universal repair tool for every existing PDF or a client approval suite.
           </p>
         </div>
         <aside className="border-l border-border pl-5">
@@ -205,6 +210,25 @@ export default function ToolsIndexPage() {
               </section>
             );
           })}
+        </div>
+      </section>
+
+      <section className="border-y border-border bg-surface">
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-12 lg:grid-cols-[0.78fr_1.22fr] lg:items-center">
+          <div>
+            <p className="text-sm font-bold uppercase text-brand">Comparison</p>
+            <h2 className="mt-3 font-display text-3xl font-bold leading-tight text-surface-ink">Canva PDF Print or a checked Trim Proof handoff?</h2>
+          </div>
+          <div>
+            <p className="text-base leading-7 text-muted">
+              Use the comparison when a Canva file looks finished, but the printer is asking about bleed, crop marks,
+              PDF/X, CMYK workflow, or preflight evidence.
+            </p>
+            <Link className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-brand transition hover:text-surface-ink" href="/compare/canva-print-ready-pdf">
+              Open Canva comparison
+              <ArrowRight aria-hidden className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </section>
 

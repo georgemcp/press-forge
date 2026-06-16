@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import sitemap from "@/app/sitemap";
+import { audiencePages } from "@/lib/seo/audience-pages";
+import { comparisonPages } from "@/lib/seo/comparison-pages";
 import { getSiteOrigin } from "@/lib/seo/site-url";
 import { toolPages } from "@/lib/seo/tool-pages";
 
@@ -13,9 +15,18 @@ describe("SEO sitemap", () => {
     expect(urls).toContain(`${origin}/about`);
     expect(urls).toContain(`${origin}/tools`);
     expect(urls).toContain(`${origin}/pricing`);
+    expect(urls).toContain(`${origin}/prepress-checklist`);
     expect(urls).toContain(`${origin}/privacy`);
     expect(urls).not.toContain(`${origin}/signup`);
     expect(urls).not.toContain(`${origin}/app`);
+
+    for (const page of audiencePages) {
+      expect(urls).toContain(`${origin}${page.path}`);
+    }
+
+    for (const page of comparisonPages) {
+      expect(urls).toContain(`${origin}${page.path}`);
+    }
 
     for (const page of toolPages) {
       expect(urls).toContain(`${origin}/tools/${page.slug}`);

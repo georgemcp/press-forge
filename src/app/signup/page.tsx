@@ -3,18 +3,12 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Box, CheckCircle2 } from "lucide-react";
 import { SignupForm } from "@/components/account/account-access-form";
+import { signupPageMetadata } from "@/app/signup/signup-metadata";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Create Account",
-  description: "Create a Trim Proof account before running a watermarked demo proof or paid clean PDF/X export.",
-  robots: {
-    index: false,
-    follow: false
-  }
-};
+export const metadata: Metadata = signupPageMetadata;
 
 interface SignupPageProps {
   searchParams: Promise<{

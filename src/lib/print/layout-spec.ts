@@ -32,7 +32,7 @@ export const assetSlotSchema = z.object({
 });
 
 export const layoutSpecSchema = z.object({
-  productType: z.enum(["business_card", "postcard", "flyer", "poster", "brochure", "letterhead"]),
+  productType: z.enum(["business_card", "postcard", "flyer", "poster", "brochure", "letterhead", "menu"]),
   printProfile: z.enum(["USWebCoatedSWOP", "GRACoL2013", "FOGRA39"]).default("USWebCoatedSWOP"),
   pdfxLevel: z.enum(["PDF/X-1a:2001", "PDF/X-4"]).default("PDF/X-1a:2001"),
   cropMarks: z.boolean().default(true),

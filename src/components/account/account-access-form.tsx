@@ -92,6 +92,7 @@ export function SignupForm({ nextPath, planInterest }: SignupFormProps) {
         <SelectField label="Primary use case" name="primaryUseCase">
           <option value="business_cards">Business cards</option>
           <option value="flyers">Flyers</option>
+          <option value="menus">Menus</option>
           <option value="posters">Posters</option>
           <option value="brochures">Brochures</option>
           <option value="postcards">Postcards</option>

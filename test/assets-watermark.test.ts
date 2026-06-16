@@ -1,11 +1,13 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveLayoutAssets } from "@/lib/print/assets";
 import { sampleBusinessCardLayout } from "@/lib/print/sample-layout";
 
 const tempDirs: string[] = [];
+const assetsSource = readFileSync("src/lib/print/assets.ts", "utf8");
 
 async function makeTempDir() {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "trimproof-assets-"));
@@ -67,5 +69,10 @@ describe("demo asset watermarking", () => {
 
     expect(Buffer.compare(Buffer.from(cleanAsset.bytes), Buffer.from(watermarkedAsset.bytes))).not.toBe(0);
     expect(Buffer.compare(cleanPreview, watermarkedPreview)).not.toBe(0);
+  });
+
+  it("uses Trim Proof naming in the demo watermark copy", () => {
+    expect(assetsSource).toContain("TRIM PROOF DEMO");
+    expect(assetsSource).not.toContain("PRESS FORGE DEMO");
   });
 });

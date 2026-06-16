@@ -8,7 +8,7 @@ Live DataForSEO Google Ads Search Volume was refreshed for the United States and
 - Locations: United States (`2840`), Canada (`2124`)
 - Language: English
 - Search partners: disabled
-- Mapped pages: 42
+- Mapped pages: 45
 
 ## Top Keywords
 
@@ -32,8 +32,8 @@ Live DataForSEO Google Ads Search Volume was refreshed for the United States and
 | brochure template | 18,100 | 1,900 | 20,000 | $2.93 | MEDIUM | Tri-Fold Brochure Template for Print-Ready PDFs |
 | brochure templates | 18,100 | 1,900 | 20,000 | $2.93 | MEDIUM | Tri-Fold Brochure Template for Print-Ready PDFs |
 | flyer maker | 18,100 | 590 | 18,690 | $3.60 | HIGH | Flyer Maker With AI Print-Ready PDF/X |
-| flyer maker free | 18,100 | 390 | 18,490 | $2.70 | MEDIUM | Free Flyer Maker Demo |
-| free flyer creator | 18,100 | 390 | 18,490 | $2.70 | MEDIUM | Free Flyer Maker Demo |
+| flyer maker free | 18,100 | 390 | 18,490 | $2.70 | MEDIUM | Free Flyer Maker Demo with AI |
+| free flyer creator | 18,100 | 390 | 18,490 | $2.70 | MEDIUM | Free Flyer Maker Demo with AI |
 
 ## Top Pages
 
@@ -41,7 +41,7 @@ Live DataForSEO Google Ads Search Volume was refreshed for the United States and
 | --- | ---: | --- |
 | Business Card Maker With AI Print-Ready PDF/X | 188,870 | business card creator, business card generator, business card maker, online business card maker |
 | Poster Size Guide | 159,180 | poster dimensions, poster size, poster sizes, standard poster size, poster size in pixels |
-| Free Flyer Maker Demo | 81,590 | flyer maker free, free flyer creator, free flyer generator, free flyer maker, AI flyer generator |
+| Free Flyer Maker Demo with AI | 81,860 | flyer maker free, free flyer creator, free flyer generator, free flyer maker, AI flyer generator |
 | Poster Maker With AI Print-Ready PDF/X | 73,030 | poster creator, poster maker, poster design, poster designer, online poster maker |
 | Postcard Size Guide | 69,090 | postcard dimensions, postcard size, postcard sizes, standard postcard size, postcard size in pixels |
 | Business Card Size Guide | 68,920 | business card size, standard business card dimensions, standard business card size, what size is a business card, business card dimensions |
@@ -49,19 +49,15 @@ Live DataForSEO Google Ads Search Volume was refreshed for the United States and
 | Business Card Template for Print-Ready PDFs | 49,800 | business card template, business card templates, business card PDF template, business card template PDF, business card PDF |
 | Flyer Template for Print-Ready PDFs | 42,510 | flyer template, flyer templates, free flyer template, free flyer templates, flyer design template |
 | Letterhead Template for Print-Ready PDFs | 31,430 | letterhead template, letterhead templates, business letterhead template, free letterhead template, company letterhead template |
-| Free Poster Maker Demo | 30,170 | free poster creator, free poster generator, free poster maker, poster maker free, AI poster generator |
-| Flyer Maker With AI Print-Ready PDF/X | 28,630 | flyer maker, flyer creator, online flyer maker, flyer generator, business flyer maker |
+| Free Poster Maker Demo with AI | 30,320 | free poster creator, free poster generator, free poster maker, poster maker free, AI poster generator |
+| Menu Template for Print-Ready PDFs | 30,040 | menu template, menu templates, free menu template, restaurant menu template, food menu template |
 
 ## Unmapped Demand
 
-- menu template: 10,900 combined searches, $3.55 CPC
-- menu templates: 10,900 combined searches, $3.55 CPC
-- menu maker: 2,660 combined searches, $6.79 CPC
-- free menu maker: 1,990 combined searches, $7.25 CPC
-- menu pdf template: 100 combined searches, $2.90 CPC
+No high-value unmapped keywords were found in this refresh.
 
 ## Notes
 
 - The live refresh is intended to keep Trim Proof focused on the highest-volume print-production and proof-generation queries that match the product.
 - Unmapped high-volume terms are the best signals for future page expansion.
-- The repository already covers the main supported starter products: flyers, posters, brochures, business cards, postcards, and letterhead.
+- The repository already covers the main supported starter products: flyers, posters, brochures, menus, business cards, postcards, and letterhead.

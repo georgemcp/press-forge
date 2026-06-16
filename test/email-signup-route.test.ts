@@ -14,11 +14,12 @@ vi.mock("@/lib/db/supabase", () => ({
 
 vi.mock("@/lib/email/transactional", () => ({
   getAdminSignupRecipients: () => mocks.getAdminSignupRecipients(),
-  sendTransactionalEmail: (...args: unknown[]) => mocks.sendTransactionalEmail(...args)
+  sendTransactionalEmail: () => mocks.sendTransactionalEmail()
 }));
 
 vi.mock("@/lib/analytics/server-events", () => ({
-  sendServerAnalyticsEvent: (...args: unknown[]) => mocks.sendServerAnalyticsEvent(...args)
+  sendServerAnalyticsEvent: (...args: Parameters<typeof mocks.sendServerAnalyticsEvent>) =>
+    mocks.sendServerAnalyticsEvent(...args)
 }));
 
 describe("email signup route", () => {

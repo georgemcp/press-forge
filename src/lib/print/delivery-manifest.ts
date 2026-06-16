@@ -10,10 +10,16 @@ export interface ProofDeliveryManifest {
   createdAt: string;
 }
 
-const productionArtifactPattern = /^pressforge-(?:business-card|postcard|flyer|poster|brochure|letterhead)\.(?:source\.pdf|pdfx\.pdf|master\.svg)$/;
+const supportedArtifactProductPattern = "(?:business-card|postcard|flyer|poster|brochure|letterhead|menu)";
+const productionArtifactPattern = new RegExp(`^(?:trimproof|pressforge)-${supportedArtifactProductPattern}\\.(?:source\\.pdf|pdfx\\.pdf|master\\.svg)$`);
+const nonProductionArtifactPattern = /^(?:asset-[a-z0-9-]+\.png|preflight-report\.(?:json|html|txt))$/;
 
 export function isProductionArtifact(fileName: string) {
   return productionArtifactPattern.test(fileName);
+}
+
+export function isAllowedProofFileName(fileName: string) {
+  return isProductionArtifact(fileName) || nonProductionArtifactPattern.test(fileName);
 }
 
 export function createProofDeliveryManifest(mode: "dummy" | "advanced"): ProofDeliveryManifest {
@@ -32,6 +38,10 @@ export async function writeProofDeliveryManifest(outputDir: string, mode: "dummy
 }
 
 export async function canServeProofFile(outputDir: string, fileName: string) {
+  if (!isAllowedProofFileName(fileName)) {
+    return false;
+  }
+
   if (!isProductionArtifact(fileName)) {
     return true;
   }

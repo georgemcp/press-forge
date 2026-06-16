@@ -6,15 +6,30 @@ import { createServiceSupabaseClient } from "@/lib/db/supabase";
 export const runtime = "nodejs";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/svg+xml",
-  "image/gif",
-  "image/heic",
-  "image/heif",
-];
+const ALLOWED_UPLOAD_TYPES = {
+  "application/pdf": "pdf",
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/heic": "heic",
+  "image/heif": "heif",
+} as const;
+const allowedUploadCategories = ["reference", "source"] as const;
+
+type UploadCategory = typeof allowedUploadCategories[number];
+type AllowedUploadType = keyof typeof ALLOWED_UPLOAD_TYPES;
+
+function isAllowedUploadType(value: string): value is AllowedUploadType {
+  return value in ALLOWED_UPLOAD_TYPES;
+}
+
+function parseUploadCategory(value: FormDataEntryValue | null): UploadCategory | undefined {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return "reference";
+  }
+  return allowedUploadCategories.includes(value as UploadCategory) ? (value as UploadCategory) : undefined;
+}
 
 export async function POST(request: Request) {
   const account = await getAccountSessionFromCookies();
@@ -35,11 +50,18 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
-  const category = (formData.get("category") as string) || "reference";
+  const category = parseUploadCategory(formData.get("category"));
 
   if (!file) {
     return NextResponse.json(
       { error: "No file provided. Use form field 'file'." },
+      { status: 400 }
+    );
+  }
+
+  if (!category) {
+    return NextResponse.json(
+      { error: "Unsupported upload category. Use 'reference' or 'source'." },
       { status: 400 }
     );
   }
@@ -51,10 +73,10 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (!isAllowedUploadType(file.type)) {
     return NextResponse.json(
       {
-        error: `Unsupported file type: ${file.type}. Allowed: ${ALLOWED_TYPES.join(", ")}`,
+        error: `Unsupported file type: ${file.type}. Allowed: ${Object.keys(ALLOWED_UPLOAD_TYPES).join(", ")}`,
       },
       { status: 400 }
     );
@@ -62,7 +84,7 @@ export async function POST(request: Request) {
 
   try {
     const fileId = randomUUID();
-    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const ext = ALLOWED_UPLOAD_TYPES[file.type];
     const storagePath = `${account.userId}/${category}/${fileId}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -93,6 +115,7 @@ export async function POST(request: Request) {
       originalName: file.name,
       contentType: file.type,
       size: file.size,
+      category,
     });
   } catch (error) {
     console.error("Upload failed:", error);
@@ -121,7 +144,14 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const category = searchParams.get("category") || "reference";
+  const category = parseUploadCategory(searchParams.get("category"));
+
+  if (!category) {
+    return NextResponse.json(
+      { error: "Unsupported upload category. Use 'reference' or 'source'." },
+      { status: 400 }
+    );
+  }
 
   try {
     const { data, error } = await supabase.storage
@@ -146,6 +176,7 @@ export async function GET(request: Request) {
         url: publicUrl,
         size: file.metadata?.size || 0,
         contentType: file.metadata?.mimetype || "image/png",
+        category,
         createdAt: file.created_at,
       };
     });

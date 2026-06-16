@@ -38,7 +38,7 @@ Pull timestamp: 2026-06-07T15:38:23Z to 2026-06-07T15:39:25Z
 | `brochure size pixels` | 30 | n/a | Low |
 | `brochure bleed size` | 10 | n/a | Low |
 
-Adjacent unsupported menu terms remain deferred unless menu becomes a real supported starter product:
+Adjacent menu terms are now part of the supported starter-product cluster:
 
 | Keyword | Search volume | CPC | Competition |
 |---|---:|---:|---|

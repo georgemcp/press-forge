@@ -58,7 +58,7 @@ DataForSEO live Google Ads Search Volume was refreshed for the core keyword set 
 - `camera ready art`: 110 monthly searches; `press ready pdf`: 50 monthly searches in the 2026-06-07 camera-ready follow-up
 - `business card with bleed`: 110 monthly searches
 - `business card bleed size`, `business card size with bleed`, `business card bleed dimensions`, `business card size and bleed`, and `business card with bleed size`: 170 monthly searches each in the 2026-06-07 follow-up refresh, with `bleed for business cards` at 110
-- Unsupported menu clusters still deferred on 2026-06-07 include `menu template` at 9,900 monthly searches, `menu maker` at 2,900, `free menu maker` at 1,900, and `menu pdf template` at 110; brochures moved from deferred to supported after adding an 8.5 x 11 tri-fold starter profile and brochure proof pages.
+- Menu clusters are now supported on 2026-06-12 via `menu maker`, `free menu maker`, and `menu pdf template`; they should be treated like the other supported starter-product clusters after the dedicated menu pages landed alongside the brochure proof pages.
 - `postcard size`, `postcard dimensions`, and `postcard sizes`: 18,100 monthly searches each in the 2026-06-07 supported-product size refresh, low competition, $7.14 CPC
 - `standard postcard size`: 8,100 monthly searches, medium competition, $6.65 CPC; `postcard size in pixels`: 210 monthly searches
 - `postcard design` and `postcard designer`: 2,900 monthly searches each in the 2026-06-07 maker refresh, high competition, $7.62 CPC
@@ -133,7 +133,7 @@ DataForSEO live Google Ads Search Volume was refreshed for the core keyword set 
 
 ## SERP Positioning
 
-DataForSEO SERP snapshots on 2026-06-06 showed:
+DataForSEO SERP snapshots on 2026-06-12 showed:
 
 - Broad AI flyer terms are dominated by Adobe, Canva, Design.com, Template.net, Venngage, and other template/generator products.
 - `flyer maker`, `free flyer maker`, and `AI flyer generator` SERPs are dominated by Canva, Adobe Express, Design.com, PosterMyWall, Microsoft Word, Template.net, Venngage, app-store results, YouTube, Pinterest, VistaCreate, and smaller AI flyer apps. Trim Proof should use the checked print handoff wedge rather than generic design-app claims.
@@ -142,7 +142,7 @@ DataForSEO SERP snapshots on 2026-06-06 showed:
 - `print ready artwork` shows printer/blog definition guides plus People Also Ask questions around meaning and preparation, making it a strong guide/AEO page rather than a generic generator landing page.
 - `camera ready artwork` is a legacy print-production synonym with definition-heavy SERPs and People Also Ask questions, so it should strengthen the print-ready artwork guide instead of splitting into a near-duplicate page.
 - `postcard size` is a large supported-product cluster with USPS and printer guides dominating the SERP; Trim Proof should answer size, bleed, pixels, safe area, USPS caveats, and then route users into a checked postcard proof workflow.
-- `postcard template` is a supported-product template cluster where Avery, MOO, Microsoft Word, Canva, Adobe Express, printer template pages, Pinterest, and vector/template libraries dominate. Trim Proof should expand the existing postcard PDF template page around a generated proof/preflight wedge, not a generic static-template marketplace.
+- `postcard template`, `brochure template`, `letterhead template`, and `menu template` are supported-product template clusters where Avery, MOO, Microsoft Word, Canva, Adobe Express, printer template pages, Pinterest, and vector/template libraries dominate. Trim Proof should expand the existing print-ready template pages around a generated proof/preflight wedge, not a generic static-template marketplace.
 - `postcard maker` is dominated by Canva, Adobe Express, Walgreens, Vistaprint, Jukebox Print, Avery, MyPostcard, MyCreativeShop, Design.com, Kittl, and MOO. Trim Proof should use an exact postcard-maker route for checked PDF/X proof handoff rather than pretending to be a printing, postage, or generic design service.
 - `business card size` is the largest supported-product setup cluster found so far. It should have a standalone guide that answers dimensions and pixels first, then links to bleed and print-ready PDF proof workflows.
 - `business card size pixels` and `business card pixel size` form a narrower, high-CPC, low-competition setup cluster. DataForSEO SERPs are dominated by printer/design-tool dimension guides and PAA questions around pixel size, 300 DPI, whether cards are 2 x 3, and resolution. Trim Proof should answer 1050 x 600 px trim, 1125 x 675 px with 0.125 inch bleed, 975 x 525 px default safe area, and why vendor templates can disagree, then route users into a checked business-card proof workflow.
@@ -160,7 +160,7 @@ DataForSEO SERP snapshots on 2026-06-06 showed:
 - `letterhead template` is a larger supported-product template cluster where Microsoft Word, Adobe, Canva, Template.net, Design.com, Pinterest, Vecteezy, and Venngage dominate. Trim Proof should expand the existing letterhead PDF template page around a generated print-ready proof wedge, not a generic Word-template marketplace.
 - `letterhead maker` is dominated by MyCreativeShop, Adobe Express, Template.net, Microsoft Word, Design.com, Google Play apps, Canva, Venngage, YouTube, Zoviz, and Pippit. Trim Proof should use exact letterhead-maker routes for checked PDF/X proof handoff rather than pretending to be a Word-template library, app-store design tool, or print shop.
 - `proofing software` is dominated by approval and markup suites such as PageProof, Wrike, QuickReviewer, WeAproove, Gartner listings, and Adobe Workfront. Trim Proof should target the print-production proof-check angle, not approval routing.
-- `menu pdf template` has measurable volume but should be deferred until menu is a supported starter product.
+- `menu pdf template` has measurable volume and is now supported through the dedicated menu template page.
 - Canva print searches are a small but coherent problem cluster: print quality, CMYK, bleed, PDF Print versus standard PDF, crop marks, and PDF/X-1a. Trim Proof should answer the troubleshooting question and then offer a fresh checked proof workflow for supported products.
 
 Positioning implication: Trim Proof should not try to beat Adobe/Canva with generic design claims alone. The durable wedge is "AI flyer, poster, brochure, and business-card creation plus deterministic print proofing" with visible PDF/X, CMYK, bleed, crop marks, panel or safe-area guidance, vector text, and preflight evidence.

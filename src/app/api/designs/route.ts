@@ -11,6 +11,8 @@ export interface SavedDesign {
   id: string;
   userId: string;
   name: string;
+  clientName: string;
+  jobName: string;
   brief: string;
   enhancedBrief: BriefEnhancementResult | null;
   layoutSpec: LayoutSpec;
@@ -20,6 +22,24 @@ export interface SavedDesign {
   iterationCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+interface SupabaseErrorLike {
+  code?: string;
+  message?: string;
+}
+
+function isMissingSavedDesignsTable(error: SupabaseErrorLike | null | undefined) {
+  const message = error?.message?.toLowerCase();
+
+  return (
+    error?.code === "PGRST205" ||
+    Boolean(message?.includes("saved_designs") && message.includes("schema cache"))
+  );
+}
+
+function normalizeSavedDesignText(value: unknown, fallback = "") {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim().slice(0, 140) : fallback;
 }
 
 // ── GET /api/designs — list saved designs ──────────────────────────────────────
@@ -47,6 +67,10 @@ export async function GET(request: Request) {
       .eq("user_id", account.userId)
       .single();
 
+    if (isMissingSavedDesignsTable(error)) {
+      return NextResponse.json({ error: "Design not found." }, { status: 404 });
+    }
+
     if (error || !data) {
       return NextResponse.json({ error: "Design not found." }, { status: 404 });
     }
@@ -56,7 +80,9 @@ export async function GET(request: Request) {
       design: {
         id: row.id as string,
         userId: row.user_id as string,
-        name: (row.name as string) || "Untitled Design",
+        name: normalizeSavedDesignText(row.name, "Untitled Design"),
+        clientName: normalizeSavedDesignText(row.client_name),
+        jobName: normalizeSavedDesignText(row.job_name),
         brief: (row.brief as string) || "",
         enhancedBrief: (row.enhanced_brief as BriefEnhancementResult | null) || null,
         layoutSpec: row.layout_spec as LayoutSpec,
@@ -81,6 +107,14 @@ export async function GET(request: Request) {
     .limit(limit);
 
   if (error) {
+    if (isMissingSavedDesignsTable(error)) {
+      return NextResponse.json({
+        designs: [],
+        unavailable: true,
+        reason: "Saved designs are not available in this environment.",
+      });
+    }
+
     console.error("Failed to list designs:", error);
     return NextResponse.json({ error: "Failed to load designs." }, { status: 500 });
   }
@@ -88,7 +122,9 @@ export async function GET(request: Request) {
   const designs: SavedDesign[] = (data || []).map((row: Record<string, unknown>) => ({
     id: row.id as string,
     userId: row.user_id as string,
-    name: (row.name as string) || "Untitled Design",
+    name: normalizeSavedDesignText(row.name, "Untitled Design"),
+    clientName: normalizeSavedDesignText(row.client_name),
+    jobName: normalizeSavedDesignText(row.job_name),
     brief: (row.brief as string) || "",
     enhancedBrief: (row.enhanced_brief as BriefEnhancementResult | null) || null,
     layoutSpec: row.layout_spec as LayoutSpec,
@@ -129,6 +165,10 @@ export async function DELETE(request: Request) {
     .eq("user_id", account.userId);
 
   if (error) {
+    if (isMissingSavedDesignsTable(error)) {
+      return NextResponse.json({ error: "Saved designs are not available in this environment." }, { status: 503 });
+    }
+
     console.error("Failed to delete design:", error);
     return NextResponse.json({ error: "Failed to delete design." }, { status: 500 });
   }
@@ -147,6 +187,8 @@ export async function POST(request: Request) {
   const payload = (await request.json().catch(() => ({}))) as {
     id?: string;              // if provided, update existing design
     name?: string;
+    clientName?: string;
+    jobName?: string;
     brief?: string;
     enhancedBrief?: BriefEnhancementResult | null;
     layoutSpec?: LayoutSpec;
@@ -167,7 +209,9 @@ export async function POST(request: Request) {
 
   const designData = {
     user_id: account.userId,
-    name: payload.name || "Untitled Design",
+    name: normalizeSavedDesignText(payload.name, "Untitled Design"),
+    client_name: normalizeSavedDesignText(payload.clientName),
+    job_name: normalizeSavedDesignText(payload.jobName),
     brief: payload.brief || "",
     enhanced_brief: payload.enhancedBrief as Json || null,
     layout_spec: payload.layoutSpec as unknown as Json,
@@ -188,6 +232,10 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
+      if (isMissingSavedDesignsTable(error)) {
+        return NextResponse.json({ error: "Saved designs are not available in this environment." }, { status: 503 });
+      }
+
       console.error("Failed to update design:", error);
       return NextResponse.json({ error: "Failed to update design." }, { status: 500 });
     }
@@ -203,6 +251,10 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
+    if (isMissingSavedDesignsTable(error)) {
+      return NextResponse.json({ error: "Saved designs are not available in this environment." }, { status: 503 });
+    }
+
     console.error("Failed to save design:", error);
     return NextResponse.json({ error: "Failed to save design." }, { status: 500 });
   }

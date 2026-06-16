@@ -165,9 +165,9 @@ export async function exportLayoutPdf(spec: LayoutSpec, options: PdfExportOption
   const geometry = getPageGeometry(spec.productType);
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
-  pdfDoc.setTitle("Press Forge print-ready proof");
-  pdfDoc.setProducer("Press Forge deterministic prepress engine");
-  pdfDoc.setCreator("Press Forge");
+  pdfDoc.setTitle("Trim Proof print-ready proof");
+  pdfDoc.setProducer("Trim Proof deterministic prepress engine");
+  pdfDoc.setCreator("Trim Proof");
 
   const page = pdfDoc.addPage([geometry.mediaBox.width, geometry.mediaBox.height]);
   page.setMediaBox(0, 0, geometry.mediaBox.width, geometry.mediaBox.height);

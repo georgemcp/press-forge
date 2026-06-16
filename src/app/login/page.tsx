@@ -3,18 +3,12 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Box, CheckCircle2 } from "lucide-react";
 import { LoginForm } from "@/components/account/account-access-form";
+import { loginPageMetadata } from "@/app/login/login-metadata";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Sign In",
-  description: "Sign in to Trim Proof before running demo proofs or paid PDF/X exports.",
-  robots: {
-    index: false,
-    follow: false
-  }
-};
+export const metadata: Metadata = loginPageMetadata;
 
 interface LoginPageProps {
   searchParams: Promise<{

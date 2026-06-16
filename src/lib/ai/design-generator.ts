@@ -55,6 +55,15 @@ function buildDesignSpecPrompt(input: DesignGenerationInput): string {
     `Iteration: ${input.designIteration || 1}`,
   ];
 
+  if (input.productType === "menu") {
+    parts.push(
+      "",
+      "=== MENU GUIDANCE ===",
+      "Treat the design as a single-sheet print-ready menu proof. Use a text-forward hierarchy that feels like a restaurant, cafe, bar, or takeout menu depending on the brief.",
+      "If the brief does not specify a format, prefer a landscape single-sheet menu layout that keeps the title, menu sections, and contact or ordering details easy to scan."
+    );
+  }
+
   if (input.referenceImageUrls && input.referenceImageUrls.length > 0) {
     parts.push("", "=== REFERENCE IMAGES ===");
     parts.push(
@@ -67,7 +76,7 @@ function buildDesignSpecPrompt(input: DesignGenerationInput): string {
     "",
     "Return a JSON object with:",
     "1. layoutSpec: A complete LayoutSpec object with:",
-    '   - productType: "business_card" | "postcard" | "flyer" | "poster" | "brochure" | "letterhead"',
+    '   - productType: "business_card" | "postcard" | "flyer" | "poster" | "brochure" | "letterhead" | "menu"',
     '   - printProfile: "USWebCoatedSWOP" | "GRACoL2013" | "FOGRA39"',
     '   - pdfxLevel: "PDF/X-1a:2001" | "PDF/X-4"',
     "   - cropMarks: boolean",
@@ -94,6 +103,7 @@ function buildDesignSpecPrompt(input: DesignGenerationInput): string {
     "- For posters (11x17in): y ranges from 0 to 17. x ranges from 0 to 11.",
     "- For brochures (11x8.5in): y ranges from 0 to 8.5. x ranges from 0 to 11.",
     "- For letterheads (8.5x11in): y ranges from 0 to 11. x ranges from 0 to 8.5.",
+    "- For menus (11x8.5in landscape): y ranges from 0 to 8.5. x ranges from 0 to 11.",
     "- Text blocks MUST use these role values: brand, headline, subhead, body, contact, legal.",
     "- Font sizes should be proportional to the product size. Business cards use smaller text (6-16pt), posters use larger (14-54pt).",
     "- Asset slots positioned first as backgrounds, then logos/icons overlaid.",

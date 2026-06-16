@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-12T21:58:15.239Z",
+  "generatedAt": "2026-06-12T23:34:26.796Z",
   "source": {
     "provider": "DataForSEO",
     "endpoint": "https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live",
@@ -566,7 +566,7 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "AI business card maker",
@@ -644,7 +644,7 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "AI flyer generator",
@@ -722,7 +722,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "AI flyer maker",
@@ -800,7 +800,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "AI letterhead generator",
@@ -879,6 +879,84 @@
       ],
       "pageSlug": "free-letterhead-maker",
       "pageTitle": "Free Letterhead Maker Demo"
+    },
+    {
+      "keyword": "AI menu generator",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 390,
+      "competition": "MEDIUM",
+      "competitionIndex": 60,
+      "lowTopOfPageBid": 1.84,
+      "highTopOfPageBid": 6.97,
+      "cpc": 6.63,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 590
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 480
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 480
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 390
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 390
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 390
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 390
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 390
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 480
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 480
+        }
+      ],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
     },
     {
       "keyword": "AI postcard generator",
@@ -1034,7 +1112,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "AI poster maker",
@@ -1112,7 +1190,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "bleed for business cards",
@@ -4192,7 +4270,7 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "business card with bleed size",
@@ -7479,7 +7557,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "flyer maker print ready PDF",
@@ -7496,7 +7574,7 @@
       "cpc": null,
       "monthlySearches": [],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "flyer PDF template",
@@ -8048,6 +8126,84 @@
       "pageTitle": "Flyer Template for Print-Ready PDFs"
     },
     {
+      "keyword": "food menu template",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 1300,
+      "competition": "HIGH",
+      "competitionIndex": 100,
+      "lowTopOfPageBid": 0.63,
+      "highTopOfPageBid": 4.94,
+      "cpc": 2.5,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 1000
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 1000
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 1300
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 1000
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 1300
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 880
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 1000
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 1300
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 1300
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 1300
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 1300
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 1300
+        }
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
+    },
+    {
       "keyword": "free AI brochure maker",
       "locationName": "United States",
       "locationCode": 2840,
@@ -8201,7 +8357,85 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
+    },
+    {
+      "keyword": "free AI business card maker",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 20,
+      "competition": "HIGH",
+      "competitionIndex": 90,
+      "lowTopOfPageBid": 1.07,
+      "highTopOfPageBid": 3.64,
+      "cpc": 4.69,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 20
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 30
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 20
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 20
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 20
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 20
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 20
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 20
+        }
+      ],
+      "pageSlug": "free-ai-business-card-generator",
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "free AI flyer generator",
@@ -8279,7 +8513,85 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
+    },
+    {
+      "keyword": "free AI flyer maker",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 260,
+      "competition": "HIGH",
+      "competitionIndex": 70,
+      "lowTopOfPageBid": 1.48,
+      "highTopOfPageBid": 7.73,
+      "cpc": 6.83,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 390
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 390
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 320
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 260
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 210
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 260
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 210
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 260
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 210
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 140
+        }
+      ],
+      "pageSlug": "free-ai-flyer-generator",
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "free AI letterhead generator",
@@ -8358,6 +8670,84 @@
       ],
       "pageSlug": "free-letterhead-maker",
       "pageTitle": "Free Letterhead Maker Demo"
+    },
+    {
+      "keyword": "free AI menu generator",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 30,
+      "competition": "MEDIUM",
+      "competitionIndex": 55,
+      "lowTopOfPageBid": 1.69,
+      "highTopOfPageBid": 7.02,
+      "cpc": 5.98,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 70
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 50
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 40
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 40
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 20
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 20
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 20
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 40
+        }
+      ],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
     },
     {
       "keyword": "free AI postcard generator",
@@ -8513,7 +8903,85 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
+    },
+    {
+      "keyword": "free AI poster maker",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 110,
+      "competition": "MEDIUM",
+      "competitionIndex": 61,
+      "lowTopOfPageBid": 0.88,
+      "highTopOfPageBid": 3.18,
+      "cpc": 3.23,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 110
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 140
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 140
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 140
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 70
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 70
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 90
+        }
+      ],
+      "pageSlug": "free-poster-maker",
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "free brochure creator",
@@ -8903,7 +9371,7 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "free business card maker",
@@ -8981,7 +9449,7 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "free flyer creator",
@@ -9059,7 +9527,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "free flyer generator",
@@ -9137,7 +9605,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "free flyer maker",
@@ -9215,7 +9683,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "free flyer template",
@@ -9686,6 +10154,84 @@
       "pageTitle": "Letterhead Template for Print-Ready PDFs"
     },
     {
+      "keyword": "free menu generator",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 1900,
+      "competition": "HIGH",
+      "competitionIndex": 71,
+      "lowTopOfPageBid": 0.68,
+      "highTopOfPageBid": 7.25,
+      "cpc": 5.07,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 1600
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 1900
+        }
+      ],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
+    },
+    {
       "keyword": "free menu maker",
       "locationName": "United States",
       "locationCode": 2840,
@@ -9759,7 +10305,87 @@
           "month": 6,
           "searchVolume": 1900
         }
-      ]
+      ],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
+    },
+    {
+      "keyword": "free menu template",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 3600,
+      "competition": "MEDIUM",
+      "competitionIndex": 59,
+      "lowTopOfPageBid": 0.44,
+      "highTopOfPageBid": 3.25,
+      "cpc": 2.34,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 2900
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 3600
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 3600
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 3600
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 3600
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 3600
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 4400
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 4400
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 4400
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 4400
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 4400
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 4400
+        }
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
     },
     {
       "keyword": "free postcard creator",
@@ -10149,7 +10775,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "free poster generator",
@@ -10227,7 +10853,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "free poster maker",
@@ -10305,7 +10931,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "free poster template",
@@ -12380,6 +13006,162 @@
       "pageTitle": "Print-Ready PDF Generator"
     },
     {
+      "keyword": "menu creator",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 2400,
+      "competition": "HIGH",
+      "competitionIndex": 77,
+      "lowTopOfPageBid": 1.05,
+      "highTopOfPageBid": 8.91,
+      "cpc": 5.56,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 2400
+        }
+      ],
+      "pageSlug": "menu-maker",
+      "pageTitle": "Menu Maker for Print-Ready PDFs"
+    },
+    {
+      "keyword": "menu generator",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 390,
+      "competition": "MEDIUM",
+      "competitionIndex": 43,
+      "lowTopOfPageBid": 1.04,
+      "highTopOfPageBid": 6.42,
+      "cpc": 6.01,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 390
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 390
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 390
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 320
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 390
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 390
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 390
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 590
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 390
+        }
+      ],
+      "pageSlug": "menu-maker",
+      "pageTitle": "Menu Maker for Print-Ready PDFs"
+    },
+    {
       "keyword": "menu maker",
       "locationName": "United States",
       "locationCode": 2840,
@@ -12453,7 +13235,104 @@
           "month": 6,
           "searchVolume": 2900
         }
-      ]
+      ],
+      "pageSlug": "menu-maker",
+      "pageTitle": "Menu Maker for Print-Ready PDFs"
+    },
+    {
+      "keyword": "menu maker free",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 1900,
+      "competition": "HIGH",
+      "competitionIndex": 71,
+      "lowTopOfPageBid": 0.68,
+      "highTopOfPageBid": 7.25,
+      "cpc": 5.07,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 1600
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 1900
+        }
+      ],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
+    },
+    {
+      "keyword": "menu maker with bleed",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": null,
+      "competition": null,
+      "competitionIndex": null,
+      "lowTopOfPageBid": null,
+      "highTopOfPageBid": null,
+      "cpc": null,
+      "monthlySearches": [],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
     },
     {
       "keyword": "menu pdf template",
@@ -12529,7 +13408,87 @@
           "month": 6,
           "searchVolume": 110
         }
-      ]
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
+    },
+    {
+      "keyword": "menu PDF template",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 90,
+      "competition": "HIGH",
+      "competitionIndex": 83,
+      "lowTopOfPageBid": 0.45,
+      "highTopOfPageBid": 2.82,
+      "cpc": 2.9,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 70
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 50
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 70
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 110
+        }
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
     },
     {
       "keyword": "menu template",
@@ -12605,7 +13564,87 @@
           "month": 6,
           "searchVolume": 8100
         }
-      ]
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
+    },
+    {
+      "keyword": "menu template PDF",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 90,
+      "competition": "HIGH",
+      "competitionIndex": 83,
+      "lowTopOfPageBid": 0.45,
+      "highTopOfPageBid": 2.82,
+      "cpc": 2.9,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 70
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 50
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 70
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 110
+        }
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
     },
     {
       "keyword": "menu templates",
@@ -12681,7 +13720,9 @@
           "month": 6,
           "searchVolume": 8100
         }
-      ]
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
     },
     {
       "keyword": "online brochure maker",
@@ -12994,6 +14035,84 @@
       ],
       "pageSlug": "letterhead-maker",
       "pageTitle": "Letterhead Maker for Print-Ready PDF/X"
+    },
+    {
+      "keyword": "online menu maker",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 590,
+      "competition": "HIGH",
+      "competitionIndex": 82,
+      "lowTopOfPageBid": 1.63,
+      "highTopOfPageBid": 11.27,
+      "cpc": 7.29,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 480
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 480
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 590
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 480
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 390
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 480
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 880
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 720
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 880
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 720
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 590
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 1000
+        }
+      ],
+      "pageSlug": "menu-maker",
+      "pageTitle": "Menu Maker for Print-Ready PDFs"
     },
     {
       "keyword": "online postcard maker",
@@ -16091,7 +17210,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "poster maker online",
@@ -16186,7 +17305,7 @@
       "cpc": null,
       "monthlySearches": [],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "poster pdf maker",
@@ -17881,6 +19000,40 @@
       "pageTitle": "Letterhead Template for Print-Ready PDFs"
     },
     {
+      "keyword": "print ready menu maker",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": null,
+      "competition": null,
+      "competitionIndex": null,
+      "lowTopOfPageBid": null,
+      "highTopOfPageBid": null,
+      "cpc": null,
+      "monthlySearches": [],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
+    },
+    {
+      "keyword": "print ready menu template",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": null,
+      "competition": null,
+      "competitionIndex": null,
+      "lowTopOfPageBid": null,
+      "highTopOfPageBid": null,
+      "cpc": null,
+      "monthlySearches": [],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
+    },
+    {
       "keyword": "print ready PDF",
       "locationName": "United States",
       "locationCode": 2840,
@@ -18358,6 +19511,162 @@
       "pageSlug": "online-proofing-software",
       "pageTitle": "Online Proofing Software for Print-Ready PDFs",
       "pageType": "guide"
+    },
+    {
+      "keyword": "restaurant menu maker",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 590,
+      "competition": "HIGH",
+      "competitionIndex": 76,
+      "lowTopOfPageBid": 2.38,
+      "highTopOfPageBid": 12.8,
+      "cpc": 9.09,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 480
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 480
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 480
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 390
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 480
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 590
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 480
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 480
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 1000
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 720
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 720
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 880
+        }
+      ],
+      "pageSlug": "menu-maker",
+      "pageTitle": "Menu Maker for Print-Ready PDFs"
+    },
+    {
+      "keyword": "restaurant menu template",
+      "locationName": "United States",
+      "locationCode": 2840,
+      "countryCode": "US",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 2400,
+      "competition": "HIGH",
+      "competitionIndex": 83,
+      "lowTopOfPageBid": 0.98,
+      "highTopOfPageBid": 6.7,
+      "cpc": 4.07,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 1900
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 2400
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 3600
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 2900
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 3600
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 2400
+        }
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
     },
     {
       "keyword": "RGB to CMYK PDF",
@@ -20476,7 +21785,7 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "AI business card maker",
@@ -20554,7 +21863,7 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "AI flyer generator",
@@ -20632,7 +21941,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "AI flyer maker",
@@ -20710,7 +22019,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "AI letterhead generator",
@@ -20789,6 +22098,84 @@
       ],
       "pageSlug": "free-letterhead-maker",
       "pageTitle": "Free Letterhead Maker Demo"
+    },
+    {
+      "keyword": "AI menu generator",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 40,
+      "competition": "MEDIUM",
+      "competitionIndex": 49,
+      "lowTopOfPageBid": 1.1,
+      "highTopOfPageBid": 3.43,
+      "cpc": 4.01,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 30
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 40
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 30
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 30
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 50
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 70
+        }
+      ],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
     },
     {
       "keyword": "AI postcard generator",
@@ -20944,7 +22331,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "AI poster maker",
@@ -21022,7 +22409,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "bleed for business cards",
@@ -24102,7 +25489,7 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "business card with bleed size",
@@ -27389,7 +28776,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "flyer maker print ready PDF",
@@ -27406,7 +28793,7 @@
       "cpc": null,
       "monthlySearches": [],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "flyer PDF template",
@@ -27958,6 +29345,84 @@
       "pageTitle": "Flyer Template for Print-Ready PDFs"
     },
     {
+      "keyword": "food menu template",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 110,
+      "competition": "MEDIUM",
+      "competitionIndex": 56,
+      "lowTopOfPageBid": 0.55,
+      "highTopOfPageBid": 3.55,
+      "cpc": 2.13,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 110
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 50
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 140
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 140
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 140
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 110
+        }
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
+    },
+    {
       "keyword": "free AI brochure maker",
       "locationName": "Canada",
       "locationCode": 2124,
@@ -28111,7 +29576,85 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
+    },
+    {
+      "keyword": "free AI business card maker",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 10,
+      "competition": "HIGH",
+      "competitionIndex": 83,
+      "lowTopOfPageBid": 1.16,
+      "highTopOfPageBid": 4.81,
+      "cpc": 3.71,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 0
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 0
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 0
+        }
+      ],
+      "pageSlug": "free-ai-business-card-generator",
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "free AI flyer generator",
@@ -28189,7 +29732,85 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
+    },
+    {
+      "keyword": "free AI flyer maker",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 10,
+      "competition": "HIGH",
+      "competitionIndex": 75,
+      "lowTopOfPageBid": 0.98,
+      "highTopOfPageBid": 5.05,
+      "cpc": 5.65,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 20
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 20
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 10
+        }
+      ],
+      "pageSlug": "free-ai-flyer-generator",
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "free AI letterhead generator",
@@ -28268,6 +29889,84 @@
       ],
       "pageSlug": "free-letterhead-maker",
       "pageTitle": "Free Letterhead Maker Demo"
+    },
+    {
+      "keyword": "free AI menu generator",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 10,
+      "competition": "MEDIUM",
+      "competitionIndex": 64,
+      "lowTopOfPageBid": 1,
+      "highTopOfPageBid": 3.97,
+      "cpc": 4.15,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 10
+        }
+      ],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
     },
     {
       "keyword": "free AI postcard generator",
@@ -28423,7 +30122,85 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
+    },
+    {
+      "keyword": "free AI poster maker",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 40,
+      "competition": "MEDIUM",
+      "competitionIndex": 59,
+      "lowTopOfPageBid": 0.36,
+      "highTopOfPageBid": 3.37,
+      "cpc": 2.47,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 30
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 50
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 50
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 40
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 50
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 50
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 20
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 30
+        }
+      ],
+      "pageSlug": "free-poster-maker",
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "free brochure creator",
@@ -28813,7 +30590,7 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "free business card maker",
@@ -28891,7 +30668,7 @@
         }
       ],
       "pageSlug": "free-ai-business-card-generator",
-      "pageTitle": "Free Business Card Maker Demo"
+      "pageTitle": "Free Business Card Maker Demo with AI"
     },
     {
       "keyword": "free flyer creator",
@@ -28969,7 +30746,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "free flyer generator",
@@ -29047,7 +30824,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "free flyer maker",
@@ -29125,7 +30902,7 @@
         }
       ],
       "pageSlug": "free-ai-flyer-generator",
-      "pageTitle": "Free Flyer Maker Demo"
+      "pageTitle": "Free Flyer Maker Demo with AI"
     },
     {
       "keyword": "free flyer template",
@@ -29596,6 +31373,84 @@
       "pageTitle": "Letterhead Template for Print-Ready PDFs"
     },
     {
+      "keyword": "free menu generator",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 90,
+      "competition": "HIGH",
+      "competitionIndex": 69,
+      "lowTopOfPageBid": 0.6,
+      "highTopOfPageBid": 3.46,
+      "cpc": 3.16,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 70
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 70
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 110
+        }
+      ],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
+    },
+    {
       "keyword": "free menu maker",
       "locationName": "Canada",
       "locationCode": 2124,
@@ -29669,7 +31524,87 @@
           "month": 6,
           "searchVolume": 110
         }
-      ]
+      ],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
+    },
+    {
+      "keyword": "free menu template",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 320,
+      "competition": "MEDIUM",
+      "competitionIndex": 47,
+      "lowTopOfPageBid": 0.3,
+      "highTopOfPageBid": 1.93,
+      "cpc": 1.55,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 320
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 320
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 260
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 260
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 260
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 320
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 390
+        }
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
     },
     {
       "keyword": "free postcard creator",
@@ -30059,7 +31994,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "free poster generator",
@@ -30137,7 +32072,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "free poster maker",
@@ -30215,7 +32150,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "free poster template",
@@ -32290,6 +34225,162 @@
       "pageTitle": "Print-Ready PDF Generator"
     },
     {
+      "keyword": "menu creator",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 170,
+      "competition": "HIGH",
+      "competitionIndex": 82,
+      "lowTopOfPageBid": 0.79,
+      "highTopOfPageBid": 5.67,
+      "cpc": 5.88,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 110
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 110
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 170
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 140
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 170
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 140
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 210
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 210
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 260
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 170
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 140
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 210
+        }
+      ],
+      "pageSlug": "menu-maker",
+      "pageTitle": "Menu Maker for Print-Ready PDFs"
+    },
+    {
+      "keyword": "menu generator",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 40,
+      "competition": "MEDIUM",
+      "competitionIndex": 40,
+      "lowTopOfPageBid": 1.3,
+      "highTopOfPageBid": 3.45,
+      "cpc": 11.11,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 30
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 40
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 30
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 20
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 50
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 20
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 70
+        }
+      ],
+      "pageSlug": "menu-maker",
+      "pageTitle": "Menu Maker for Print-Ready PDFs"
+    },
+    {
       "keyword": "menu maker",
       "locationName": "Canada",
       "locationCode": 2124,
@@ -32363,7 +34454,104 @@
           "month": 6,
           "searchVolume": 480
         }
-      ]
+      ],
+      "pageSlug": "menu-maker",
+      "pageTitle": "Menu Maker for Print-Ready PDFs"
+    },
+    {
+      "keyword": "menu maker free",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 90,
+      "competition": "HIGH",
+      "competitionIndex": 69,
+      "lowTopOfPageBid": 0.6,
+      "highTopOfPageBid": 3.46,
+      "cpc": 3.16,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 70
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 70
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 90
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 90
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 110
+        }
+      ],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
+    },
+    {
+      "keyword": "menu maker with bleed",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": null,
+      "competition": null,
+      "competitionIndex": null,
+      "lowTopOfPageBid": null,
+      "highTopOfPageBid": null,
+      "cpc": null,
+      "monthlySearches": [],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
     },
     {
       "keyword": "menu pdf template",
@@ -32439,7 +34627,87 @@
           "month": 6,
           "searchVolume": 10
         }
-      ]
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
+    },
+    {
+      "keyword": "menu PDF template",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 10,
+      "competition": "LOW",
+      "competitionIndex": 0,
+      "lowTopOfPageBid": null,
+      "highTopOfPageBid": null,
+      "cpc": null,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 20
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 10
+        }
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
     },
     {
       "keyword": "menu template",
@@ -32515,7 +34783,87 @@
           "month": 6,
           "searchVolume": 1600
         }
-      ]
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
+    },
+    {
+      "keyword": "menu template PDF",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 10,
+      "competition": "LOW",
+      "competitionIndex": 0,
+      "lowTopOfPageBid": null,
+      "highTopOfPageBid": null,
+      "cpc": null,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 20
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 10
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 10
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 10
+        }
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
     },
     {
       "keyword": "menu templates",
@@ -32591,7 +34939,9 @@
           "month": 6,
           "searchVolume": 1600
         }
-      ]
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
     },
     {
       "keyword": "online brochure maker",
@@ -32904,6 +35254,84 @@
       ],
       "pageSlug": "letterhead-maker",
       "pageTitle": "Letterhead Maker for Print-Ready PDF/X"
+    },
+    {
+      "keyword": "online menu maker",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 50,
+      "competition": "HIGH",
+      "competitionIndex": 85,
+      "lowTopOfPageBid": 1.27,
+      "highTopOfPageBid": 4.96,
+      "cpc": 3.25,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 30
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 40
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 40
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 50
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 50
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 70
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 110
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 50
+        }
+      ],
+      "pageSlug": "menu-maker",
+      "pageTitle": "Menu Maker for Print-Ready PDFs"
     },
     {
       "keyword": "online postcard maker",
@@ -36001,7 +38429,7 @@
         }
       ],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "poster maker online",
@@ -36096,7 +38524,7 @@
       "cpc": null,
       "monthlySearches": [],
       "pageSlug": "free-poster-maker",
-      "pageTitle": "Free Poster Maker Demo"
+      "pageTitle": "Free Poster Maker Demo with AI"
     },
     {
       "keyword": "poster pdf maker",
@@ -37791,6 +40219,40 @@
       "pageTitle": "Letterhead Template for Print-Ready PDFs"
     },
     {
+      "keyword": "print ready menu maker",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": null,
+      "competition": null,
+      "competitionIndex": null,
+      "lowTopOfPageBid": null,
+      "highTopOfPageBid": null,
+      "cpc": null,
+      "monthlySearches": [],
+      "pageSlug": "free-menu-maker",
+      "pageTitle": "Free Menu Maker Demo"
+    },
+    {
+      "keyword": "print ready menu template",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": null,
+      "competition": null,
+      "competitionIndex": null,
+      "lowTopOfPageBid": null,
+      "highTopOfPageBid": null,
+      "cpc": null,
+      "monthlySearches": [],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
+    },
+    {
       "keyword": "print ready PDF",
       "locationName": "Canada",
       "locationCode": 2124,
@@ -38268,6 +40730,162 @@
       "pageSlug": "online-proofing-software",
       "pageTitle": "Online Proofing Software for Print-Ready PDFs",
       "pageType": "guide"
+    },
+    {
+      "keyword": "restaurant menu maker",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 50,
+      "competition": "HIGH",
+      "competitionIndex": 73,
+      "lowTopOfPageBid": 2,
+      "highTopOfPageBid": 10.04,
+      "cpc": 6.18,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 50
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 40
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 50
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 40
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 50
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 50
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 50
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 30
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 40
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 40
+        }
+      ],
+      "pageSlug": "menu-maker",
+      "pageTitle": "Menu Maker for Print-Ready PDFs"
+    },
+    {
+      "keyword": "restaurant menu template",
+      "locationName": "Canada",
+      "locationCode": 2124,
+      "countryCode": "CA",
+      "languageCode": "en",
+      "searchPartners": false,
+      "searchVolume": 210,
+      "competition": "MEDIUM",
+      "competitionIndex": 64,
+      "lowTopOfPageBid": 0.69,
+      "highTopOfPageBid": 3.38,
+      "cpc": 2.38,
+      "monthlySearches": [
+        {
+          "year": 2026,
+          "month": 5,
+          "searchVolume": 260
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "searchVolume": 260
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "searchVolume": 260
+        },
+        {
+          "year": 2026,
+          "month": 2,
+          "searchVolume": 210
+        },
+        {
+          "year": 2026,
+          "month": 1,
+          "searchVolume": 260
+        },
+        {
+          "year": 2025,
+          "month": 12,
+          "searchVolume": 170
+        },
+        {
+          "year": 2025,
+          "month": 11,
+          "searchVolume": 260
+        },
+        {
+          "year": 2025,
+          "month": 10,
+          "searchVolume": 210
+        },
+        {
+          "year": 2025,
+          "month": 9,
+          "searchVolume": 170
+        },
+        {
+          "year": 2025,
+          "month": 8,
+          "searchVolume": 170
+        },
+        {
+          "year": 2025,
+          "month": 7,
+          "searchVolume": 170
+        },
+        {
+          "year": 2025,
+          "month": 6,
+          "searchVolume": 260
+        }
+      ],
+      "pageSlug": "menu-pdf-template",
+      "pageTitle": "Menu Template for Print-Ready PDFs"
     },
     {
       "keyword": "RGB to CMYK PDF",
@@ -39843,9 +42461,9 @@
     }
   ],
   "summary": {
-    "totalKeywords": 270,
-    "totalRows": 552,
-    "totalSearchVolume": 1025870,
+    "totalKeywords": 288,
+    "totalRows": 590,
+    "totalSearchVolume": 1043190,
     "topKeywords": [
       {
         "keyword": "business card creator",
@@ -40164,7 +42782,7 @@
       {
         "keyword": "flyer maker free",
         "pageSlug": "free-ai-flyer-generator",
-        "pageTitle": "Free Flyer Maker Demo",
+        "pageTitle": "Free Flyer Maker Demo with AI",
         "combinedSearchVolume": 18490,
         "usSearchVolume": 18100,
         "caSearchVolume": 390,
@@ -40181,7 +42799,7 @@
       {
         "keyword": "free flyer creator",
         "pageSlug": "free-ai-flyer-generator",
-        "pageTitle": "Free Flyer Maker Demo",
+        "pageTitle": "Free Flyer Maker Demo with AI",
         "combinedSearchVolume": 18490,
         "usSearchVolume": 18100,
         "caSearchVolume": 390,
@@ -40198,7 +42816,7 @@
       {
         "keyword": "free flyer generator",
         "pageSlug": "free-ai-flyer-generator",
-        "pageTitle": "Free Flyer Maker Demo",
+        "pageTitle": "Free Flyer Maker Demo with AI",
         "combinedSearchVolume": 18490,
         "usSearchVolume": 18100,
         "caSearchVolume": 390,
@@ -40215,7 +42833,7 @@
       {
         "keyword": "free flyer maker",
         "pageSlug": "free-ai-flyer-generator",
-        "pageTitle": "Free Flyer Maker Demo",
+        "pageTitle": "Free Flyer Maker Demo with AI",
         "combinedSearchVolume": 18490,
         "usSearchVolume": 18100,
         "caSearchVolume": 390,
@@ -40335,6 +42953,8 @@
       },
       {
         "keyword": "menu template",
+        "pageSlug": "menu-pdf-template",
+        "pageTitle": "Menu Template for Print-Ready PDFs",
         "combinedSearchVolume": 10900,
         "usSearchVolume": 9900,
         "caSearchVolume": 1000,
@@ -40350,6 +42970,8 @@
       },
       {
         "keyword": "menu templates",
+        "pageSlug": "menu-pdf-template",
+        "pageTitle": "Menu Template for Print-Ready PDFs",
         "combinedSearchVolume": 10900,
         "usSearchVolume": 9900,
         "caSearchVolume": 1000,
@@ -40591,7 +43213,7 @@
       {
         "keyword": "free poster creator",
         "pageSlug": "free-poster-maker",
-        "pageTitle": "Free Poster Maker Demo",
+        "pageTitle": "Free Poster Maker Demo with AI",
         "combinedSearchVolume": 5700,
         "usSearchVolume": 4400,
         "caSearchVolume": 1300,
@@ -40608,7 +43230,7 @@
       {
         "keyword": "free poster generator",
         "pageSlug": "free-poster-maker",
-        "pageTitle": "Free Poster Maker Demo",
+        "pageTitle": "Free Poster Maker Demo with AI",
         "combinedSearchVolume": 5700,
         "usSearchVolume": 4400,
         "caSearchVolume": 1300,
@@ -40625,7 +43247,7 @@
       {
         "keyword": "free poster maker",
         "pageSlug": "free-poster-maker",
-        "pageTitle": "Free Poster Maker Demo",
+        "pageTitle": "Free Poster Maker Demo with AI",
         "combinedSearchVolume": 5700,
         "usSearchVolume": 4400,
         "caSearchVolume": 1300,
@@ -40642,7 +43264,7 @@
       {
         "keyword": "poster maker free",
         "pageSlug": "free-poster-maker",
-        "pageTitle": "Free Poster Maker Demo",
+        "pageTitle": "Free Poster Maker Demo with AI",
         "combinedSearchVolume": 5700,
         "usSearchVolume": 4400,
         "caSearchVolume": 1300,
@@ -40659,7 +43281,7 @@
       {
         "keyword": "free business card generator",
         "pageSlug": "free-ai-business-card-generator",
-        "pageTitle": "Free Business Card Maker Demo",
+        "pageTitle": "Free Business Card Maker Demo with AI",
         "combinedSearchVolume": 4880,
         "usSearchVolume": 4400,
         "caSearchVolume": 480,
@@ -40676,7 +43298,7 @@
       {
         "keyword": "free business card maker",
         "pageSlug": "free-ai-business-card-generator",
-        "pageTitle": "Free Business Card Maker Demo",
+        "pageTitle": "Free Business Card Maker Demo with AI",
         "combinedSearchVolume": 4880,
         "usSearchVolume": 4400,
         "caSearchVolume": 480,
@@ -40778,7 +43400,7 @@
       {
         "keyword": "AI flyer generator",
         "pageSlug": "free-ai-flyer-generator",
-        "pageTitle": "Free Flyer Maker Demo",
+        "pageTitle": "Free Flyer Maker Demo with AI",
         "combinedSearchVolume": 4610,
         "usSearchVolume": 4400,
         "caSearchVolume": 210,
@@ -40795,7 +43417,7 @@
       {
         "keyword": "AI poster generator",
         "pageSlug": "free-poster-maker",
-        "pageTitle": "Free Poster Maker Demo",
+        "pageTitle": "Free Poster Maker Demo with AI",
         "combinedSearchVolume": 4600,
         "usSearchVolume": 3600,
         "caSearchVolume": 1000,
@@ -40838,6 +43460,23 @@
         "maxCpc": 5.33,
         "competition": "HIGH",
         "competitionIndex": 100,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
+        "keyword": "free menu template",
+        "pageSlug": "menu-pdf-template",
+        "pageTitle": "Menu Template for Print-Ready PDFs",
+        "combinedSearchVolume": 3920,
+        "usSearchVolume": 3600,
+        "caSearchVolume": 320,
+        "usCpc": 2.34,
+        "caCpc": 1.55,
+        "maxCpc": 3.25,
+        "competition": "MEDIUM",
+        "competitionIndex": 59,
         "locationCodes": [
           2124,
           2840
@@ -40931,6 +43570,8 @@
       },
       {
         "keyword": "menu maker",
+        "pageSlug": "menu-maker",
+        "pageTitle": "Menu Maker for Print-Ready PDFs",
         "combinedSearchVolume": 2660,
         "usSearchVolume": 2400,
         "caSearchVolume": 260,
@@ -40939,6 +43580,40 @@
         "maxCpc": 6.79,
         "competition": "HIGH",
         "competitionIndex": 74,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
+        "keyword": "restaurant menu template",
+        "pageSlug": "menu-pdf-template",
+        "pageTitle": "Menu Template for Print-Ready PDFs",
+        "combinedSearchVolume": 2610,
+        "usSearchVolume": 2400,
+        "caSearchVolume": 210,
+        "usCpc": 4.07,
+        "caCpc": 2.38,
+        "maxCpc": 6.7,
+        "competition": "HIGH",
+        "competitionIndex": 83,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
+        "keyword": "menu creator",
+        "pageSlug": "menu-maker",
+        "pageTitle": "Menu Maker for Print-Ready PDFs",
+        "combinedSearchVolume": 2570,
+        "usSearchVolume": 2400,
+        "caSearchVolume": 170,
+        "usCpc": 5.56,
+        "caCpc": 5.88,
+        "maxCpc": 8.91,
+        "competition": "HIGH",
+        "competitionIndex": 82,
         "locationCodes": [
           2124,
           2840
@@ -41015,7 +43690,7 @@
       {
         "keyword": "AI poster maker",
         "pageSlug": "free-poster-maker",
-        "pageTitle": "Free Poster Maker Demo",
+        "pageTitle": "Free Poster Maker Demo with AI",
         "combinedSearchVolume": 2080,
         "usSearchVolume": 1600,
         "caSearchVolume": 480,
@@ -41030,7 +43705,43 @@
         ]
       },
       {
+        "keyword": "free menu generator",
+        "pageSlug": "free-menu-maker",
+        "pageTitle": "Free Menu Maker Demo",
+        "combinedSearchVolume": 1990,
+        "usSearchVolume": 1900,
+        "caSearchVolume": 90,
+        "usCpc": 5.07,
+        "caCpc": 3.16,
+        "maxCpc": 7.25,
+        "competition": "HIGH",
+        "competitionIndex": 71,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
         "keyword": "free menu maker",
+        "pageSlug": "free-menu-maker",
+        "pageTitle": "Free Menu Maker Demo",
+        "combinedSearchVolume": 1990,
+        "usSearchVolume": 1900,
+        "caSearchVolume": 90,
+        "usCpc": 5.07,
+        "caCpc": 3.16,
+        "maxCpc": 7.25,
+        "competition": "HIGH",
+        "competitionIndex": 71,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
+        "keyword": "menu maker free",
+        "pageSlug": "free-menu-maker",
+        "pageTitle": "Free Menu Maker Demo",
         "combinedSearchVolume": 1990,
         "usSearchVolume": 1900,
         "caSearchVolume": 90,
@@ -41047,7 +43758,7 @@
       {
         "keyword": "AI flyer maker",
         "pageSlug": "free-ai-flyer-generator",
-        "pageTitle": "Free Flyer Maker Demo",
+        "pageTitle": "Free Flyer Maker Demo with AI",
         "combinedSearchVolume": 1970,
         "usSearchVolume": 1900,
         "caSearchVolume": 70,
@@ -41133,7 +43844,7 @@
       {
         "keyword": "AI business card generator",
         "pageSlug": "free-ai-business-card-generator",
-        "pageTitle": "Free Business Card Maker Demo",
+        "pageTitle": "Free Business Card Maker Demo with AI",
         "combinedSearchVolume": 1770,
         "usSearchVolume": 1600,
         "caSearchVolume": 170,
@@ -41307,6 +44018,23 @@
         ]
       },
       {
+        "keyword": "food menu template",
+        "pageSlug": "menu-pdf-template",
+        "pageTitle": "Menu Template for Print-Ready PDFs",
+        "combinedSearchVolume": 1410,
+        "usSearchVolume": 1300,
+        "caSearchVolume": 110,
+        "usCpc": 2.5,
+        "caCpc": 2.13,
+        "maxCpc": 4.94,
+        "competition": "HIGH",
+        "competitionIndex": 100,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
         "keyword": "postcard maker",
         "pageSlug": "postcard-maker",
         "pageTitle": "Postcard Maker for Print-Ready PDF/X",
@@ -41360,7 +44088,7 @@
       {
         "keyword": "free AI flyer generator",
         "pageSlug": "free-ai-flyer-generator",
-        "pageTitle": "Free Flyer Maker Demo",
+        "pageTitle": "Free Flyer Maker Demo with AI",
         "combinedSearchVolume": 1050,
         "usSearchVolume": 1000,
         "caSearchVolume": 50,
@@ -41571,7 +44299,7 @@
       {
         "keyword": "free AI poster generator",
         "pageSlug": "free-poster-maker",
-        "pageTitle": "Free Poster Maker Demo",
+        "pageTitle": "Free Poster Maker Demo with AI",
         "combinedSearchVolume": 690,
         "usSearchVolume": 480,
         "caSearchVolume": 210,
@@ -41740,6 +44468,40 @@
         ]
       },
       {
+        "keyword": "restaurant menu maker",
+        "pageSlug": "menu-maker",
+        "pageTitle": "Menu Maker for Print-Ready PDFs",
+        "combinedSearchVolume": 640,
+        "usSearchVolume": 590,
+        "caSearchVolume": 50,
+        "usCpc": 9.09,
+        "caCpc": 6.18,
+        "maxCpc": 12.8,
+        "competition": "HIGH",
+        "competitionIndex": 76,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
+        "keyword": "online menu maker",
+        "pageSlug": "menu-maker",
+        "pageTitle": "Menu Maker for Print-Ready PDFs",
+        "combinedSearchVolume": 640,
+        "usSearchVolume": 590,
+        "caSearchVolume": 50,
+        "usCpc": 7.29,
+        "caCpc": 3.25,
+        "maxCpc": 11.27,
+        "competition": "HIGH",
+        "competitionIndex": 85,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
         "keyword": "free tri fold brochure template",
         "pageSlug": "tri-fold-brochure-template",
         "pageTitle": "Tri-Fold Brochure Template for Print-Ready PDFs",
@@ -41873,6 +44635,40 @@
         "maxCpc": 8,
         "competition": "HIGH",
         "competitionIndex": 88,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
+        "keyword": "menu generator",
+        "pageSlug": "menu-maker",
+        "pageTitle": "Menu Maker for Print-Ready PDFs",
+        "combinedSearchVolume": 430,
+        "usSearchVolume": 390,
+        "caSearchVolume": 40,
+        "usCpc": 6.01,
+        "caCpc": 11.11,
+        "maxCpc": 11.11,
+        "competition": "MEDIUM",
+        "competitionIndex": 43,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
+        "keyword": "AI menu generator",
+        "pageSlug": "free-menu-maker",
+        "pageTitle": "Free Menu Maker Demo",
+        "combinedSearchVolume": 430,
+        "usSearchVolume": 390,
+        "caSearchVolume": 40,
+        "usCpc": 6.63,
+        "caCpc": 4.01,
+        "maxCpc": 6.97,
+        "competition": "MEDIUM",
+        "competitionIndex": 60,
         "locationCodes": [
           2124,
           2840
@@ -42087,6 +44883,23 @@
         ]
       },
       {
+        "keyword": "free AI flyer maker",
+        "pageSlug": "free-ai-flyer-generator",
+        "pageTitle": "Free Flyer Maker Demo with AI",
+        "combinedSearchVolume": 270,
+        "usSearchVolume": 260,
+        "caSearchVolume": 10,
+        "usCpc": 6.83,
+        "caCpc": 5.65,
+        "maxCpc": 7.73,
+        "competition": "HIGH",
+        "competitionIndex": 75,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
         "keyword": "event flyer maker",
         "pageSlug": "ai-flyer-generator",
         "pageTitle": "Flyer Maker With AI Print-Ready PDF/X",
@@ -42124,7 +44937,7 @@
       {
         "keyword": "AI business card maker",
         "pageSlug": "free-ai-business-card-generator",
-        "pageTitle": "Free Business Card Maker Demo",
+        "pageTitle": "Free Business Card Maker Demo with AI",
         "combinedSearchVolume": 240,
         "usSearchVolume": 210,
         "caSearchVolume": 30,
@@ -42351,6 +45164,23 @@
         ]
       },
       {
+        "keyword": "menu pdf template",
+        "pageSlug": "menu-pdf-template",
+        "pageTitle": "Menu Template for Print-Ready PDFs",
+        "combinedSearchVolume": 200,
+        "usSearchVolume": 90,
+        "caSearchVolume": 10,
+        "usCpc": 2.9,
+        "caCpc": null,
+        "maxCpc": 2.9,
+        "competition": "HIGH",
+        "competitionIndex": 83,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
         "keyword": "business card PDF template",
         "pageSlug": "business-card-pdf-template",
         "pageTitle": "Business Card Template for Print-Ready PDFs",
@@ -42493,7 +45323,7 @@
       {
         "keyword": "free AI business card generator",
         "pageSlug": "free-ai-business-card-generator",
-        "pageTitle": "Free Business Card Maker Demo",
+        "pageTitle": "Free Business Card Maker Demo with AI",
         "combinedSearchVolume": 160,
         "usSearchVolume": 140,
         "caSearchVolume": 20,
@@ -42579,6 +45409,23 @@
         ]
       },
       {
+        "keyword": "free AI poster maker",
+        "pageSlug": "free-poster-maker",
+        "pageTitle": "Free Poster Maker Demo with AI",
+        "combinedSearchVolume": 150,
+        "usSearchVolume": 110,
+        "caSearchVolume": 40,
+        "usCpc": 3.23,
+        "caCpc": 2.47,
+        "maxCpc": 3.37,
+        "competition": "MEDIUM",
+        "competitionIndex": 61,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
         "keyword": "pdf x 1a",
         "pageSlug": "pdfx-1a-generator",
         "pageTitle": "PDF/X-1a Generator",
@@ -42651,7 +45498,7 @@
       {
         "keyword": "business card with bleed",
         "pageSlug": "free-ai-business-card-generator",
-        "pageTitle": "Free Business Card Maker Demo",
+        "pageTitle": "Free Business Card Maker Demo with AI",
         "combinedSearchVolume": 140,
         "usSearchVolume": 110,
         "caSearchVolume": 30,
@@ -42999,7 +45846,9 @@
         ]
       },
       {
-        "keyword": "menu pdf template",
+        "keyword": "menu template PDF",
+        "pageSlug": "menu-pdf-template",
+        "pageTitle": "Menu Template for Print-Ready PDFs",
         "combinedSearchVolume": 100,
         "usSearchVolume": 90,
         "caSearchVolume": 10,
@@ -43390,6 +46239,23 @@
         ]
       },
       {
+        "keyword": "free AI menu generator",
+        "pageSlug": "free-menu-maker",
+        "pageTitle": "Free Menu Maker Demo",
+        "combinedSearchVolume": 40,
+        "usSearchVolume": 30,
+        "caSearchVolume": 10,
+        "usCpc": 5.98,
+        "caCpc": 4.15,
+        "maxCpc": 7.02,
+        "competition": "MEDIUM",
+        "competitionIndex": 64,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
         "keyword": "brochure size pixels",
         "pageSlug": "brochure-size-guide",
         "pageTitle": "Brochure Size Guide",
@@ -43489,6 +46355,23 @@
         "maxCpc": 11.1,
         "competition": "MEDIUM",
         "competitionIndex": 86,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
+        "keyword": "free AI business card maker",
+        "pageSlug": "free-ai-business-card-generator",
+        "pageTitle": "Free Business Card Maker Demo with AI",
+        "combinedSearchVolume": 30,
+        "usSearchVolume": 20,
+        "caSearchVolume": 10,
+        "usCpc": 4.69,
+        "caCpc": 3.71,
+        "maxCpc": 4.81,
+        "competition": "HIGH",
+        "competitionIndex": 90,
         "locationCodes": [
           2124,
           2840
@@ -44129,7 +47012,7 @@
       {
         "keyword": "flyer maker print ready PDF",
         "pageSlug": "free-ai-flyer-generator",
-        "pageTitle": "Free Flyer Maker Demo",
+        "pageTitle": "Free Flyer Maker Demo with AI",
         "combinedSearchVolume": 0,
         "usSearchVolume": 0,
         "caSearchVolume": 0,
@@ -44165,6 +47048,23 @@
         "pageSlug": "print-ready-artwork",
         "pageTitle": "Print-Ready Artwork Guide",
         "pageType": "guide",
+        "combinedSearchVolume": 0,
+        "usSearchVolume": 0,
+        "caSearchVolume": 0,
+        "usCpc": null,
+        "caCpc": null,
+        "maxCpc": null,
+        "competition": null,
+        "competitionIndex": 0,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
+        "keyword": "menu maker with bleed",
+        "pageSlug": "free-menu-maker",
+        "pageTitle": "Free Menu Maker Demo",
         "combinedSearchVolume": 0,
         "usSearchVolume": 0,
         "caSearchVolume": 0,
@@ -44302,7 +47202,7 @@
       {
         "keyword": "poster maker with bleed",
         "pageSlug": "free-poster-maker",
-        "pageTitle": "Free Poster Maker Demo",
+        "pageTitle": "Free Poster Maker Demo with AI",
         "combinedSearchVolume": 0,
         "usSearchVolume": 0,
         "caSearchVolume": 0,
@@ -44438,6 +47338,40 @@
         ]
       },
       {
+        "keyword": "print ready menu maker",
+        "pageSlug": "free-menu-maker",
+        "pageTitle": "Free Menu Maker Demo",
+        "combinedSearchVolume": 0,
+        "usSearchVolume": 0,
+        "caSearchVolume": 0,
+        "usCpc": null,
+        "caCpc": null,
+        "maxCpc": null,
+        "competition": null,
+        "competitionIndex": 0,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
+        "keyword": "print ready menu template",
+        "pageSlug": "menu-pdf-template",
+        "pageTitle": "Menu Template for Print-Ready PDFs",
+        "combinedSearchVolume": 0,
+        "usSearchVolume": 0,
+        "caSearchVolume": 0,
+        "usCpc": null,
+        "caCpc": null,
+        "maxCpc": null,
+        "competition": null,
+        "competitionIndex": 0,
+        "locationCodes": [
+          2124,
+          2840
+        ]
+      },
+      {
         "keyword": "print ready PDF generator",
         "pageSlug": "print-ready-pdf-generator",
         "pageTitle": "Print-Ready PDF Generator",
@@ -44552,9 +47486,9 @@
       },
       {
         "pageSlug": "free-ai-flyer-generator",
-        "pageTitle": "Free Flyer Maker Demo",
-        "combinedSearchVolume": 81590,
-        "keywordCount": 8,
+        "pageTitle": "Free Flyer Maker Demo with AI",
+        "combinedSearchVolume": 81860,
+        "keywordCount": 9,
         "topKeywords": [
           "flyer maker free",
           "free flyer creator",
@@ -44658,15 +47592,28 @@
       },
       {
         "pageSlug": "free-poster-maker",
-        "pageTitle": "Free Poster Maker Demo",
-        "combinedSearchVolume": 30170,
-        "keywordCount": 8,
+        "pageTitle": "Free Poster Maker Demo with AI",
+        "combinedSearchVolume": 30320,
+        "keywordCount": 9,
         "topKeywords": [
           "free poster creator",
           "free poster generator",
           "free poster maker",
           "poster maker free",
           "AI poster generator"
+        ]
+      },
+      {
+        "pageSlug": "menu-pdf-template",
+        "pageTitle": "Menu Template for Print-Ready PDFs",
+        "combinedSearchVolume": 30040,
+        "keywordCount": 8,
+        "topKeywords": [
+          "menu template",
+          "menu templates",
+          "free menu template",
+          "restaurant menu template",
+          "food menu template"
         ]
       },
       {
@@ -44723,9 +47670,9 @@
       },
       {
         "pageSlug": "free-ai-business-card-generator",
-        "pageTitle": "Free Business Card Maker Demo",
-        "combinedSearchVolume": 12070,
-        "keywordCount": 6,
+        "pageTitle": "Free Business Card Maker Demo with AI",
+        "combinedSearchVolume": 12100,
+        "keywordCount": 7,
         "topKeywords": [
           "free business card generator",
           "free business card maker",
@@ -44776,6 +47723,19 @@
         ]
       },
       {
+        "pageSlug": "menu-maker",
+        "pageTitle": "Menu Maker for Print-Ready PDFs",
+        "combinedSearchVolume": 6940,
+        "keywordCount": 5,
+        "topKeywords": [
+          "menu maker",
+          "menu creator",
+          "online menu maker",
+          "restaurant menu maker",
+          "menu generator"
+        ]
+      },
+      {
         "pageSlug": "business-card-pixel-size",
         "pageTitle": "Business Card Pixel Size Guide",
         "pageType": "guide",
@@ -44787,6 +47747,19 @@
           "business card size in pixels",
           "business card size pixels",
           "business card size Photoshop"
+        ]
+      },
+      {
+        "pageSlug": "free-menu-maker",
+        "pageTitle": "Free Menu Maker Demo",
+        "combinedSearchVolume": 6440,
+        "keywordCount": 7,
+        "topKeywords": [
+          "free menu generator",
+          "free menu maker",
+          "menu maker free",
+          "AI menu generator",
+          "free AI menu generator"
         ]
       },
       {
@@ -45064,82 +48037,6 @@
         ]
       }
     ],
-    "unmappedKeywords": [
-      {
-        "keyword": "menu template",
-        "combinedSearchVolume": 10900,
-        "usSearchVolume": 9900,
-        "caSearchVolume": 1000,
-        "usCpc": 2.89,
-        "caCpc": 1.99,
-        "maxCpc": 3.55,
-        "competition": "HIGH",
-        "competitionIndex": 76,
-        "locationCodes": [
-          2124,
-          2840
-        ]
-      },
-      {
-        "keyword": "menu templates",
-        "combinedSearchVolume": 10900,
-        "usSearchVolume": 9900,
-        "caSearchVolume": 1000,
-        "usCpc": 2.89,
-        "caCpc": 1.99,
-        "maxCpc": 3.55,
-        "competition": "HIGH",
-        "competitionIndex": 76,
-        "locationCodes": [
-          2124,
-          2840
-        ]
-      },
-      {
-        "keyword": "menu maker",
-        "combinedSearchVolume": 2660,
-        "usSearchVolume": 2400,
-        "caSearchVolume": 260,
-        "usCpc": 4.85,
-        "caCpc": 3.72,
-        "maxCpc": 6.79,
-        "competition": "HIGH",
-        "competitionIndex": 74,
-        "locationCodes": [
-          2124,
-          2840
-        ]
-      },
-      {
-        "keyword": "free menu maker",
-        "combinedSearchVolume": 1990,
-        "usSearchVolume": 1900,
-        "caSearchVolume": 90,
-        "usCpc": 5.07,
-        "caCpc": 3.16,
-        "maxCpc": 7.25,
-        "competition": "HIGH",
-        "competitionIndex": 71,
-        "locationCodes": [
-          2124,
-          2840
-        ]
-      },
-      {
-        "keyword": "menu pdf template",
-        "combinedSearchVolume": 100,
-        "usSearchVolume": 90,
-        "caSearchVolume": 10,
-        "usCpc": 2.9,
-        "caCpc": null,
-        "maxCpc": 2.9,
-        "competition": "HIGH",
-        "competitionIndex": 83,
-        "locationCodes": [
-          2124,
-          2840
-        ]
-      }
-    ]
+    "unmappedKeywords": []
   }
 }

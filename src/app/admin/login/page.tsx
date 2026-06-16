@@ -4,12 +4,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Box } from "lucide-react";
 import { AdminLoginForm } from "@/components/admin/admin-login-form";
+import { adminLoginMetadata } from "@/app/admin/admin-metadata";
 import { ADMIN_SESSION_COOKIE, isAdminAuthConfigured, verifyAdminSessionValue } from "@/lib/admin/auth";
 
-export const metadata: Metadata = {
-  title: "Admin Login",
-  description: "Protected Trim Proof management center login."
-};
+export const metadata: Metadata = adminLoginMetadata;
 
 export default async function AdminLoginPage() {
   const cookieStore = await cookies();

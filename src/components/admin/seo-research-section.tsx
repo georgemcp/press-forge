@@ -1,5 +1,7 @@
 import { AlertTriangle, Globe2, Layers3, Search, TrendingUp, type LucideIcon } from "lucide-react";
+import { buildDataForSeoSerpSummary, normalizeSerpDomain, type DataForSeoSerpFile } from "@/lib/seo/dataforseo-serp";
 import type { DataForSeoResearchFile } from "@/lib/seo/dataforseo-research";
+import { keywordTakeaway } from "@/lib/seo/serp-takeaways";
 
 function number(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
@@ -59,7 +61,7 @@ function MetricCard({
   );
 }
 
-export function SeoResearchSection({ research }: { research?: DataForSeoResearchFile }) {
+export function SeoResearchSection({ research, serpResearch }: { research?: DataForSeoResearchFile; serpResearch?: DataForSeoSerpFile }) {
   if (!research) {
     return (
       <div className="rounded-[8px] border border-border bg-surface p-4 text-sm text-muted">
@@ -78,6 +80,7 @@ export function SeoResearchSection({ research }: { research?: DataForSeoResearch
   const topKeywords = research.summary.topKeywords.slice(0, 12);
   const topPages = research.summary.topPages.slice(0, 8);
   const deferredKeywords = research.summary.unmappedKeywords.slice(0, 8);
+  const serpSummary = serpResearch ? buildDataForSeoSerpSummary(serpResearch) : undefined;
 
   return (
     <div className="grid gap-4">
@@ -87,7 +90,7 @@ export function SeoResearchSection({ research }: { research?: DataForSeoResearch
             <p className="text-xs font-semibold uppercase text-brand">Live research</p>
             <h3 className="mt-2 font-display text-2xl font-bold text-surface-ink">North America keyword coverage</h3>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
-              Refreshed {date(research.generatedAt)} from DataForSEO live search volume across the United States and Canada. The supported starter-product pages already capture the biggest demand pools; the only meaningful unmapped cluster in this refresh is menu, which stays deferred until menu becomes a supported starter product.
+              Refreshed {date(research.generatedAt)} from DataForSEO live search volume across the United States and Canada. The supported starter-product pages already capture the biggest demand pools, including menu, and any remaining unmapped terms are smaller residual gaps.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -118,10 +121,10 @@ export function SeoResearchSection({ research }: { research?: DataForSeoResearch
             <div className="max-w-3xl">
               <div className="flex items-center gap-2 text-warning">
                 <AlertTriangle aria-hidden className="h-4 w-4" />
-                <p className="text-xs font-semibold uppercase tracking-wide">Deferred cluster</p>
+                <p className="text-xs font-semibold uppercase tracking-wide">Remaining gap</p>
               </div>
               <p className="mt-2 text-sm leading-6 text-surface-ink">
-                The biggest unmapped keyword family is <span className="font-semibold">{topOpportunity.keyword}</span> at {number(topOpportunity.combinedSearchVolume)} combined searches with {money(topOpportunity.maxCpc)} CPC. The repo already documents menu as deferred, so keep this cluster out of the supported starter-product set until menu becomes a real product.
+                The biggest remaining unmapped keyword family is <span className="font-semibold">{topOpportunity.keyword}</span> at {number(topOpportunity.combinedSearchVolume)} combined searches with {money(topOpportunity.maxCpc)} CPC. Keep this cluster out of the supported starter-product set until there is a matching page.
               </p>
             </div>
             {topPage ? (
@@ -215,43 +218,103 @@ export function SeoResearchSection({ research }: { research?: DataForSeoResearch
         </div>
       </div>
 
-      <div className="rounded-[8px] border border-border bg-surface">
-        <div className="flex flex-col gap-2 border-b border-border px-4 py-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase text-muted">Deferred opportunities</p>
-            <h4 className="font-display text-xl font-bold text-surface-ink">Unsupported demand to keep on the watchlist</h4>
+      {serpSummary ? (
+        <div className="grid gap-4 rounded-[8px] border border-border bg-surface p-4 shadow-sm">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase text-brand">Page-one competition</p>
+              <h4 className="font-display text-xl font-bold text-surface-ink">Who owns the SERP</h4>
+              <p className="mt-2 max-w-4xl text-sm leading-6 text-muted">
+                The snapshot splits into three clear lanes: generic AI design queries are dominated by Adobe, Canva, Design.com, Template.net, and Venngage; postcard, brochure, letterhead, and menu template queries lean on Word, Canva, printer templates, and smaller libraries; and print-prepress questions lean on Adobe help, Reddit, and niche PDF or printer tools. Trim Proof should keep the checked print-handoff wedge in every lane.
+              </p>
+            </div>
+            <p className="text-sm text-muted">{serpSummary.totalSnapshots} tracked keywords · {serpSummary.market}</p>
           </div>
-          <p className="text-sm text-muted">Do not publish these as supported products yet</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[880px] border-collapse text-sm">
-            <thead className="bg-surface-strong text-left text-xs uppercase text-muted">
-              <tr>
-                <th className="px-3 py-3">Keyword</th>
-                <th className="px-3 py-3">US</th>
-                <th className="px-3 py-3">CA</th>
-                <th className="px-3 py-3">Combined</th>
-                <th className="px-3 py-3">CPC</th>
-                <th className="px-3 py-3">Competition</th>
-                <th className="px-3 py-3">Why deferred</th>
-              </tr>
-            </thead>
-            <tbody>
-              {deferredKeywords.map((item) => (
-                <tr className="border-t border-border" key={item.keyword}>
-                  <td className="px-3 py-3 font-medium text-surface-ink">{item.keyword}</td>
-                  <td className="px-3 py-3">{number(item.usSearchVolume)}</td>
-                  <td className="px-3 py-3">{number(item.caSearchVolume)}</td>
-                  <td className="px-3 py-3 font-semibold">{number(item.combinedSearchVolume)}</td>
-                  <td className="px-3 py-3">{money(item.maxCpc)}</td>
-                  <td className="px-3 py-3">{item.competition}</td>
-                  <td className="px-3 py-3 text-muted">Menu is not a supported starter product yet.</td>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {serpSummary.topDomains.slice(0, 4).map((domain) => (
+              <article className="rounded-[8px] border border-border bg-background p-3" key={domain.domain}>
+                <p className="text-[11px] font-semibold uppercase text-muted">{normalizeSerpDomain(domain.domain)}</p>
+                <p className="mt-2 font-display text-xl font-bold text-surface-ink">{number(domain.appearances)} page-one hits</p>
+                <p className="mt-1 text-sm text-muted">Best rank #{domain.bestRank} · {domain.keywords.slice(0, 2).join(" · ")}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] border-collapse text-sm">
+              <thead className="bg-surface-strong text-left text-xs uppercase text-muted">
+                <tr>
+                  <th className="px-3 py-3">Keyword</th>
+                  <th className="px-3 py-3">Page-one domains</th>
+                  <th className="px-3 py-3">Takeaway</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {serpSummary.snapshots.map((snapshot) => (
+                  <tr className="border-t border-border" key={snapshot.keyword}>
+                    <td className="px-3 py-3 font-medium text-surface-ink">{snapshot.keyword}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {snapshot.topResults.map((result) => (
+                          <span className="rounded-[999px] border border-border bg-surface px-2 py-1 font-mono text-[11px] text-muted" key={`${snapshot.keyword}-${result.rank_group}-${result.domain}`}>
+                            #{result.rank_group} {normalizeSerpDomain(result.domain)}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-muted">{keywordTakeaway(snapshot.keyword)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      ) : null}
+
+      {deferredKeywords.length ? (
+        <div className="rounded-[8px] border border-border bg-surface">
+          <div className="flex flex-col gap-2 border-b border-border px-4 py-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase text-muted">Remaining opportunities</p>
+              <h4 className="font-display text-xl font-bold text-surface-ink">Unmapped demand to keep on the watchlist</h4>
+            </div>
+            <p className="text-sm text-muted">Do not publish these as supported products yet</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[880px] border-collapse text-sm">
+              <thead className="bg-surface-strong text-left text-xs uppercase text-muted">
+                <tr>
+                  <th className="px-3 py-3">Keyword</th>
+                  <th className="px-3 py-3">US</th>
+                  <th className="px-3 py-3">CA</th>
+                  <th className="px-3 py-3">Combined</th>
+                  <th className="px-3 py-3">CPC</th>
+                  <th className="px-3 py-3">Competition</th>
+                  <th className="px-3 py-3">Why unmapped</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deferredKeywords.map((item) => (
+                  <tr className="border-t border-border" key={item.keyword}>
+                    <td className="px-3 py-3 font-medium text-surface-ink">{item.keyword}</td>
+                    <td className="px-3 py-3">{number(item.usSearchVolume)}</td>
+                    <td className="px-3 py-3">{number(item.caSearchVolume)}</td>
+                    <td className="px-3 py-3 font-semibold">{number(item.combinedSearchVolume)}</td>
+                    <td className="px-3 py-3">{money(item.maxCpc)}</td>
+                    <td className="px-3 py-3">{item.competition}</td>
+                    <td className="px-3 py-3 text-muted">No supported page mapped yet.</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-[8px] border border-success/30 bg-success/10 p-4 text-sm font-semibold text-success">
+          All tracked keyword families are mapped to supported pages.
+        </div>
+      )}
 
       <div className="rounded-[8px] border border-border bg-background px-4 py-4 text-sm leading-6 text-muted">
         <p>

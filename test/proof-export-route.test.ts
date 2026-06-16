@@ -8,13 +8,22 @@ const mocks = vi.hoisted(() => ({
   } as { userId: string; email: string } | undefined,
   generateProof: vi.fn(async () => ({
     report: {
-      status: "pass",
-      printProfile: "business-card",
-      pdfxLevel: "PDF/X-1a"
+      status: "passed",
+      pdfPath: "/tmp/job/trimproof-business-card.pdfx.pdf",
+      productType: "business_card",
+      printProfile: "USWebCoatedSWOP",
+      pdfxLevel: "PDF/X-1a:2001",
+      checks: [],
+      ghostscript: {
+        available: true
+      },
+      generatedAt: "2026-06-15T12:00:00.000Z"
     },
-    reportPath: "/tmp/job/report.json",
-    sourcePdfPath: "/tmp/job/source.pdf",
-    svgMasterPath: "/tmp/job/source.svg",
+    reportPath: "/tmp/job/preflight-report.json",
+    reportHtmlPath: "/tmp/job/preflight-report.html",
+    reportTextPath: "/tmp/job/preflight-report.txt",
+    sourcePdfPath: "/tmp/job/trimproof-business-card.source.pdf",
+    svgMasterPath: "/tmp/job/trimproof-business-card.master.svg",
     assets: [
       {
         slotId: "slot_1",
@@ -36,15 +45,16 @@ vi.mock("@/lib/auth/account-server", () => ({
 }));
 
 vi.mock("@/lib/print/proof", () => ({
-  generateProof: (...args: unknown[]) => mocks.generateProof(...args)
+  generateProof: () => mocks.generateProof()
 }));
 
 vi.mock("@/lib/print/delivery-manifest", () => ({
-  writeProofDeliveryManifest: (...args: unknown[]) => mocks.writeProofDeliveryManifest(...args)
+  writeProofDeliveryManifest: () => mocks.writeProofDeliveryManifest()
 }));
 
 vi.mock("@/lib/analytics/server-events", () => ({
-  sendServerAnalyticsEvent: (...args: unknown[]) => mocks.sendServerAnalyticsEvent(...args)
+  sendServerAnalyticsEvent: (...args: Parameters<typeof mocks.sendServerAnalyticsEvent>) =>
+    mocks.sendServerAnalyticsEvent(...args)
 }));
 
 vi.mock("@/lib/billing/paid-session", () => ({
@@ -89,6 +99,9 @@ describe("proof export route", () => {
     await expect(response.json()).resolves.toMatchObject({
       mode: "dummy",
       productionDownloadLocked: true,
+      reportUrl: expect.stringContaining("/preflight-report.json"),
+      reportHtmlUrl: expect.stringContaining("/preflight-report.html"),
+      reportTextUrl: expect.stringContaining("/preflight-report.txt"),
       analytics: {
         status: "sent",
         configured: true,
@@ -101,9 +114,9 @@ describe("proof export route", () => {
       params: {
         mode: "dummy",
         product_type: "business_card",
-        report_status: "pass",
-        print_profile: "business-card",
-        pdfx_level: "PDF/X-1a",
+        report_status: "passed",
+        print_profile: "USWebCoatedSWOP",
+        pdfx_level: "PDF/X-1a:2001",
         asset_provider: "openai",
         production_download_locked: true,
         entitlement: "dummy",

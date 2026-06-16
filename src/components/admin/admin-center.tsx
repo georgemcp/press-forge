@@ -8,19 +8,22 @@ import {
   ExternalLink,
   FileCheck2,
   Gauge,
+  Handshake,
   Layers3,
   LogOut,
   Mail,
   NotebookPen,
+  PlusCircle,
   ReceiptText,
   ShieldCheck,
   TrendingUp,
   Users,
   WalletCards
 } from "lucide-react";
-import { logoutAdmin } from "@/app/admin/actions";
+import { logPilotOutreachEvent, logoutAdmin, recordPilotEvidence, upsertPilotProspect } from "@/app/admin/actions";
 import { adminRanges, type AdminCenterData, type AdminRange } from "@/lib/admin/data";
 import { getOrderRevenueCents } from "@/lib/admin/metrics";
+import { buildPilotFirstTouchBatch } from "@/lib/admin/pilot-outreach";
 import { SeoResearchSection } from "@/components/admin/seo-research-section";
 
 function money(cents: number, currency = "USD") {
@@ -100,8 +103,8 @@ function KpiCard({ title, value, detail, icon: Icon, tone = "neutral" }: { title
 
 function Section({ id, title, children, aside }: { id: string; title: string; children: React.ReactNode; aside?: React.ReactNode }) {
   return (
-    <section className="border-t border-border bg-background" id={id}>
-      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-8">
+    <section className="min-w-0 border-t border-border bg-background" id={id}>
+      <div className="mx-auto grid min-w-0 max-w-7xl gap-5 px-4 py-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="font-display text-2xl font-bold text-surface-ink">{title}</h2>
           {aside ? <div className="text-sm text-muted">{aside}</div> : null}
@@ -124,15 +127,21 @@ function StripeLink({ kind, id }: { kind: "customers" | "checkout/sessions" | "s
   );
 }
 
-export function AdminCenter({ data, range }: { data: AdminCenterData; range: AdminRange }) {
+export function AdminCenter({ data, range, saved, error }: { data: AdminCenterData; range: AdminRange; saved?: string; error?: string }) {
   const summary = data.summary;
   const recentOrders = data.orders.slice(0, 12);
   const recentProofs = data.generatedProofs.slice(0, 12);
   const recentAccounts = data.accounts.slice(0, 12);
+  const pilotLeads = data.pilotLeads.slice(0, 12);
+  const recentOutreachEvents = data.pilotOutreachEvents.slice(0, 8);
+  const recentEvidenceRecords = data.pilotEvidenceRecords.slice(0, 8);
+  const targetListLeads = data.pilotLeads.filter((lead) => lead.origin !== "signup");
+  const manualProspectCount = data.pilotProspects.length;
+  const firstTouchBatch = buildPilotFirstTouchBatch(data.pilotLeads, 10);
   const activeSubscriptions = data.subscriptions.filter((subscription) => subscription.status === "paid");
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
@@ -170,7 +179,7 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
             Live operating view for accounts, paid access, proof usage, estimated contribution margin, and production readiness. Revenue uses current product prices; profit is contribution profit after estimated Stripe fees and proof-generation COGS.
           </p>
           <nav className="flex flex-wrap gap-2 text-sm font-semibold">
-            {["KPIs", "SEO", "Accounts", "Subscriptions", "Orders", "Usage", "Audit", "Readiness"].map((item) => (
+            {["KPIs", "SEO", "Pipeline", "Accounts", "Subscriptions", "Orders", "Usage", "Audit", "Readiness"].map((item) => (
               <a className="rounded-[8px] border border-border bg-surface px-3 py-2 text-muted hover:text-surface-ink" href={`#${item.toLowerCase()}`} key={item}>
                 {item}
               </a>
@@ -185,6 +194,8 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
             ))}
           </div>
         ) : null}
+        {saved ? <div className="rounded-[8px] border border-success/30 bg-success/10 p-4 text-sm font-semibold text-success">{saved}</div> : null}
+        {error ? <div className="rounded-[8px] border border-danger/30 bg-danger/10 p-4 text-sm font-semibold text-danger">{error}</div> : null}
       </section>
 
       <Section id="kpis" title="KPIs" aside={`Generated ${date(summary.generatedAt)} · ${summary.periodLabel}`}>
@@ -201,7 +212,398 @@ export function AdminCenter({ data, range }: { data: AdminCenterData; range: Adm
       </Section>
 
       <Section id="seo" title="North America SEO demand" aside={data.seoResearch ? `Refreshed ${date(data.seoResearch.generatedAt)} · DataForSEO live search volume` : "Live DataForSEO research file missing"}>
-        <SeoResearchSection research={data.seoResearch} />
+        <SeoResearchSection research={data.seoResearch} serpResearch={data.seoSerpResearch} />
+      </Section>
+
+      <Section id="pipeline" title="Pilot pipeline" aside={`${number(data.pilotLeads.length)} launch-list leads with follow-up context`}>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <KpiCard detail="Uncontacted launch-list leads, sorted by segment fit and recency" icon={Handshake} title="Needs follow-up" value={number(data.pilotLeads.filter((lead) => lead.followUpStatus === "needs_follow_up").length)} />
+          <KpiCard detail="Print shops, Pro-interest accounts, or VIP-marked leads" icon={Users} title="High priority" value={number(data.pilotLeads.filter((lead) => lead.priorityLabel === "High").length)} />
+          <KpiCard detail={`${number(manualProspectCount)} manual prospects plus any later signup signals merged by email`} icon={PlusCircle} title="Target list" value={number(targetListLeads.length)} />
+          <KpiCard detail="Leads already moved into customer, contacted, VIP, or blocked status" icon={NotebookPen} title="Worked leads" value={number(data.pilotLeads.filter((lead) => lead.followUpStatus !== "needs_follow_up").length)} />
+          <KpiCard detail="Manual sends, replies, and pilot decisions recorded by an admin" icon={Activity} title="Outreach events" value={number(data.pilotOutreachEvents.length)} />
+          <KpiCard detail="Real pilot jobs, report notes, quote permission, and public-claim status" icon={FileCheck2} title="Pilot evidence" value={number(data.pilotEvidenceRecords.length)} />
+        </div>
+        <div className="grid gap-3 rounded-[8px] border border-border bg-surface p-4 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h3 className="font-display text-lg font-bold text-surface-ink">First-touch batch</h3>
+              <p className="max-w-3xl text-sm leading-5 text-muted">Top uncontacted prospects with ready-to-copy drafts. Sending is manual; keep each row as `needs_follow_up` until the message is actually sent and logged.</p>
+            </div>
+            <Badge status={firstTouchBatch.length ? "vip" : "expired"}>{number(firstTouchBatch.length)} ready</Badge>
+          </div>
+          <div className="grid gap-3 xl:grid-cols-2">
+            {firstTouchBatch.map((item, index) => (
+              <article className="grid gap-3 rounded-[8px] border border-border bg-background p-3" key={item.lead.email}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-muted">Touch {index + 1} · {item.lead.segmentLabel}</p>
+                    <h4 className="font-display text-base font-bold text-surface-ink">{item.lead.companyName ?? item.lead.contactName ?? item.lead.email}</h4>
+                    <p className="mt-1 text-xs leading-5 text-muted">{item.lead.firstSupportedJob ? label(item.lead.firstSupportedJob) : "supported print job"} · score {item.lead.priorityScore}</p>
+                  </div>
+                  <a
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] border border-brand bg-brand-soft px-3 py-2 text-sm font-bold text-brand hover:bg-background"
+                    href={`mailto:${item.lead.email}?subject=${encodeURIComponent(item.message.subject)}&body=${encodeURIComponent(item.message.body)}`}
+                  >
+                    <Mail aria-hidden className="h-4 w-4" />
+                    Open draft
+                  </a>
+                </div>
+                <div className="rounded-[8px] border border-border bg-surface p-3">
+                  <p className="text-xs font-semibold uppercase text-muted">Subject</p>
+                  <p className="mt-1 text-sm font-semibold text-surface-ink">{item.message.subject}</p>
+                </div>
+                <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+                  Body
+                  <textarea className="min-h-56 resize-y rounded-[8px] border border-border bg-surface px-3 py-2 font-mono text-xs leading-5 text-surface-ink" readOnly value={item.message.body} />
+                </label>
+                <form action={logPilotOutreachEvent} className="grid gap-2 rounded-[8px] border border-border bg-surface p-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                  <input name="returnPath" type="hidden" value={`/admin?range=${range}#pipeline`} />
+                  <input name="email" type="hidden" value={item.lead.email} />
+                  <input name="eventType" type="hidden" value="first_touch_sent" />
+                  <input name="channel" type="hidden" value="email" />
+                  <input name="subject" type="hidden" value={item.message.subject} />
+                  <input name="firstSupportedJob" type="hidden" value={item.lead.firstSupportedJob ?? ""} />
+                  <input name="notes" type="hidden" value="First-touch email sent manually from the admin batch." />
+                  <input name="nextStep" type="hidden" value="Follow up in three business days if there is no reply." />
+                  <p className="text-xs leading-5 text-muted">Log this only after the email is actually sent. No automatic email is sent.</p>
+                  <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] border border-brand bg-brand-soft px-3 py-2 text-sm font-bold text-brand hover:bg-background" type="submit">
+                    <NotebookPen aria-hidden className="h-4 w-4" />
+                    Log sent
+                  </button>
+                </form>
+                <p className="text-xs leading-5 text-muted">{item.lead.likelyPain ?? item.lead.useCase}</p>
+              </article>
+            ))}
+            {!firstTouchBatch.length ? <p className="rounded-[8px] border border-border bg-background p-4 text-sm text-muted">No uncontacted prospects are ready for first-touch drafting.</p> : null}
+          </div>
+        </div>
+        <div className="grid gap-3 rounded-[8px] border border-border bg-surface p-4 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h3 className="font-display text-lg font-bold text-surface-ink">Outreach events</h3>
+              <p className="max-w-3xl text-sm leading-5 text-muted">Manual evidence for founder touches, replies, and pilot decisions. This ledger is the source of truth for what actually happened.</p>
+            </div>
+            <Badge status={recentOutreachEvents.length ? "vip" : "expired"}>{number(recentOutreachEvents.length)} recent</Badge>
+          </div>
+          <div className="max-w-full overflow-x-auto rounded-[8px] border border-border bg-background">
+            <table className="w-full min-w-[760px] border-collapse text-sm">
+              <thead className="bg-surface-strong text-left text-xs uppercase text-muted">
+                <tr>
+                  <th className="px-3 py-3">Prospect</th>
+                  <th className="px-3 py-3">Event</th>
+                  <th className="px-3 py-3">Channel</th>
+                  <th className="px-3 py-3">Subject</th>
+                  <th className="px-3 py-3">Next step</th>
+                  <th className="px-3 py-3">Logged</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentOutreachEvents.map((event) => (
+                  <tr className="border-t border-border align-top" key={event.id}>
+                    <td className="px-3 py-3 font-semibold text-surface-ink">{event.prospect_email}</td>
+                    <td className="px-3 py-3"><Badge status={event.event_type === "pilot_agreed" ? "vip" : event.event_type === "blocked" || event.event_type === "pilot_declined" ? "blocked" : "contacted"}>{label(event.event_type)}</Badge></td>
+                    <td className="px-3 py-3">{label(event.channel)}</td>
+                    <td className="px-3 py-3 max-w-[240px] text-muted">{event.subject || "n/a"}</td>
+                    <td className="px-3 py-3 max-w-[240px] text-muted">{event.next_step || "n/a"}</td>
+                    <td className="px-3 py-3">{date(event.event_at)}</td>
+                  </tr>
+                ))}
+                {!recentOutreachEvents.length ? (
+                  <tr>
+                    <td className="px-3 py-6 text-muted" colSpan={6}>No manual outreach events have been logged yet.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="grid gap-3 rounded-[8px] border border-border bg-surface p-4 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h3 className="font-display text-lg font-bold text-surface-ink">Record pilot evidence</h3>
+              <p className="max-w-3xl text-sm leading-5 text-muted">Log real supported jobs, report clarity, and permission boundaries. Do not use as public proof until permission and claim status allow it.</p>
+            </div>
+            <Badge status={recentEvidenceRecords.length ? "vip" : "expired"}>{number(recentEvidenceRecords.length)} recent</Badge>
+          </div>
+          <form action={recordPilotEvidence} className="grid gap-3 rounded-[8px] border border-border bg-background p-3">
+            <input name="returnPath" type="hidden" value={`/admin?range=${range}#pipeline`} />
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+                Email
+                <input className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" name="email" required type="email" />
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+                Job
+                <select className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" defaultValue="flyer" name="jobType">
+                  <option value="flyer">Flyer</option>
+                  <option value="poster">Poster</option>
+                  <option value="menu">Menu</option>
+                  <option value="brochure">Brochure</option>
+                  <option value="business_card">Business card</option>
+                  <option value="postcard">Postcard</option>
+                  <option value="letterhead">Letterhead</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+                Tested path
+                <select className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" defaultValue="dummy_proof" name="testedPath">
+                  <option value="dummy_proof">Dummy proof</option>
+                  <option value="export_credit">Export credit</option>
+                  <option value="pro">Pro</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+                Outcome
+                <select className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" defaultValue="review_only" name="outcome">
+                  <option value="review_only">Reviewed only</option>
+                  <option value="needs_revision">Needs revision</option>
+                  <option value="used_after_review">Used after review</option>
+                  <option value="not_fit">Not a fit</option>
+                  <option value="blocked">Blocked</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+                Quote permission
+                <select className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" defaultValue="none" name="quotePermission">
+                  <option value="none">None</option>
+                  <option value="anonymous">Anonymous</option>
+                  <option value="attributed">Attributed</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+                Claim status
+                <select className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" defaultValue="not_approved" name="publicClaimStatus">
+                  <option value="not_approved">Not approved</option>
+                  <option value="approved_internal">Internal only</option>
+                  <option value="approved_public">Approved public</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+                Evidence date
+                <input className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" name="evidenceAt" type="datetime-local" />
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+                Product version
+                <input className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" name="productVersion" placeholder="commit, tag, or release" />
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted md:col-span-2">
+                Source material
+                <input className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" name="sourceMaterial" placeholder="brief, screenshot, PDF, Canva export, image" />
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted md:col-span-2">
+                Printer spec
+                <input className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" name="printerSpec" />
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted md:col-span-2">
+                Checks summary
+                <textarea className="min-h-28 resize-y rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold leading-5 text-surface-ink" name="checksSummary" />
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted md:col-span-2">
+                Report clarity
+                <textarea className="min-h-28 resize-y rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold leading-5 text-surface-ink" name="reportClarity" />
+              </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase text-muted md:col-span-4">
+                Notes
+                <input className="rounded-[8px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-surface-ink" name="notes" />
+              </label>
+            </div>
+            <div className="flex justify-end">
+              <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-brand-dark" type="submit">
+                <NotebookPen aria-hidden className="h-4 w-4" />
+                Save evidence
+              </button>
+            </div>
+          </form>
+          <div className="max-w-full overflow-x-auto rounded-[8px] border border-border bg-background">
+            <table className="w-full min-w-[980px] border-collapse text-sm">
+              <thead className="bg-surface-strong text-left text-xs uppercase text-muted">
+                <tr>
+                  <th className="px-3 py-3">Prospect</th>
+                  <th className="px-3 py-3">Job</th>
+                  <th className="px-3 py-3">Outcome</th>
+                  <th className="px-3 py-3">Permission</th>
+                  <th className="px-3 py-3">Claim status</th>
+                  <th className="px-3 py-3">Report clarity</th>
+                  <th className="px-3 py-3">Logged</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentEvidenceRecords.map((record) => (
+                  <tr className="border-t border-border align-top" key={record.id}>
+                    <td className="px-3 py-3 font-semibold text-surface-ink">{record.prospect_email}</td>
+                    <td className="px-3 py-3">
+                      <div className="font-semibold text-surface-ink">{label(record.job_type)}</div>
+                      <div className="text-xs text-muted">{label(record.tested_path)}</div>
+                    </td>
+                    <td className="px-3 py-3"><Badge status={record.outcome === "blocked" || record.outcome === "not_fit" ? "blocked" : "vip"}>{label(record.outcome)}</Badge></td>
+                    <td className="px-3 py-3">{label(record.quote_permission)}</td>
+                    <td className="px-3 py-3"><Badge status={record.public_claim_status === "approved_public" ? "vip" : record.public_claim_status === "approved_internal" ? "lead" : "needs_attention"}>{label(record.public_claim_status)}</Badge></td>
+                    <td className="px-3 py-3 max-w-[320px] text-muted">{record.report_clarity || record.checks_summary || "n/a"}</td>
+                    <td className="px-3 py-3">{date(record.evidence_at)}</td>
+                  </tr>
+                ))}
+                {!recentEvidenceRecords.length ? (
+                  <tr>
+                    <td className="px-3 py-6 text-muted" colSpan={7}>No pilot evidence records have been logged yet.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <form action={upsertPilotProspect} className="grid gap-4 rounded-[8px] border border-border bg-surface p-4 shadow-sm">
+          <input name="returnPath" type="hidden" value={`/admin?range=${range}#pipeline`} />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="font-display text-lg font-bold text-surface-ink">Add pilot prospect</h3>
+              <p className="text-sm leading-5 text-muted">Use real public or signup-provided contact details only.</p>
+            </div>
+            <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-brand-dark" type="submit">
+              <PlusCircle aria-hidden className="h-4 w-4" />
+              Save prospect
+            </button>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+              Email
+              <input className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" name="email" required type="email" />
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+              Company
+              <input className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" name="companyName" />
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+              Contact
+              <input className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" name="contactName" />
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+              Role
+              <input className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" name="role" />
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+              Segment
+              <select className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" defaultValue="print_shop" name="segment">
+                <option value="print_shop">Print shop</option>
+                <option value="designer">Designer</option>
+                <option value="marketing_team">Marketing team</option>
+                <option value="checklist_reader">Checklist reader</option>
+                <option value="account_signup">Account signup</option>
+                <option value="general_launch">General launch</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+              Source
+              <select className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" defaultValue="manual_target_list" name="source">
+                <option value="manual_target_list">Manual target list</option>
+                <option value="google_maps">Google Maps</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="referral">Referral</option>
+                <option value="community_post">Community post</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+              First job
+              <select className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" defaultValue="flyer" name="firstSupportedJob">
+                <option value="flyer">Flyer</option>
+                <option value="poster">Poster</option>
+                <option value="menu">Menu</option>
+                <option value="brochure">Brochure</option>
+                <option value="business_card">Business card</option>
+                <option value="postcard">Postcard</option>
+                <option value="letterhead">Letterhead</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+              Status
+              <select className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" defaultValue="needs_follow_up" name="status">
+                <option value="needs_follow_up">Needs follow-up</option>
+                <option value="contacted">Contacted</option>
+                <option value="vip">VIP</option>
+                <option value="customer">Customer</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+              Priority
+              <input className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" defaultValue="55" max="100" min="0" name="priorityScore" type="number" />
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted">
+              Last contact
+              <input className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" name="lastContactAt" type="datetime-local" />
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted md:col-span-2">
+              Public contact path
+              <input className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" name="publicContactPath" />
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted md:col-span-2">
+              Likely pain
+              <input className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" name="likelyPain" />
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase text-muted md:col-span-2">
+              Notes
+              <input className="rounded-[8px] border border-border bg-background px-3 py-2 text-sm font-semibold text-surface-ink" name="notes" />
+            </label>
+          </div>
+        </form>
+        <div className="max-w-full overflow-x-auto rounded-[8px] border border-border bg-surface">
+          <table className="w-full min-w-[1120px] border-collapse text-sm">
+            <thead className="bg-surface-strong text-left text-xs uppercase text-muted">
+              <tr>
+                <th className="px-3 py-3">Lead</th>
+                <th className="px-3 py-3">Origin</th>
+                <th className="px-3 py-3">Segment</th>
+                <th className="px-3 py-3">Follow-up</th>
+                <th className="px-3 py-3">Priority</th>
+                <th className="px-3 py-3">Use case</th>
+                <th className="px-3 py-3">Last signal</th>
+                <th className="px-3 py-3">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pilotLeads.map((lead) => (
+                <tr className="border-t border-border align-top" key={lead.email}>
+                  <td className="px-3 py-3">
+                    <div className="font-semibold text-surface-ink">{lead.email}</div>
+                    <div className="text-xs text-muted">{lead.companyName ?? lead.contactName ?? lead.source}</div>
+                    {lead.role || lead.monthlyPrintJobs ? <div className="text-xs text-muted">{[lead.role, lead.monthlyPrintJobs ? `${lead.monthlyPrintJobs} jobs/mo` : undefined].filter(Boolean).join(" · ")}</div> : null}
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="font-semibold text-surface-ink">{label(lead.origin)}</div>
+                    {lead.firstSupportedJob ? <div className="text-xs text-muted">{label(lead.firstSupportedJob)}</div> : null}
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="font-semibold text-surface-ink">{lead.segmentLabel}</div>
+                    <div className="text-xs text-muted">{lead.source}</div>
+                  </td>
+                  <td className="px-3 py-3">
+                    <Badge status={lead.followUpStatus}>{lead.followUpLabel}</Badge>
+                    {lead.lastContactAt ? <div className="mt-1 text-xs text-muted">Last contact {date(lead.lastContactAt)}</div> : null}
+                  </td>
+                  <td className="px-3 py-3">
+                    <Badge status={lead.priorityLabel === "High" ? "vip" : lead.priorityLabel === "Medium" ? "lead" : "expired"}>{lead.priorityLabel}</Badge>
+                    <div className="mt-1 text-xs text-muted">Score {lead.priorityScore}</div>
+                  </td>
+                  <td className="px-3 py-3 max-w-[280px] text-sm leading-5 text-muted">{lead.useCase}</td>
+                  <td className="px-3 py-3">{date(lead.lastSignalAt)}</td>
+                  <td className="px-3 py-3">
+                    <div className="flex flex-col gap-1">
+                      <Link className="text-xs font-semibold text-brand hover:underline" href={`/admin/accounts/${encodeURIComponent(lead.email)}`}>Open account</Link>
+                      <a className="text-xs font-semibold text-brand hover:underline" href={`mailto:${lead.email}`}>Email</a>
+                      {lead.publicContactPath ? <span className="max-w-[180px] truncate text-xs text-muted">{lead.publicContactPath}</span> : null}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {!pilotLeads.length ? (
+                <tr>
+                  <td className="px-3 py-6 text-muted" colSpan={8}>No launch-list leads yet.</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
       </Section>
 
       <Section id="accounts" title="Accounts" aside={`${number(data.accounts.length)} known emails from users, signups, and orders`}>
