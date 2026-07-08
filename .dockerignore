@@ -1,0 +1,12 @@
+node_modules
+.next
+artifacts
+coverage
+.git
+.env
+.env.*
+!.env.example
+public/generated
+*.log
+*.tsbuildinfo
+.DS_Store
