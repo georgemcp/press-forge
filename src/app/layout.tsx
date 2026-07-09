@@ -19,33 +19,38 @@ const body = Instrument_Sans({
 export const metadata: Metadata = {
   metadataBase: getSiteUrl(),
   title: {
-    default: "Press Forge | AI Print Design Studio",
-    template: "%s | Press Forge"
+    default: "Trim Proof | AI Print Design Studio",
+    template: "%s | Trim Proof"
   },
   description:
     "Create print-ready designs with AI. Upload references, describe your vision, and get production-ready PDF/X files with CMYK, bleed, crop marks, and embedded fonts.",
   alternates: {
     canonical: "/"
   },
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg"
+  },
   openGraph: {
-    title: "Press Forge | AI Print Design Studio",
+    title: "Trim Proof | AI Print Design Studio",
     description:
       "Describe your vision, upload references, and let AI generate print-ready designs with deterministic PDF/X export.",
     url: "/",
-    siteName: "Press Forge",
+    siteName: "Trim Proof",
     images: [
       {
         url: "/trim-proof-workspace-concept.png",
         width: 1440,
         height: 1000,
-        alt: "Press Forge workspace with AI brief enhancement, design preview, chat panel, and export controls."
+        alt: "Trim Proof workspace with AI brief enhancement, design preview, chat panel, and export controls."
       }
     ],
     type: "website"
   },
   twitter: {
     card: "summary_large_image",
-    title: "Press Forge | AI Print Design Studio",
+    title: "Trim Proof | AI Print Design Studio",
     description:
       "AI-powered print design from brief to PDF/X. Upload references, chat with AI to iterate, export production-ready files."
   }

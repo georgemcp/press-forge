@@ -23,7 +23,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const account = await getAccountSessionFromCookies();
   if (!account) {
-    return NextResponse.json({ error: "Create an account before generating a Press Forge demo or export." }, { status: 401 });
+    return NextResponse.json({ error: "Create an account before generating a Trim Proof demo or export." }, { status: 401 });
   }
 
   const payload = (await request.json().catch(() => ({}))) as {
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       }
     });
     if (analytics.status === "failed") {
-      console.error("Press Forge server analytics event failed", {
+      console.error("Trim Proof server analytics event failed", {
         event: "proof_export_completed",
         provider: analytics.provider,
         reason: analytics.reason
@@ -151,6 +151,8 @@ export async function POST(request: Request) {
       demoArtWatermarked: mode === "dummy",
       ...productionUrls,
       reportUrl: `${fileBase}/${path.basename(proof.reportPath)}`,
+      reportHtmlUrl: `${fileBase}/${path.basename(proof.reportHtmlPath)}`,
+      reportTextUrl: `${fileBase}/${path.basename(proof.reportTextPath)}`,
       assetUrls: proof.assets.map((asset) => ({
         slotId: asset.slotId,
         provider: asset.provider,

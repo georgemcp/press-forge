@@ -43,6 +43,12 @@ const textBlockTemplates: Record<ProductType, TextBlockTemplate[]> = {
     { id: "tagline", role: "subhead", x: 0.7, y: 9.52, width: 5.8, fontSize: 12.5, weight: "medium" },
     { id: "name", role: "headline", x: 0.7, y: 8.64, width: 3.4, fontSize: 15.5, weight: "bold" },
     { id: "contact", role: "contact", x: 0.72, y: 0.72, width: 7.2, fontSize: 10, weight: "regular" }
+  ],
+  menu: [
+    { id: "brand", role: "brand", x: 0.62, y: 7.38, width: 4.9, fontSize: 28, weight: "bold" },
+    { id: "tagline", role: "subhead", x: 0.66, y: 6.78, width: 5.2, fontSize: 11.5, weight: "medium" },
+    { id: "name", role: "headline", x: 0.68, y: 4.72, width: 4.9, fontSize: 23, weight: "bold" },
+    { id: "contact", role: "contact", x: 6.0, y: 0.74, width: 4.2, fontSize: 9.4, weight: "regular" }
   ]
 };
 
@@ -57,7 +63,13 @@ const genericBrandPhrases = new Set([
   "brochure",
   "trifold brochure",
   "tri-fold brochure",
-  "letterhead"
+  "letterhead",
+  "menu",
+  "menu maker",
+  "menu template",
+  "menu pdf template",
+  "restaurant menu",
+  "food menu"
 ]);
 
 const palettes: Record<string, { paper: CmykColor; ink: CmykColor; accent: CmykColor }> = {
@@ -99,8 +111,15 @@ function titleCase(value: string) {
 
 function cleanupCandidate(value: string) {
   return value
-    .replace(/\b(?:with|that|and|for|business card|flyer|poster|postcard|brochure|trifold|tri-fold|letterhead)\b.*$/i, "")
+    .replace(/\b(?:with|that|and|for|business card|flyer|poster|postcard|brochure|trifold|tri-fold|letterhead|menu|menu maker|menu template|menu pdf template|restaurant menu|food menu)\b.*$/i, "")
     .replace(/[.,;:|]+$/g, "")
+    .trim();
+}
+
+function cleanupMenuBrand(value: string) {
+  return value
+    .replace(/\b(?:breakfast|brunch|lunch|dinner|cocktail|dessert|seasonal)\b$/i, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -123,26 +142,30 @@ function extractLabeledValue(brief: string, labels: string[]) {
   return match?.[1] ? cleanupCandidate(match[1]) : undefined;
 }
 
-function extractBrand(brief: string) {
+function extractBrand(brief: string, productType?: ProductType) {
   const explicit = extractLabeledValue(brief, ["brand", "company", "business"]);
   if (explicit) {
-    return titleCase(explicit);
+    return titleCase(productType === "menu" ? cleanupMenuBrand(explicit) : explicit);
   }
 
   const quoted = extractQuotedBrand(brief);
   if (quoted) {
-    return titleCase(quoted);
+    return titleCase(productType === "menu" ? cleanupMenuBrand(quoted) : quoted);
   }
 
   const forMatch = brief.match(/\bfor\s+(?:a|an|the)?\s*([^,.;|]{2,64}?)(?=,|;|\.|\||\s+with\b|\s+that\b|\s+to\b|$)/i)?.[1];
   const candidate = forMatch ? rejectGeneric(cleanupCandidate(forMatch)) : undefined;
   if (candidate) {
-    return titleCase(candidate);
+    return titleCase(productType === "menu" ? cleanupMenuBrand(candidate) : candidate);
   }
 
-  const leadingProductMatch = brief.match(/^([A-Za-z0-9&'. -]{2,48})\s+(?:business card|flyer|poster|postcard|brochure|trifold brochure|tri-fold brochure|letterhead)\b/i)?.[1];
+  const leadingProductMatch = brief.match(/^([A-Za-z0-9&'. -]{2,48})\s+(?:business card|flyer|poster|postcard|brochure|trifold brochure|tri-fold brochure|letterhead|menu)\b/i)?.[1];
   const leadingCandidate = leadingProductMatch ? rejectGeneric(cleanupCandidate(leadingProductMatch)) : undefined;
-  return leadingCandidate ? titleCase(leadingCandidate) : "Press Forge";
+  if (!leadingCandidate) {
+    return "Trim Proof";
+  }
+
+  return titleCase(productType === "menu" ? cleanupMenuBrand(leadingCandidate) : leadingCandidate);
 }
 
 function inferProductType(brief: string, requested?: ProductType): ProductType {
@@ -152,6 +175,9 @@ function inferProductType(brief: string, requested?: ProductType): ProductType {
   const lower = brief.toLowerCase();
   if (lower.includes("letterhead")) {
     return "letterhead";
+  }
+  if (lower.includes("menu")) {
+    return "menu";
   }
   if (lower.includes("poster")) {
     return "poster";
@@ -166,6 +192,35 @@ function inferProductType(brief: string, requested?: ProductType): ProductType {
     return "postcard";
   }
   return "business_card";
+}
+
+function extractMenuTitle(brief: string) {
+  const explicit = extractLabeledValue(brief, ["headline", "title", "menu title"]);
+  if (explicit) {
+    return titleCase(explicit);
+  }
+
+  const lower = brief.toLowerCase();
+  if (lower.includes("breakfast")) {
+    return "Breakfast Menu";
+  }
+  if (lower.includes("brunch")) {
+    return "Brunch Menu";
+  }
+  if (lower.includes("lunch")) {
+    return "Lunch Menu";
+  }
+  if (lower.includes("dinner")) {
+    return "Dinner Menu";
+  }
+  if (lower.includes("cocktail")) {
+    return "Cocktail Menu";
+  }
+  if (lower.includes("dessert")) {
+    return "Dessert Menu";
+  }
+
+  return "Seasonal Menu";
 }
 
 function extractPersonName(brief: string) {
@@ -202,6 +257,9 @@ function getTagline(brief: string) {
   }
 
   const lower = brief.toLowerCase();
+  if (lower.includes("menu")) {
+    return "Fresh flavors, ready for print.";
+  }
   if (lower.includes("luxury") || lower.includes("premium")) {
     return "Premium work, prepared for print.";
   }
@@ -241,7 +299,7 @@ function createTextBlocks(productType: ProductType, values: Record<string, strin
       return { ...block, content: values.tagline, color: { c: 0.55, m: 0.44, y: 0.38, k: 0.46 } } satisfies TextBlock;
     }
     if (block.id === "name") {
-      return { ...block, content: values.personName, color: palette.ink } satisfies TextBlock;
+      return { ...block, content: values.headline, color: palette.ink } satisfies TextBlock;
     }
     return { ...block, content: `${values.contact}  |  ${pdfxLabel} ready`, color: { c: 0.48, m: 0.38, y: 0.32, k: 0.42 } } satisfies TextBlock;
   });
@@ -278,8 +336,9 @@ export function deriveLayoutSpecFromBrief(input: BriefLayoutInput): LayoutSpec {
   const brief = normalizeBrief(input.brief);
   const productType = inferProductType(brief, input.productType);
   const pdfxLevel = input.pdfxLevel ?? sampleBusinessCardLayout.pdfxLevel;
-  const brand = extractBrand(brief);
+  const brand = extractBrand(brief, productType);
   const personName = extractPersonName(brief);
+  const headline = productType === "menu" ? extractMenuTitle(brief) : personName;
   const contact = extractContact(brief, brand);
   const tagline = getTagline(brief);
   const palette = selectPalette(brief);
@@ -292,7 +351,7 @@ export function deriveLayoutSpecFromBrief(input: BriefLayoutInput): LayoutSpec {
     cropMarks: input.cropMarks ?? sampleBusinessCardLayout.cropMarks,
     palette,
     styleDirection: brief || sampleBusinessCardLayout.styleDirection,
-    textBlocks: createTextBlocks(productType, { brand, personName, contact, tagline }, palette, pdfxLevel),
+    textBlocks: createTextBlocks(productType, { brand, headline, contact, tagline }, palette, pdfxLevel),
     assetSlots: createAssetSlots(productType, brief, brand, tagline)
   });
 }

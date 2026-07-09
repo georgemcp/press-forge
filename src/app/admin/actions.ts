@@ -55,6 +55,16 @@ export async function logoutAdmin() {
 }
 
 const accountStatuses = new Set(["lead", "customer", "vip", "churn_risk", "blocked"]);
+const pilotProspectSegments = new Set(["print_shop", "marketing_team", "designer", "checklist_reader", "account_signup", "general_launch"]);
+const pilotProspectStatuses = new Set(["needs_follow_up", "contacted", "customer", "vip", "blocked"]);
+const pilotOutreachEventTypes = new Set(["first_touch_sent", "follow_up_sent", "reply_received", "pilot_agreed", "pilot_declined", "blocked"]);
+const pilotOutreachChannels = new Set(["email", "contact_form", "phone", "linkedin", "in_person", "other"]);
+const supportedPilotJobs = new Set(["flyer", "poster", "menu", "brochure", "business_card", "postcard", "letterhead"]);
+const pilotEvidenceOutcomes = new Set(["review_only", "needs_revision", "used_after_review", "not_fit", "blocked"]);
+const pilotQuotePermissions = new Set(["none", "anonymous", "attributed"]);
+const pilotPublicClaimStatuses = new Set(["not_approved", "approved_internal", "approved_public"]);
+const pilotTestedPaths = new Set(["dummy_proof", "export_credit", "pro", "unknown"]);
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function textField(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -90,6 +100,39 @@ function parseLastContactAt(value: string) {
     return undefined;
   }
   return parsed.toISOString();
+}
+
+function parsePriorityScore(value: string) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 55;
+  }
+  return Math.min(100, Math.max(0, Math.round(parsed)));
+}
+
+function parseEventAt(value: string) {
+  const parsed = new Date(value || Date.now());
+  if (!Number.isFinite(parsed.getTime())) {
+    return undefined;
+  }
+  return parsed.toISOString();
+}
+
+function pilotProspectStatusForOutreachEvent(eventType: string) {
+  if (eventType === "pilot_agreed") {
+    return "vip";
+  }
+  if (eventType === "pilot_declined" || eventType === "blocked") {
+    return "blocked";
+  }
+  return "contacted";
+}
+
+function pilotProspectStatusForEvidenceOutcome(outcome: string) {
+  if (outcome === "blocked" || outcome === "not_fit") {
+    return "blocked";
+  }
+  return "vip";
 }
 
 function orderReturnPath(order: Pick<ExportOrderRow, "customer_email" | "stripe_customer_id" | "stripe_session_id">, fallback: string) {
@@ -165,6 +208,253 @@ export async function updateAccountManagement(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath(returnPath);
   redirectWithMessage(returnPath, "saved", "Account management notes saved.");
+}
+
+export async function upsertPilotProspect(formData: FormData) {
+  await requireAdminAction();
+  const returnPath = safeReturnPath(textField(formData, "returnPath") || "/admin");
+  const email = normalizeAdminEmail(textField(formData, "email"));
+  if (!email || !emailPattern.test(email)) {
+    redirectWithMessage(returnPath, "adminError", "A valid prospect email is required.");
+  }
+
+  const segment = textField(formData, "segment") || "general_launch";
+  if (!pilotProspectSegments.has(segment)) {
+    redirectWithMessage(returnPath, "adminError", "Prospect segment is not valid.");
+  }
+
+  const firstSupportedJob = textField(formData, "firstSupportedJob") || "flyer";
+  if (!supportedPilotJobs.has(firstSupportedJob)) {
+    redirectWithMessage(returnPath, "adminError", "First supported job is not valid.");
+  }
+
+  const status = textField(formData, "status") || "needs_follow_up";
+  if (!pilotProspectStatuses.has(status)) {
+    redirectWithMessage(returnPath, "adminError", "Prospect status is not valid.");
+  }
+
+  const lastContactAt = parseLastContactAt(textField(formData, "lastContactAt"));
+  if (lastContactAt === undefined) {
+    redirectWithMessage(returnPath, "adminError", "Last contact date is not valid.");
+  }
+
+  const supabase = await getSupabaseForAction(returnPath);
+  const priorityScore = parsePriorityScore(textField(formData, "priorityScore"));
+  const { error } = await supabase.from("pilot_prospects").upsert(
+    {
+      email,
+      company_name: textField(formData, "companyName").slice(0, 160) || null,
+      contact_name: textField(formData, "contactName").slice(0, 120) || null,
+      role: textField(formData, "role").slice(0, 120) || null,
+      segment,
+      source: textField(formData, "source").slice(0, 80) || "manual_target_list",
+      first_supported_job: firstSupportedJob,
+      likely_pain: textField(formData, "likelyPain").slice(0, 500),
+      public_contact_path: textField(formData, "publicContactPath").slice(0, 500),
+      status,
+      priority_score: priorityScore,
+      notes: textField(formData, "notes").slice(0, 3000),
+      last_signal_at: new Date().toISOString(),
+      last_contact_at: lastContactAt
+    },
+    { onConflict: "email" }
+  );
+  if (error) {
+    redirectWithMessage(returnPath, "adminError", error.message);
+  }
+
+  await recordAdminAuditEvent({
+    supabase,
+    action: "pilot_prospect.upsert",
+    targetType: "pilot_prospect",
+    targetId: email,
+    metadata: {
+      segment,
+      status,
+      firstSupportedJob,
+      priorityScore
+    }
+  });
+
+  revalidatePath("/admin");
+  redirectWithMessage(returnPath, "saved", "Pilot prospect saved.");
+}
+
+export async function logPilotOutreachEvent(formData: FormData) {
+  await requireAdminAction();
+  const returnPath = safeReturnPath(textField(formData, "returnPath") || "/admin");
+  const email = normalizeAdminEmail(textField(formData, "email"));
+  if (!email || !emailPattern.test(email)) {
+    redirectWithMessage(returnPath, "adminError", "A valid prospect email is required.");
+  }
+
+  const eventType = textField(formData, "eventType") || "first_touch_sent";
+  if (!pilotOutreachEventTypes.has(eventType)) {
+    redirectWithMessage(returnPath, "adminError", "Outreach event type is not valid.");
+  }
+
+  const channel = textField(formData, "channel") || "email";
+  if (!pilotOutreachChannels.has(channel)) {
+    redirectWithMessage(returnPath, "adminError", "Outreach channel is not valid.");
+  }
+
+  const firstSupportedJobValue = textField(formData, "firstSupportedJob");
+  const firstSupportedJob = firstSupportedJobValue || null;
+  if (firstSupportedJob && !supportedPilotJobs.has(firstSupportedJob)) {
+    redirectWithMessage(returnPath, "adminError", "First supported job is not valid.");
+  }
+
+  const eventAt = parseEventAt(textField(formData, "eventAt"));
+  if (!eventAt) {
+    redirectWithMessage(returnPath, "adminError", "Outreach event date is not valid.");
+  }
+
+  const subject = textField(formData, "subject").slice(0, 240);
+  const notes = textField(formData, "notes").slice(0, 3000);
+  const nextStep = textField(formData, "nextStep").slice(0, 500);
+  const supabase = await getSupabaseForAction(returnPath);
+  const { error: insertError } = await supabase.from("pilot_outreach_events").insert({
+    prospect_email: email,
+    event_type: eventType,
+    channel,
+    subject,
+    notes,
+    next_step: nextStep,
+    first_supported_job: firstSupportedJob,
+    event_at: eventAt
+  });
+  if (insertError) {
+    redirectWithMessage(returnPath, "adminError", insertError.message);
+  }
+
+  const prospectUpdate = supabase.from("pilot_prospects").update({
+    status: pilotProspectStatusForOutreachEvent(eventType),
+    last_contact_at: eventAt,
+    last_signal_at: eventAt
+  });
+  const { error: prospectError } = await prospectUpdate.eq("email", email);
+  if (prospectError) {
+    redirectWithMessage(returnPath, "adminError", prospectError.message);
+  }
+
+  await recordAdminAuditEvent({
+    supabase,
+    action: "pilot_outreach.log_event",
+    targetType: "pilot_prospect",
+    targetId: email,
+    metadata: {
+      eventType,
+      channel,
+      firstSupportedJob,
+      subjectLength: subject.length,
+      notesLength: notes.length,
+      nextStepLength: nextStep.length,
+      eventAt
+    }
+  });
+
+  revalidatePath("/admin");
+  redirectWithMessage(returnPath, "saved", "Pilot outreach event logged.");
+}
+
+export async function recordPilotEvidence(formData: FormData) {
+  await requireAdminAction();
+  const returnPath = safeReturnPath(textField(formData, "returnPath") || "/admin");
+  const email = normalizeAdminEmail(textField(formData, "email"));
+  if (!email || !emailPattern.test(email)) {
+    redirectWithMessage(returnPath, "adminError", "A valid prospect email is required.");
+  }
+
+  const jobType = textField(formData, "jobType") || "flyer";
+  if (!supportedPilotJobs.has(jobType)) {
+    redirectWithMessage(returnPath, "adminError", "Pilot evidence job type is not valid.");
+  }
+
+  const testedPath = textField(formData, "testedPath") || "unknown";
+  if (!pilotTestedPaths.has(testedPath)) {
+    redirectWithMessage(returnPath, "adminError", "Pilot evidence tested path is not valid.");
+  }
+
+  const outcome = textField(formData, "outcome") || "review_only";
+  if (!pilotEvidenceOutcomes.has(outcome)) {
+    redirectWithMessage(returnPath, "adminError", "Pilot evidence outcome is not valid.");
+  }
+
+  const quotePermission = textField(formData, "quotePermission") || "none";
+  if (!pilotQuotePermissions.has(quotePermission)) {
+    redirectWithMessage(returnPath, "adminError", "Quote permission is not valid.");
+  }
+
+  const publicClaimStatus = textField(formData, "publicClaimStatus") || "not_approved";
+  if (!pilotPublicClaimStatuses.has(publicClaimStatus)) {
+    redirectWithMessage(returnPath, "adminError", "Public claim status is not valid.");
+  }
+
+  const evidenceAt = parseEventAt(textField(formData, "evidenceAt"));
+  if (!evidenceAt) {
+    redirectWithMessage(returnPath, "adminError", "Pilot evidence date is not valid.");
+  }
+
+  const sourceMaterial = textField(formData, "sourceMaterial").slice(0, 500);
+  const printerSpec = textField(formData, "printerSpec").slice(0, 500);
+  const checksSummary = textField(formData, "checksSummary").slice(0, 1200);
+  const reportClarity = textField(formData, "reportClarity").slice(0, 1200);
+  const productVersion = textField(formData, "productVersion").slice(0, 160);
+  const notes = textField(formData, "notes").slice(0, 3000);
+  const supabase = await getSupabaseForAction(returnPath);
+  const { error: insertError } = await supabase.from("pilot_evidence_records").insert({
+    prospect_email: email,
+    job_type: jobType,
+    source_material: sourceMaterial,
+    printer_spec: printerSpec,
+    tested_path: testedPath,
+    checks_summary: checksSummary,
+    report_clarity: reportClarity,
+    outcome,
+    quote_permission: quotePermission,
+    public_claim_status: publicClaimStatus,
+    product_version: productVersion,
+    notes,
+    evidence_at: evidenceAt
+  });
+  if (insertError) {
+    redirectWithMessage(returnPath, "adminError", insertError.message);
+  }
+
+  const { error: prospectError } = await supabase
+    .from("pilot_prospects")
+    .update({
+      first_supported_job: jobType,
+      status: pilotProspectStatusForEvidenceOutcome(outcome),
+      last_signal_at: evidenceAt
+    })
+    .eq("email", email);
+  if (prospectError) {
+    redirectWithMessage(returnPath, "adminError", prospectError.message);
+  }
+
+  await recordAdminAuditEvent({
+    supabase,
+    action: "pilot_evidence.record",
+    targetType: "pilot_prospect",
+    targetId: email,
+    metadata: {
+      jobType,
+      testedPath,
+      outcome,
+      quotePermission,
+      publicClaimStatus,
+      sourceMaterialLength: sourceMaterial.length,
+      printerSpecLength: printerSpec.length,
+      checksSummaryLength: checksSummary.length,
+      reportClarityLength: reportClarity.length,
+      notesLength: notes.length,
+      evidenceAt
+    }
+  });
+
+  revalidatePath("/admin");
+  redirectWithMessage(returnPath, "saved", "Pilot evidence recorded.");
 }
 
 export async function openStripeCustomerPortal(formData: FormData) {

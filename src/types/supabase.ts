@@ -374,6 +374,165 @@ export type Database = {
           },
         ]
       }
+      pilot_evidence_records: {
+        Row: {
+          checks_summary: string
+          created_at: string
+          evidence_at: string
+          id: string
+          job_type: string
+          notes: string
+          outcome: string
+          printer_spec: string
+          product_version: string
+          prospect_email: string
+          public_claim_status: string
+          quote_permission: string
+          report_clarity: string
+          source_material: string
+          tested_path: string
+          updated_at: string
+        }
+        Insert: {
+          checks_summary?: string
+          created_at?: string
+          evidence_at?: string
+          id?: string
+          job_type: string
+          notes?: string
+          outcome: string
+          printer_spec?: string
+          product_version?: string
+          prospect_email: string
+          public_claim_status?: string
+          quote_permission?: string
+          report_clarity?: string
+          source_material?: string
+          tested_path?: string
+          updated_at?: string
+        }
+        Update: {
+          checks_summary?: string
+          created_at?: string
+          evidence_at?: string
+          id?: string
+          job_type?: string
+          notes?: string
+          outcome?: string
+          printer_spec?: string
+          product_version?: string
+          prospect_email?: string
+          public_claim_status?: string
+          quote_permission?: string
+          report_clarity?: string
+          source_material?: string
+          tested_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pilot_prospects: {
+        Row: {
+          company_name: string | null
+          contact_name: string | null
+          created_at: string
+          email: string
+          first_supported_job: string
+          id: string
+          last_contact_at: string | null
+          last_signal_at: string | null
+          likely_pain: string
+          notes: string
+          priority_score: number
+          public_contact_path: string
+          role: string | null
+          segment: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email: string
+          first_supported_job: string
+          id?: string
+          last_contact_at?: string | null
+          last_signal_at?: string | null
+          likely_pain?: string
+          notes?: string
+          priority_score?: number
+          public_contact_path?: string
+          role?: string | null
+          segment: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string
+          first_supported_job?: string
+          id?: string
+          last_contact_at?: string | null
+          last_signal_at?: string | null
+          likely_pain?: string
+          notes?: string
+          priority_score?: number
+          public_contact_path?: string
+          role?: string | null
+          segment?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pilot_outreach_events: {
+        Row: {
+          channel: string
+          created_at: string
+          event_at: string
+          event_type: string
+          first_supported_job: string | null
+          id: string
+          next_step: string
+          notes: string
+          prospect_email: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          event_at?: string
+          event_type: string
+          first_supported_job?: string | null
+          id?: string
+          next_step?: string
+          notes?: string
+          prospect_email: string
+          subject?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          event_at?: string
+          event_type?: string
+          first_supported_job?: string | null
+          id?: string
+          next_step?: string
+          notes?: string
+          prospect_email?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       print_profiles: {
         Row: {
           code: string
@@ -494,6 +653,8 @@ export type Database = {
           id: string
           user_id: string
           name: string
+          client_name: string
+          job_name: string
           brief: string
           enhanced_brief: Json | null
           layout_spec: Json
@@ -508,6 +669,8 @@ export type Database = {
           id?: string
           user_id: string
           name?: string
+          client_name?: string
+          job_name?: string
           brief?: string
           enhanced_brief?: Json | null
           layout_spec: Json
@@ -522,6 +685,8 @@ export type Database = {
           id?: string
           user_id?: string
           name?: string
+          client_name?: string
+          job_name?: string
           brief?: string
           enhanced_brief?: Json | null
           layout_spec?: Json

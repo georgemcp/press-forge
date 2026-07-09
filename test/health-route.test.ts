@@ -36,6 +36,7 @@ describe("health route", () => {
     const response = await GET();
     const payload = await response.json();
 
+    expect(payload.service).toBe("trimproof");
     expect(payload.checks).toMatchObject({
       stripeConfigured: true,
       stripeCheckoutConfigured: true,

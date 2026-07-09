@@ -6,7 +6,7 @@ import { getSiteOrigin } from "@/lib/seo/site-url";
 export const metadata: Metadata = {
   title: "Trim Proof Pricing",
   description:
-    "Trim Proof pricing: create a free watermarked demo proof, buy a $12 export credit for one clean production PDF/X export, or use Trim Proof Pro for $49/month with 15 advanced exports.",
+    "Trim Proof pricing: create a free watermarked demo proof, buy a $12 export credit for one clean production PDF/X export, or use Trim Proof Pro for $49/month with 15 advanced exports across supported products including menus.",
   alternates: {
     canonical: "/pricing"
   },
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Trim Proof Pricing",
     description:
-      "Compare the free watermarked demo, one-export credit, and Trim Proof Pro plan for checked PDF/X proofs."
+      "Compare the free watermarked demo, one-export credit, and Trim Proof Pro plan for checked PDF/X proofs across supported products including menus."
   }
 };
 
@@ -42,7 +42,7 @@ const plans = [
     name: "Export credit",
     price: "$12",
     cadence: "per export",
-    body: "Buy one advanced PDF/X-1a production export when a specific flyer, poster, brochure, card, postcard, or letterhead job is ready.",
+    body: "Buy one advanced PDF/X-1a production export when a specific flyer, poster, menu, brochure, card, postcard, or letterhead job is ready.",
     cta: "Buy one export credit",
     href: "/signup?intent=single_export&next=/app%3Fmode%3Dadvanced",
     features: ["One production PDF/X-1a export", "CMYK-oriented output path", "Crop marks when requested", "Credit consumed on generated proof"]
@@ -55,12 +55,12 @@ const plans = [
     body: "Use Pro when recurring print work needs checked exports without buying one credit at a time.",
     cta: "Start Pro",
     href: "/signup?intent=pro&next=/app%3Fmode%3Dadvanced",
-    features: ["15 advanced exports per month", "Subscription checkout", "Built for recurring flyer, poster, brochure, card, postcard, and letterhead jobs", "Stripe subscription management"]
+    features: ["15 advanced exports per month", "Subscription checkout", "Built for recurring flyer, poster, menu, brochure, card, postcard, and letterhead jobs", "Stripe subscription management"]
   }
 ];
 
 const facts = [
-  ["Supported products", "Flyers, posters, brochures, business cards, postcards, and letterhead."],
+  ["Supported products", "Flyers, posters, menus, brochures, business cards, postcards, and letterhead."],
   ["Current verified export", "PDF/X-1a-oriented production export with preflight checks."],
   ["Prepress checks", "Bleed, crop marks, trim boxes, embedded vector text, color workflow, image DPI, and PDF/X status."],
   ["Product boundary", "Trim Proof does not guarantee acceptance by every printer and is not a universal PDF repair tool or proof approval suite."]
@@ -179,7 +179,7 @@ export default function PricingPage() {
         <div className="border-y border-border bg-surface p-5">
           <p className="text-xs font-bold uppercase text-brand">Short answer</p>
           <p className="mt-3 text-lg leading-8 text-surface-ink">
-            Trim Proof offers a free watermarked demo account, a $12 one-export credit, and Trim Proof Pro at $49/month with 15 advanced exports. Paid paths unlock clean production-oriented PDF/X-1a exports for supported flyers, posters, brochures, business cards, postcards, and letterhead.
+            Trim Proof offers a free watermarked demo account, a $12 one-export credit, and Trim Proof Pro at $49/month with 15 advanced exports. Paid paths unlock clean production-oriented PDF/X-1a exports for supported flyers, posters, menus, brochures, business cards, postcards, and letterhead.
           </p>
         </div>
       </section>

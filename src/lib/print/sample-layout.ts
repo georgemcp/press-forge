@@ -16,7 +16,7 @@ export const sampleBusinessCardLayout: LayoutSpec = {
     {
       id: "brand",
       role: "brand",
-      content: "PRESS FORGE",
+      content: "TRIM PROOF",
       x: 0.42,
       y: 1.36,
       width: 2.62,
@@ -49,7 +49,7 @@ export const sampleBusinessCardLayout: LayoutSpec = {
     {
       id: "contact",
       role: "contact",
-      content: "pressforge.com  |  PDF/X-1a ready",
+      content: "trimproof.com  |  PDF/X-1a ready",
       x: 0.42,
       y: 0.38,
       width: 2.4,

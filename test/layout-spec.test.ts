@@ -6,6 +6,8 @@ import { sampleBusinessCardLayout } from "@/lib/print/sample-layout";
 describe("LayoutSpec schema", () => {
   it("accepts the deterministic proof sample", () => {
     expect(layoutSpecSchema.parse(sampleBusinessCardLayout).productType).toBe("business_card");
+    expect(sampleBusinessCardLayout.textBlocks.find((block) => block.id === "brand")?.content).toBe("TRIM PROOF");
+    expect(JSON.stringify(sampleBusinessCardLayout)).not.toMatch(/Press Forge/i);
   });
 
   it("rejects raster assets below the print DPI floor", () => {
@@ -98,6 +100,23 @@ describe("LayoutSpec schema", () => {
     });
     expect(spec.textBlocks.find((block) => block.id === "brand")?.content).toBe("BARE GETAWAYS");
     expect(spec.textBlocks.find((block) => block.id === "brand")?.fontSize).toBeGreaterThan(50);
+  });
+
+  it("infers menu geometry from the brief when no product is selected", () => {
+    const spec = deriveLayoutSpecFromBrief({
+      brief: "Sunset Bistro dinner menu with seasonal specials and ordering details"
+    });
+
+    expect(spec.productType).toBe("menu");
+    expect(spec.assetSlots[0]).toMatchObject({
+      x: -0.125,
+      y: -0.125,
+      width: 11.25,
+      height: 8.75
+    });
+    expect(spec.textBlocks.find((block) => block.id === "brand")?.content).toBe("SUNSET BISTRO");
+    expect(spec.textBlocks.find((block) => block.id === "name")?.content).toBe("Dinner Menu");
+    expect(spec.textBlocks.find((block) => block.id === "tagline")?.content).toBe("Fresh flavors, ready for print.");
   });
 
   it("infers tri-fold brochure geometry from the brief when no product is selected", () => {

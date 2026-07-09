@@ -46,6 +46,7 @@ describe("SEO tool pages", () => {
     expect(getToolPage("tri-fold-brochure-template")).toBeDefined();
     expect(getToolPage("postcard-pdf-template")).toBeDefined();
     expect(getToolPage("letterhead-pdf-template")).toBeDefined();
+    expect(getToolPage("menu-pdf-template")).toBeDefined();
   });
 
   it("keeps the business card bleed size guide accurate and bounded", () => {
@@ -454,6 +455,61 @@ describe("SEO tool pages", () => {
     expect(page?.faq.map((item) => item.answer).join(" ")).toContain("Clean production PDF/X-1a downloads are unlocked");
   });
 
+  it("keeps the menu maker page broad enough and bounded", () => {
+    const page = getToolPage("menu-maker");
+
+    expect(page).toBeDefined();
+    expect(page?.title).toContain("Menu Maker");
+    expect(page?.keywords).toContain("menu maker");
+    expect(page?.keywords).toContain("menu creator");
+    expect(page?.keywords).toContain("menu generator");
+    expect(page?.keywords).toContain("free menu maker");
+    expect(page?.answer).toContain("11 x 8.5 inch landscape menu profile");
+    expect(page?.answer).toContain("Free demo art is watermarked");
+    expect(page?.answer).toContain("PDF/X-1a downloads require a paid export credit");
+    expect(page?.sections.map((section) => section.heading).join(" ")).toContain("Free menu maker versus paid clean export");
+    expect(page?.sections.map((section) => section.body).join(" ")).toContain("does not sell printed menus");
+    expect(page?.faq.map((item) => item.question).join(" ")).toContain("What is the best free menu maker?");
+    expect(page?.faq.map((item) => item.question).join(" ")).toContain("Can Trim Proof make menu proofs with bleed?");
+    expect(page?.faq.map((item) => item.answer).join(" ")).toContain("does not sell printed menus");
+  });
+
+  it("keeps the free menu maker page clear about watermarked demo export", () => {
+    const page = getToolPage("free-menu-maker");
+
+    expect(page).toBeDefined();
+    expect(page?.title).toContain("Free Menu Maker");
+    expect(page?.keywords).toContain("free menu maker");
+    expect(page?.keywords).toContain("menu maker free");
+    expect(page?.keywords).toContain("free menu generator");
+    expect(page?.answer).toContain("watermarked menu proof");
+    expect(page?.answer).toContain("clean checked PDF/X-1a export");
+    expect(page?.checks).toContain("Free watermarked demo account path");
+    expect(page?.sections.map((section) => section.heading).join(" ")).toContain("Free watermarked demo versus paid clean export");
+    expect(page?.faq.map((item) => item.question).join(" ")).toContain("Where can I create a menu for free?");
+    expect(page?.faq.map((item) => item.answer).join(" ")).toContain("Clean production PDF/X-1a downloads are unlocked");
+  });
+
+  it("keeps the menu template page broad enough and bounded", () => {
+    const page = getToolPage("menu-pdf-template");
+
+    expect(page).toBeDefined();
+    expect(page?.title).toContain("Menu Template");
+    expect(page?.keywords).toContain("menu template");
+    expect(page?.keywords).toContain("menu templates");
+    expect(page?.keywords).toContain("free menu template");
+    expect(page?.keywords).toContain("menu PDF template");
+    expect(page?.answer).toContain("11 x 8.5 inch landscape menu profile");
+    expect(page?.answer).toContain("free demo art is watermarked");
+    expect(page?.answer).toContain("printer specifications still control final acceptance");
+    expect(page?.checks).toContain("11 x 8.5 inch landscape menu profile");
+    expect(page?.sections.map((section) => section.heading).join(" ")).toContain("Free template versus print-ready proof");
+    expect(page?.sections.map((section) => section.body).join(" ")).toContain("11.25 x 8.75 inch");
+    expect(page?.sections.map((section) => section.body).join(" ")).toContain("not a universal template marketplace");
+    expect(page?.faq.map((item) => item.question).join(" ")).toContain("Where can I get free menu templates?");
+    expect(page?.faq.map((item) => item.answer).join(" ")).toContain("does not distribute one static template file");
+  });
+
   it("keeps the postcard template page broad enough and bounded", () => {
     const page = getToolPage("postcard-pdf-template");
 
@@ -545,6 +601,19 @@ describe("SEO tool pages", () => {
     expect(page?.answer).toContain("repair arbitrary files");
   });
 
+  it("keeps the print-ready PDF generator broad enough and bounded", () => {
+    const page = getToolPage("print-ready-pdf-generator");
+
+    expect(page).toBeDefined();
+    expect(page?.title).toContain("Print-Ready PDF Generator");
+    expect(page?.keywords).toContain("print ready PDF");
+    expect(page?.keywords).toContain("print ready PDF generator");
+    expect(page?.answer).toContain("checked PDF/X proof");
+    expect(page?.answer).toContain("Adobe help pages");
+    expect(page?.sections.map((section) => section.heading).join(" ")).toContain("What the live SERP is competing with");
+    expect(page?.faq.map((item) => item.question).join(" ")).toContain("How is Trim Proof different from Adobe Acrobat Preflight or PrintFriendly?");
+  });
+
   it("keeps the prepress checklist guide in the registry", () => {
     const page = getToolPage("prepress-checklist");
 
@@ -552,6 +621,45 @@ describe("SEO tool pages", () => {
     expect(page?.pageType).toBe("guide");
     expect(page?.keywords).toContain("print file requirements");
     expect(page?.answer).toContain("printer-specific requirements");
+  });
+
+  it("keeps the PDF preflight checker accurate and bounded", () => {
+    const page = getToolPage("pdf-preflight-checker");
+
+    expect(page).toBeDefined();
+    expect(page?.title).toContain("PDF Preflight Checker");
+    expect(page?.keywords).toContain("PDF preflight");
+    expect(page?.keywords).toContain("PDF preflight checker online");
+    expect(page?.answer).toContain("Adobe Acrobat help pages");
+    expect(page?.answer).toContain("production proof");
+    expect(page?.sections.map((section) => section.heading).join(" ")).toContain("What the live SERP rewards");
+    expect(page?.faq.map((item) => item.question).join(" ")).toContain("How is Trim Proof different from Adobe Acrobat Preflight?");
+  });
+
+  it("keeps the PDF to CMYK converter accurate and bounded", () => {
+    const page = getToolPage("pdf-to-cmyk-converter");
+
+    expect(page).toBeDefined();
+    expect(page?.title).toContain("PDF to CMYK Converter");
+    expect(page?.keywords).toContain("convert PDF to CMYK");
+    expect(page?.keywords).toContain("CMYK PDF converter");
+    expect(page?.answer).toContain("pdf2cmyk.com");
+    expect(page?.answer).toContain("Ghostscript");
+    expect(page?.sections.map((section) => section.heading).join(" ")).toContain("What the live SERP already teaches");
+    expect(page?.faq.map((item) => item.question).join(" ")).toContain("How is Trim Proof different from pdf2cmyk.com or forum advice?");
+  });
+
+  it("keeps the add bleed page accurate and bounded", () => {
+    const page = getToolPage("add-bleed-to-pdf-online");
+
+    expect(page).toBeDefined();
+    expect(page?.title).toContain("Add Bleed to PDF Online");
+    expect(page?.keywords).toContain("add bleed to PDF online");
+    expect(page?.keywords).toContain("PDF bleed generator");
+    expect(page?.answer).toContain("0.125 inches");
+    expect(page?.answer).toContain("PressPDF");
+    expect(page?.sections.map((section) => section.heading).join(" ")).toContain("What the live SERP is competing with");
+    expect(page?.faq.map((item) => item.question).join(" ")).toContain("How is Trim Proof different from PressPDF or forum instructions?");
   });
 
   it("keeps the Canva print quality guide accurate and bounded", () => {
@@ -680,6 +788,15 @@ describe("SEO tool pages", () => {
     expect(marketingSiteSource).toContain("/tools/free-letterhead-maker");
   });
 
+  it("links the menu pages from the homepage keyword map", () => {
+    expect(marketingSiteSource).toContain("Menu maker");
+    expect(marketingSiteSource).toContain("Free menu maker");
+    expect(marketingSiteSource).toContain("Menu template");
+    expect(marketingSiteSource).toContain("/tools/menu-maker");
+    expect(marketingSiteSource).toContain("/tools/free-menu-maker");
+    expect(marketingSiteSource).toContain("/tools/menu-pdf-template");
+  });
+
   it("links the print-ready artwork guide from the homepage keyword map", () => {
     expect(marketingSiteSource).toContain("Print-ready artwork");
     expect(marketingSiteSource).toContain("/tools/print-ready-artwork");
@@ -711,6 +828,10 @@ describe("SEO tool pages", () => {
     expect(toolsIndexSource).toContain("free-brochure-maker");
     expect(toolsIndexSource).toContain("tri-fold-brochure-template");
     expect(toolsIndexSource).toContain("brochure-size-guide");
+    expect(toolsIndexSource).toContain("Supported menu pages");
+    expect(toolsIndexSource).toContain("menu-maker");
+    expect(toolsIndexSource).toContain("free-menu-maker");
+    expect(toolsIndexSource).toContain("menu-pdf-template");
     expect(toolsIndexSource).toContain("postcard-maker");
     expect(toolsIndexSource).toContain("free-postcard-maker");
     expect(toolsIndexSource).toContain("letterhead-maker");

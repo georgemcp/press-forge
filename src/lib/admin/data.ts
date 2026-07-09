@@ -5,7 +5,10 @@ import { getStripeClient } from "@/lib/billing/stripe";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { resolveEmailConfig } from "@/lib/email/transactional";
 import { deliveryManifestFileName, type ProofDeliveryManifest } from "@/lib/print/delivery-manifest";
+import type { DataForSeoSerpFile } from "@/lib/seo/dataforseo-serp";
 import { getCreativeProviderStatus } from "@/lib/providers/model-config";
+import type { DataForSeoResearchFile } from "@/lib/seo/dataforseo-research";
+import { buildPilotPipelineLeads, type PilotPipelineLead, type PilotProspectRow } from "@/lib/admin/pilot-pipeline";
 import type { Tables } from "@/types/supabase";
 import {
   buildAdminAccountSummaries,
@@ -27,6 +30,8 @@ type ProjectRow = Tables<"projects">;
 type ExportRow = Tables<"exports">;
 type AssetRow = Tables<"assets">;
 type AdminAuditEventRow = Tables<"admin_audit_events">;
+type PilotOutreachEventRow = Tables<"pilot_outreach_events">;
+type PilotEvidenceRecordRow = Tables<"pilot_evidence_records">;
 
 export type AdminRange = "7d" | "30d" | "90d" | "all";
 
@@ -44,6 +49,10 @@ export interface AdminCenterData {
   orders: ExportOrderRow[];
   subscriptions: ExportOrderRow[];
   signups: EmailSignupRow[];
+  pilotProspects: PilotProspectRow[];
+  pilotOutreachEvents: PilotOutreachEventRow[];
+  pilotEvidenceRecords: PilotEvidenceRecordRow[];
+  pilotLeads: PilotPipelineLead[];
   users: UserRow[];
   accountManagement: AccountManagementRow[];
   auditEvents: AdminAuditEventRow[];
@@ -53,6 +62,8 @@ export interface AdminCenterData {
   exports: ExportRow[];
   assets: AssetRow[];
   sourceErrors: string[];
+  seoResearch?: DataForSeoResearchFile;
+  seoSerpResearch?: DataForSeoSerpFile;
   readiness: {
     supabaseConfigured: boolean;
     stripeConfigured: boolean;
@@ -177,6 +188,8 @@ export function parseAdminRange(value: string | string[] | undefined): AdminRang
 export async function getAdminCenterData(range: AdminRange): Promise<AdminCenterData> {
   const economics = getAdminEconomicsConfig();
   const sourceErrors: string[] = [];
+  const seoResearch = await readJsonFile<DataForSeoResearchFile>(path.join(process.cwd(), "src/data/seo/dataforseo-live-research.json"));
+  const seoSerpResearch = await readJsonFile<DataForSeoSerpFile>(path.join(process.cwd(), "docs/seo/dataforseo-serp-refresh-2026-06-12.json"));
   const supabase = createServiceSupabaseClient();
   const generatedProofs = await readGeneratedProofInventory();
   const emailConfig = resolveEmailConfig();
@@ -198,6 +211,10 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
       orders: [],
       subscriptions: [],
       signups: [],
+      pilotProspects: [],
+      pilotOutreachEvents: [],
+      pilotEvidenceRecords: [],
+      pilotLeads: [],
       users: [],
       accountManagement: [],
       auditEvents: [],
@@ -207,6 +224,8 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
       exports: [],
       assets: [],
       sourceErrors: ["Supabase service client is not configured."],
+      seoResearch,
+      seoSerpResearch,
       readiness: {
         supabaseConfigured: false,
         stripeConfigured: Boolean(getStripeClient()),
@@ -221,7 +240,7 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
     };
   }
 
-  const [orders, signups, users, credits, projects, exports, assets, accountManagement, auditEvents] = await Promise.all([
+  const [orders, signups, users, credits, projects, exports, assets, accountManagement, pilotProspects, pilotOutreachEvents, pilotEvidenceRecords, auditEvents] = await Promise.all([
     fetchTable<ExportOrderRow>(supabase.from("export_orders").select("*").order("created_at", { ascending: false }).limit(5000), "export_orders", sourceErrors),
     fetchTable<EmailSignupRow>(supabase.from("email_signups").select("*").order("created_at", { ascending: false }).limit(5000), "email_signups", sourceErrors),
     fetchTable<UserRow>(supabase.from("users").select("*").order("created_at", { ascending: false }).limit(5000), "users", sourceErrors),
@@ -230,6 +249,9 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
     fetchTable<ExportRow>(supabase.from("exports").select("*").order("created_at", { ascending: false }).limit(5000), "exports", sourceErrors),
     fetchTable<AssetRow>(supabase.from("assets").select("*").order("created_at", { ascending: false }).limit(5000), "assets", sourceErrors),
     fetchTable<AccountManagementRow>(supabase.from("account_management").select("*").order("updated_at", { ascending: false }).limit(5000), "account_management", sourceErrors),
+    fetchTable<PilotProspectRow>(supabase.from("pilot_prospects").select("*").order("updated_at", { ascending: false }).limit(5000), "pilot_prospects", sourceErrors),
+    fetchTable<PilotOutreachEventRow>(supabase.from("pilot_outreach_events").select("*").order("event_at", { ascending: false }).limit(5000), "pilot_outreach_events", sourceErrors),
+    fetchTable<PilotEvidenceRecordRow>(supabase.from("pilot_evidence_records").select("*").order("evidence_at", { ascending: false }).limit(5000), "pilot_evidence_records", sourceErrors),
     fetchTable<AdminAuditEventRow>(supabase.from("admin_audit_events").select("*").order("created_at", { ascending: false }).limit(1000), "admin_audit_events", sourceErrors)
   ]);
 
@@ -250,6 +272,10 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
     orders,
     subscriptions: orders.filter((order) => order.entitlement === "subscription"),
     signups,
+    pilotProspects,
+    pilotOutreachEvents,
+    pilotEvidenceRecords,
+    pilotLeads: buildPilotPipelineLeads({ orders, signups, users, management: accountManagement, prospects: pilotProspects }),
     users,
     accountManagement,
     auditEvents,
@@ -259,6 +285,8 @@ export async function getAdminCenterData(range: AdminRange): Promise<AdminCenter
     exports,
     assets,
     sourceErrors,
+    seoResearch,
+    seoSerpResearch,
     readiness: {
       supabaseConfigured: true,
       stripeConfigured: Boolean(getStripeClient()),

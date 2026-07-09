@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { getSiteOrigin } from "@/lib/seo/site-url";
 
 let stripeClient: Stripe | undefined;
 
@@ -18,5 +19,5 @@ export function getExportPriceId() {
 }
 
 export function getAppUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  return getSiteOrigin();
 }

@@ -165,8 +165,8 @@ Brochure and tri-fold brochure terms were refreshed on 2026-06-07. See `docs/seo
 - Add a bounded proofing software guide because `proofing software` and `online proofing software` have strong CPC signals, but keep copy clear that Trim Proof is not a client approval suite.
 - Add a prepress automation software page because `prepress software` and `prepress automation software` are lower-competition SaaS-adjacent searches that match the deterministic PDF workflow.
 - Add a prepress checklist guide because `prepress checklist`, `how to prepare files for printing`, and `print file requirements` are low-volume but answer-friendly queries that match Trim Proof's preflight proof workflow.
-- Add flyer, postcard, and letterhead PDF template pages because all three are supported starter products and have measurable template demand.
-- Defer `menu pdf template` despite 110 monthly searches because menus are not a currently stated supported starter product.
+- Add flyer, postcard, letterhead, and menu PDF template pages because all four formats are supported starter products and have measurable template demand.
+- `menu pdf template` is now supported through a dedicated menu template page, so the menu template cluster should be linked into the public tool hub alongside the other supported products.
 - Add a dedicated Canva print-ready PDF guide because the refined Canva cluster combines `canva print quality`, `canva cmyk`, `canva bleed`, and `canva print ready pdf` intent.
 - Add a dedicated Canva print quality and CMYK guide because `canva print quality` is the highest exact Canva query in the refresh at 260 monthly searches and pairs with `canva cmyk` at 110.
 - Keep Canva pages honest: Trim Proof can create a fresh checked proof for supported products, but should not claim arbitrary Canva PDF repair or universal conversion.

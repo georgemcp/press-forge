@@ -15,6 +15,8 @@ export const metadata: Metadata = {
 interface AdminPageProps {
   searchParams: Promise<{
     range?: string;
+    saved?: string;
+    adminError?: string;
   }>;
 }
 
@@ -26,5 +28,5 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = await searchParams;
   const range = parseAdminRange(params.range);
   const data = await getAdminCenterData(range);
-  return <AdminCenter data={data} range={range} />;
+  return <AdminCenter data={data} error={params.adminError} range={range} saved={params.saved} />;
 }

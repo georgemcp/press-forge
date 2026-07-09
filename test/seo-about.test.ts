@@ -14,7 +14,7 @@ describe("SEO about page", () => {
   });
 
   it("keeps supported products, pricing, and proof paths visible", () => {
-    expect(aboutPageSource).toContain("Business cards, flyers, posters, brochures, postcards, and letterhead.");
+    expect(aboutPageSource).toContain("Business cards, flyers, menus, posters, brochures, postcards, and letterhead.");
     expect(aboutPageSource).toContain("$12 one-export credit");
     expect(aboutPageSource).toContain("$49/month Trim Proof Pro");
     expect(aboutPageSource).toContain("/signup?intent=demo&next=/app");

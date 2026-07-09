@@ -56,6 +56,17 @@ function buildEnhancementPrompt(options: BriefEnhanceOptions): string {
     parts.push(`PREVIOUS FEEDBACK TO INCORPORATE: ${options.previousFeedback}`);
   }
 
+  if (options.productType === "menu") {
+    parts.push(
+      "",
+      "MENU-SPECIFIC GUIDANCE:",
+      "- Treat the job as a single-sheet print-ready menu proof, not a folded brochure unless the brief explicitly says so.",
+      "- Use menu-friendly hierarchy: restaurant or brand name, menu title or cuisine line, and a concise body that can become category or item copy.",
+      "- Prefer a clean, text-forward print layout that feels like a restaurant menu, cafe menu, bar menu, or takeout menu depending on the brief.",
+      "- Keep the contact info useful for ordering, reservation, or website use."
+    );
+  }
+
   parts.push(
     "",
     "Return a JSON object with these fields:",
@@ -67,7 +78,7 @@ function buildEnhancementPrompt(options: BriefEnhanceOptions): string {
     "- suggestedContent: { headline, subhead, body, contactInfo } — write actual compelling copy (not placeholders).",
     "- designNotes: Array of 3-5 specific design recommendations (e.g., 'Use asymmetric layout with heavy left margin', 'Large bold typography for the headline').",
     "- assetSuggestions: Array of { kind, description, placement } for visual assets to generate or include. 'kind' is one of: background, photo, illustration, logo, icon.",
-    "- productTypeHint: One of 'business_card', 'postcard', 'flyer', 'poster', 'brochure', 'letterhead' based on what fits the brief best.",
+    "- productTypeHint: One of 'business_card', 'postcard', 'flyer', 'poster', 'brochure', 'letterhead', 'menu' based on what fits the brief best.",
     "",
     "Make creative, specific choices. Do not use generic filler. Every suggestion should be actionable for print production.",
     "Return ONLY valid JSON. No markdown, no explanation."

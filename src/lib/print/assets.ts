@@ -169,7 +169,7 @@ function createDemoWatermarkSvg(widthPx: number, heightPx: number) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthPx}" height="${heightPx}" viewBox="0 0 ${widthPx} ${heightPx}">
   <defs>
     <pattern id="demo-watermark" width="${repeat}" height="${repeat}" patternUnits="userSpaceOnUse" patternTransform="rotate(-32)">
-      <text x="${Math.round(repeat * 0.08)}" y="${Math.round(repeat * 0.46)}" fill="rgb(255 255 255)" fill-opacity="0.74" stroke="rgb(25 25 25)" stroke-opacity="0.32" stroke-width="1.2" font-family="sans-serif" font-size="${fontSize}" font-weight="800">PRESS FORGE DEMO</text>
+      <text x="${Math.round(repeat * 0.08)}" y="${Math.round(repeat * 0.46)}" fill="rgb(255 255 255)" fill-opacity="0.74" stroke="rgb(25 25 25)" stroke-opacity="0.32" stroke-width="1.2" font-family="sans-serif" font-size="${fontSize}" font-weight="800">TRIM PROOF DEMO</text>
       <text x="${Math.round(repeat * 0.08)}" y="${Math.round(repeat * 0.62)}" fill="rgb(25 25 25)" fill-opacity="0.54" font-family="sans-serif" font-size="${Math.max(16, Math.round(fontSize * 0.38))}" font-weight="700">PAID EXPORT REMOVES WATERMARK</text>
     </pattern>
   </defs>

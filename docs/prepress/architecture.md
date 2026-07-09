@@ -11,7 +11,7 @@ Trim Proof is built around one invariant: image models create creative assets, w
 5. Preflight checks dimensions, boxes, font embedding, PDF/X subtype, and raster DPI.
 6. Stripe billing grants export credits or subscription access; exports are delivered only after the preflight gate.
 
-Supported starter products are business cards, flyers, posters, brochures, postcards, and letterhead.
+Supported starter products are business cards, flyers, menus, posters, brochures, postcards, and letterhead.
 
 ## Local Proof
 
@@ -27,6 +27,8 @@ Outputs are written to `artifacts/proof` and include:
 - `trimproof-<product>.pdfx.pdf` when Ghostscript succeeds
 - `trimproof-<product>.master.svg`
 - `preflight-report.json`
+- `preflight-report.html`
+- `preflight-report.txt`
 
 ## Billing
 

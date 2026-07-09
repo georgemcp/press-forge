@@ -16,9 +16,13 @@ export type PressForgeEvent =
   | "email_signup_submitted"
   | "brief_enhance_started"
   | "brief_enhance_completed"
+  | "sample_brief_selected"
   | "design_generation_started"
   | "design_generation_completed"
-  | "reference_image_uploaded";
+  | "pilot_application_submitted"
+  | "reference_image_uploaded"
+  | "source_file_uploaded"
+  | "source_file_applied";
 
 /** @deprecated Use PressForgeEvent instead */
 export type TrimProofEvent = PressForgeEvent;

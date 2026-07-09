@@ -13,7 +13,7 @@ export async function GET() {
 
   return NextResponse.json({
     ok: true,
-    service: "pressforge",
+    service: "trimproof",
     checks: {
       next: "ready",
       prepress: "available",

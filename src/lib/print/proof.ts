@@ -1,13 +1,13 @@
-import fs from "node:fs/promises";
 import path from "node:path";
 import { layoutSpecSchema, type LayoutSpec } from "./layout-spec";
 import { resolveLayoutAssets, type ResolvedAsset } from "./assets";
 import { exportLayoutPdf } from "./pdf-export";
 import { runPreflight, type PreflightReport } from "./preflight";
+import { writePreflightReportFiles } from "./preflight-report";
 import { sampleBusinessCardLayout } from "./sample-layout";
 
 function getProofFileBaseName(productType: LayoutSpec["productType"]) {
-  return `pressforge-${productType.replaceAll("_", "-")}`;
+  return `trimproof-${productType.replaceAll("_", "-")}`;
 }
 
 export interface ProofResult {
@@ -15,6 +15,8 @@ export interface ProofResult {
   sourcePdfPath: string;
   svgMasterPath: string;
   reportPath: string;
+  reportHtmlPath: string;
+  reportTextPath: string;
   report: PreflightReport;
   assets: ResolvedAsset[];
 }
@@ -38,14 +40,15 @@ export async function generateProof(
     assets
   });
   const report = await runPreflight(exportResult.sourcePdfPath, spec, outputDir, assets);
-  const reportPath = path.join(outputDir, "preflight-report.json");
-  await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
+  const reportFiles = await writePreflightReportFiles(outputDir, report);
 
   return {
     outputDir,
     sourcePdfPath: exportResult.sourcePdfPath,
     svgMasterPath: exportResult.svgMasterPath,
-    reportPath,
+    reportPath: reportFiles.jsonPath,
+    reportHtmlPath: reportFiles.htmlPath,
+    reportTextPath: reportFiles.textPath,
     report,
     assets
   };

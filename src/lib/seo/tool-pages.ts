@@ -26,19 +26,24 @@ export const toolPages: ToolPage[] = [
     title: "Print-Ready PDF Generator",
     metaDescription:
       "Create print-ready PDF/X files online with bleed, crop marks, CMYK output, embedded vector fonts, and preflight checks.",
-    h1: "Print-ready PDF generator for flyers, posters, brochures, business cards, postcards, and letterhead",
+    h1: "Print-ready PDF generator for flyers, posters, menus, brochures, business cards, postcards, and letterhead",
     answer:
-      "A print-ready PDF generator should create the correct trim size, bleed, crop marks, embedded fonts, CMYK output, and preflight report. Trim Proof turns a print brief into a checked PDF/X proof by separating AI-assisted creative assets from the deterministic prepress step that makes the final file printable.",
+      "A print-ready PDF generator should create the correct trim size, bleed, crop marks, embedded fonts, CMYK output, and preflight report. Trim Proof turns a print brief into a checked PDF/X proof by separating AI-assisted creative assets from the deterministic prepress step that makes the final file printable. The live SERP around this query is crowded with Adobe help pages, PrintFriendly, LCI Paper, FreePDFConvert, and Reddit-style how-to answers, so Trim Proof has to lead with deterministic print geometry instead of generic PDF editing.",
     keywords: ["print ready PDF", "print ready PDF generator", "make PDF print ready", "convert PDF to print ready", "print ready PDF online"],
     intent: "Use this page when you need to turn a plain-English print brief into a PDF that a printer can inspect without guessing the trim size, bleed, fonts, color workflow, or raster resolution.",
     checks: ["TrimBox and BleedBox dimensions", "PDF/X subtype", "Embedded vector fonts", "Placed raster DPI", "Crop marks when enabled"],
     steps: ["Create a free account", "Describe the product and brand", "Generate a dummy proof", "Review the visible bleed, trim, and safe guides", "Open advanced mode for a paid production export"],
-    relatedSlugs: ["print-ready-artwork", "canva-print-ready-pdf", "pdf-preflight-checker"],
+    relatedSlugs: ["print-ready-artwork", "canva-print-ready-pdf", "pdf-to-cmyk-converter", "add-bleed-to-pdf-online", "pdf-preflight-checker"],
     sections: [
       {
         heading: "What makes a PDF print-ready?",
         body:
           "A PDF is print-ready when the printer can impose and produce it without guessing. The file should have correct trim and bleed boxes, embedded fonts, printer-safe color handling, high-resolution raster assets, and visible crop marks when requested."
+      },
+      {
+        heading: "What the live SERP is competing with",
+        body:
+          "Adobe help pages, PrintFriendly, LCI Paper, FreePDFConvert, and forum answers all cover pieces of the problem. Trim Proof needs to answer the same question while keeping the proof path deterministic, the print geometry explicit, and the preflight gate visible before export."
       },
       {
         heading: "Why Trim Proof separates AI from prepress",
@@ -54,6 +59,11 @@ export const toolPages: ToolPage[] = [
       {
         question: "Can I try it without paying?",
         answer: "Yes. Create a free account first; dummy proof mode then creates a sample proof and preflight report before you configure a paid export."
+      },
+      {
+        question: "How is Trim Proof different from Adobe Acrobat Preflight or PrintFriendly?",
+        answer:
+          "Adobe Acrobat Preflight, PrintFriendly, and similar tools are useful for inspection or simple cleanup. Trim Proof is built for the production handoff: it keeps the print geometry explicit, separates creative assets from the final PDF layer, and shows the checked proof before export."
       }
     ]
   },
@@ -117,7 +127,7 @@ export const toolPages: ToolPage[] = [
       {
         heading: "How Trim Proof helps",
         body:
-          "Trim Proof creates new checked proofs for supported starter products such as flyers, posters, brochures, business cards, postcards, and letterhead. It keeps final text in the deterministic PDF layer, applies explicit print geometry, and checks the output before production export instead of promising to fix every existing artwork file."
+          "Trim Proof creates new checked proofs for supported starter products such as flyers, posters, menus, brochures, business cards, postcards, and letterhead. It keeps final text in the deterministic PDF layer, applies explicit print geometry, and checks the output before production export instead of promising to fix every existing artwork file."
       }
     ],
     faq: [
@@ -219,7 +229,7 @@ export const toolPages: ToolPage[] = [
       {
         heading: "Where Trim Proof fits in the checklist",
         body:
-          "Trim Proof is built for supported starter products such as flyers, posters, brochures, business cards, postcards, and letterhead. It creates the proof from a structured brief, keeps text in a deterministic composition layer, and checks the PDF before a production download."
+          "Trim Proof is built for supported starter products such as flyers, posters, menus, brochures, business cards, postcards, and letterhead. It creates the proof from a structured brief, keeps text in a deterministic composition layer, and checks the PDF before a production download."
       },
       {
         heading: "What still depends on the printer",
@@ -254,7 +264,7 @@ export const toolPages: ToolPage[] = [
     answer:
       "Prepress automation software should make repeatable print checks visible before a file goes to production. Trim Proof automates the generated-proof path for starter print products by building explicit trim, bleed, crop marks, vector text, CMYK-oriented output, PDF/X export, image DPI checks, and a preflight report.",
     keywords: ["prepress software", "prepress automation software", "online prepress software", "prepress file checker", "PDF preflight"],
-    intent: "Use this page when a team needs repeatable prepress checks for generated flyers, posters, brochures, business cards, postcards, and letterhead instead of manually rebuilding the same PDF setup for each job.",
+    intent: "Use this page when a team needs repeatable prepress checks for generated flyers, posters, menus, brochures, business cards, postcards, and letterhead instead of manually rebuilding the same PDF setup for each job.",
     checks: ["Product-level trim and bleed profiles", "Crop mark setting", "CMYK-oriented output profile", "PDF/X-1a export path", "Embedded vector fonts", "Raster DPI gate", "Preflight report"],
     steps: ["Choose the print product profile", "Write the job brief and required copy", "Generate the proof through the structured layout path", "Run the PDF/X and preflight checks", "Use paid export only when the production file is ready"],
     relatedSlugs: ["prepress-checklist", "online-pdf-prepress-tools", "pdf-preflight-checker"],
@@ -325,17 +335,22 @@ export const toolPages: ToolPage[] = [
       "Convert PDF color workflows toward CMYK with output-intent profiles and preflight checks for print production.",
     h1: "PDF to CMYK conversion for print-ready exports",
     answer:
-      "PDF to CMYK conversion should use an ICC-aware print workflow, not a visual-only color filter. Trim Proof targets CMYK output through Ghostscript and validates the final file before download.",
+      "PDF to CMYK conversion should use an ICC-aware print workflow, not a visual-only color filter. Trim Proof targets CMYK output through Ghostscript and validates the final file before download. The live SERP is already occupied by pdf2cmyk.com, Adobe community threads, Reddit, and printer help pages, so this page should position the conversion as one controlled step inside a broader print-proof workflow.",
     keywords: ["pdf to cmyk", "convert PDF to CMYK", "CMYK PDF converter", "convert RGB PDF to CMYK online"],
     intent: "Use this page when an RGB or screen-first PDF needs a print-oriented color workflow before it goes to a commercial printer.",
     checks: ["Explicit print profile", "PDF/X output intent", "CMYK-oriented export path", "Preflight report after conversion", "No hidden rasterized text requirement"],
     steps: ["Choose the print profile expected by the printer", "Keep text as vector fonts", "Generate or upload the structured proof", "Convert through the deterministic prepress layer", "Inspect the preflight report before sending"],
-    relatedSlugs: ["canva-cmyk-print-quality", "canva-print-ready-pdf", "pdf-preflight-checker"],
+    relatedSlugs: ["canva-cmyk-print-quality", "canva-print-ready-pdf", "pdf-preflight-checker", "print-ready-pdf-generator", "add-bleed-to-pdf-online"],
     sections: [
       {
         heading: "Why RGB PDFs cause print surprises",
         body:
           "RGB colors are designed for screens. Print workflows need predictable separations and output intent, so colors should be converted with a known CMYK profile such as SWOP, GRACoL, or FOGRA."
+      },
+      {
+        heading: "What the live SERP already teaches",
+        body:
+          "Niche converters and forum answers can tell users how to get a PDF into CMYK, but they do not always preserve the print handoff context. Trim Proof should keep the profile explicit and pair conversion with preflight so the final file is still a checked proof."
       },
       {
         heading: "How Trim Proof handles color",
@@ -347,6 +362,11 @@ export const toolPages: ToolPage[] = [
       {
         question: "Is CMYK conversion the same for every printer?",
         answer: "No. The best profile depends on the printer, stock, region, and press workflow. Trim Proof keeps the profile explicit."
+      },
+      {
+        question: "How is Trim Proof different from pdf2cmyk.com or forum advice?",
+        answer:
+          "pdf2cmyk.com and forum advice can help solve the color conversion step. Trim Proof keeps that step inside a broader proof workflow with trim, bleed, fonts, and preflight still visible before download."
       }
     ]
   },
@@ -357,17 +377,22 @@ export const toolPages: ToolPage[] = [
       "Add bleed, trim, safe-area guides, and crop marks to print files before export.",
     h1: "Add bleed to a PDF before it goes to print",
     answer:
-      "Bleed is artwork that extends beyond the trim edge so small cutting shifts do not leave white slivers. Trim Proof uses product-specific bleed geometry, usually 0.125 inches on each side by default.",
+      "Bleed is artwork that extends beyond the trim edge so small cutting shifts do not leave white slivers. Trim Proof uses product-specific bleed geometry, usually 0.125 inches on each side by default. The live SERP is crowded with PressPDF, StationeryHQ, Adobe community threads, university print guides, and Reddit answers, so the page has to explain the trim/bleed relationship clearly and then route users into the deterministic proof path.",
     keywords: ["add bleed to PDF online", "PDF bleed generator", "crop marks and bleed PDF"],
     intent: "Use this page when the artwork reaches the cut edge and the printer needs extra image area outside the final trim size.",
     checks: ["0.125 inch default bleed for starter products", "Separate TrimBox and BleedBox", "Safe-area guide", "Crop marks", "Artwork placed through the bleed edge"],
     steps: ["Confirm the final trim size", "Extend background artwork into bleed", "Keep important text inside the safe area", "Generate crop marks if requested", "Run preflight before downloading the PDF"],
-    relatedSlugs: ["canva-print-ready-pdf", "canva-cmyk-print-quality", "canva-bleed-and-crop-marks"],
+    relatedSlugs: ["print-ready-pdf-generator", "canva-print-ready-pdf", "canva-cmyk-print-quality", "canva-bleed-and-crop-marks", "pdf-preflight-checker"],
     sections: [
       {
         heading: "How much bleed should a file have?",
         body:
           "Many US print workflows expect 0.125 inches of bleed on every edge, but printer specs can vary. Trim Proof keeps bleed as an explicit product setting instead of a visual guess."
+      },
+      {
+        heading: "What the live SERP is competing with",
+        body:
+          "PressPDF, StationeryHQ, Adobe community answers, university print guides, and Reddit threads all explain bleed in pieces. Trim Proof should keep the math and the proof path together so users can see the checked file before export."
       },
       {
         heading: "Bleed is not just a bigger canvas",
@@ -383,6 +408,11 @@ export const toolPages: ToolPage[] = [
       {
         question: "What if a Canva PDF is missing bleed or crop marks?",
         answer: "First check the printer's requested bleed and mark settings. If the current export cannot satisfy the spec, Trim Proof can create a fresh print-ready proof from a structured brief with explicit bleed, trim, safe-area, and crop-mark settings."
+      },
+      {
+        question: "How is Trim Proof different from PressPDF or forum instructions?",
+        answer:
+          "PressPDF and forum instructions can show how bleed works. Trim Proof uses that same requirement in a generated proof workflow so the trim, bleed, crop marks, and preflight checks are all visible before export."
       }
     ]
   },
@@ -399,7 +429,7 @@ export const toolPages: ToolPage[] = [
     intent: "Use this page when a Canva design looks right on screen but the print handoff is missing bleed, crop marks, CMYK-oriented output, or proof evidence.",
     checks: ["Printer-requested bleed amount", "PDF Print export settings", "Crop marks setting", "Color profile setting", "High-resolution artwork", "Safe-area text placement"],
     steps: ["Read the printer's file specifications", "Check whether Canva exported bleed and crop marks", "Confirm important text sits inside the safe area", "Confirm color and resolution settings are acceptable", "Create a fresh Trim Proof proof when the file needs deterministic print geometry"],
-    relatedSlugs: ["canva-print-ready-pdf", "canva-cmyk-print-quality", "add-bleed-to-pdf-online"],
+    relatedSlugs: ["canva-print-ready-pdf", "canva-cmyk-print-quality", "add-bleed-to-pdf-online", "add-crop-marks-to-pdf"],
     sections: [
       {
         heading: "Why Canva files get questioned by printers",
@@ -436,7 +466,7 @@ export const toolPages: ToolPage[] = [
     intent: "Use this page when a Canva design looks finished, but the printer or client is asking whether the PDF is truly ready for commercial printing.",
     checks: ["PDF Print versus standard PDF export", "Printer-requested bleed", "Crop marks when requested", "CMYK or printer-accepted color workflow", "Image quality and placed DPI", "Safe-area text placement", "PDF/X requirement"],
     steps: ["Read the printer's file specifications", "Check whether Canva PDF Print matches those settings", "Confirm bleed, crop marks, safe area, color, and image quality", "Check whether the printer requested PDF/X-1a or another PDF/X level", "Create a fresh Trim Proof proof when the file needs deterministic print geometry and preflight evidence"],
-    relatedSlugs: ["canva-cmyk-print-quality", "canva-bleed-and-crop-marks", "pdf-to-cmyk-converter"],
+    relatedSlugs: ["canva-cmyk-print-quality", "canva-bleed-and-crop-marks", "pdf-to-cmyk-converter", "add-bleed-to-pdf-online", "add-crop-marks-to-pdf"],
     sections: [
       {
         heading: "What to check in a Canva print PDF",
@@ -451,7 +481,7 @@ export const toolPages: ToolPage[] = [
       {
         heading: "When to rebuild the proof",
         body:
-          "If the existing Canva export cannot satisfy the printer's file requirements, rebuild the proof from a structured brief. Trim Proof is designed for supported starter products such as flyers, posters, brochures, business cards, postcards, and letterhead."
+          "If the existing Canva export cannot satisfy the printer's file requirements, rebuild the proof from a structured brief. Trim Proof is designed for supported starter products such as flyers, posters, menus, brochures, business cards, postcards, and letterhead."
       }
     ],
     faq: [
@@ -477,7 +507,7 @@ export const toolPages: ToolPage[] = [
     h1: "Canva print quality and CMYK: what to check before printing",
     pageType: "guide",
     answer:
-      "Canva print quality problems usually come from export settings, image resolution, bleed, crop marks, safe-area placement, color workflow, or a printer asking for CMYK or PDF/X. Trim Proof does not repair every Canva PDF, but it can create a fresh checked PDF/X-1a proof for supported flyers, posters, brochures, business cards, postcards, and letterhead when the current file cannot prove those print requirements.",
+      "Canva print quality problems usually come from export settings, image resolution, bleed, crop marks, safe-area placement, color workflow, or a printer asking for CMYK or PDF/X. Trim Proof does not repair every Canva PDF, but it can create a fresh checked PDF/X-1a proof for supported flyers, posters, menus, brochures, business cards, postcards, and letterhead when the current file cannot prove those print requirements.",
     keywords: ["Canva print quality", "Canva CMYK", "Canva CMYK print", "Canva print PDF", "Canva to CMYK"],
     intent: "Use this page when a Canva design looks finished on screen, but the printer is questioning color, image quality, PDF Print settings, or commercial-print readiness.",
     checks: [
@@ -513,7 +543,7 @@ export const toolPages: ToolPage[] = [
       {
         heading: "When to create a fresh checked proof",
         body:
-          "If the Canva PDF cannot satisfy the printer's color, trim, bleed, marks, image, or PDF/X requirements, a fresh generated proof can be safer than patching an uncertain export. Trim Proof supports this path for flyers, posters, brochures, business cards, postcards, and letterhead."
+          "If the Canva PDF cannot satisfy the printer's color, trim, bleed, marks, image, or PDF/X requirements, a fresh generated proof can be safer than patching an uncertain export. Trim Proof supports this path for flyers, posters, menus, brochures, business cards, postcards, and letterhead."
       }
     ],
     faq: [
@@ -541,17 +571,22 @@ export const toolPages: ToolPage[] = [
       "Check PDF/X status, bleed boxes, trim size, embedded fonts, color workflow, and image DPI before printing.",
     h1: "PDF preflight checker for online print exports",
     answer:
-      "A PDF preflight checker should verify that the file is the expected size, has correct trim and bleed boxes, embeds fonts, uses the intended color workflow, and contains images at print resolution.",
+      "A PDF preflight checker should verify that the file is the expected size, has correct trim and bleed boxes, embeds fonts, uses the intended color workflow, and contains images at print resolution. The live SERP is dominated by Adobe Acrobat help pages, Adobe community answers, Reddit, and a few niche checker tools, so Trim Proof should frame preflight as the final gate on a production proof rather than a generic PDF repair utility.",
     keywords: ["PDF preflight", "preflight PDF online", "check PDF for print", "PDF preflight checker online", "prepress file checker"],
     intent: "Use this page when a PDF looks fine on screen but needs structural print checks before a printer or client receives it.",
     checks: ["PDF exists and is downloadable", "MediaBox, TrimBox, and BleedBox", "PDF/X subtype", "Embedded fonts", "Placed raster DPI", "Ghostscript PDF/X conversion"],
     steps: ["Generate the proof", "Run the preflight gate", "Review passed and needs-attention checks", "Fix geometry, fonts, or images when needed", "Download the PDF only after the report is acceptable"],
-    relatedSlugs: ["prepress-checklist", "online-pdf-prepress-tools", "prepress-automation-software"],
+    relatedSlugs: ["print-ready-pdf-generator", "pdf-to-cmyk-converter", "add-bleed-to-pdf-online", "prepress-checklist", "online-pdf-prepress-tools", "prepress-automation-software"],
     sections: [
       {
         heading: "What Trim Proof checks before delivery",
         body:
           "The first proof checks PDF creation, MediaBox, TrimBox, BleedBox, PDF/X subtype, embedded fonts, and raster DPI. Paid production exports use the same gate before delivery."
+      },
+      {
+        heading: "What the live SERP rewards",
+        body:
+          "Adobe Acrobat Preflight, Adobe community threads, Reddit, and niche preflight articles all satisfy the basic definition. Trim Proof should keep the checked proof visible, then show why the file passed or failed before the user pays for export."
       },
       {
         heading: "Why automated preflight matters",
@@ -563,6 +598,11 @@ export const toolPages: ToolPage[] = [
       {
         question: "Can preflight guarantee every printer will accept a file?",
         answer: "No software can guarantee every vendor-specific requirement, but preflight greatly reduces avoidable production failures."
+      },
+      {
+        question: "How is Trim Proof different from Adobe Acrobat Preflight?",
+        answer:
+          "Adobe Acrobat Preflight is a strong inspection tool, but Trim Proof builds preflight into the proof workflow itself. That keeps the print geometry, final text, and export gate together instead of leaving them as separate steps."
       }
     ]
   },
@@ -571,9 +611,9 @@ export const toolPages: ToolPage[] = [
     title: "Business Card Maker With AI Print-Ready PDF/X",
     metaDescription:
       "Make a business card from a plain-English brief with AI-assisted art, vector text, 3.5 x 2 trim, bleed, preflight, and paid clean PDF/X export.",
-    h1: "Business card maker with AI and print-ready PDF/X export",
+    h1: "AI business card generator with print-ready PDF/X export",
     answer:
-      "A business card maker should create more than a screen preview. Trim Proof turns plain-English business-card briefs into checked 3.5 x 2 inch PDF proofs, uses AI only for creative assets when configured, and keeps final names, titles, phone numbers, email addresses, and URLs as embedded vector text. Free demo art is watermarked; clean production PDF/X-1a downloads require a paid export credit or Pro subscription, and printer specifications still control final acceptance.",
+      "An AI business card generator should create more than a screen preview. Trim Proof turns plain-English business-card briefs into checked 3.5 x 2 inch PDF proofs, uses AI only for creative assets when configured, and keeps final names, titles, phone numbers, email addresses, and URLs as embedded vector text. That matters because the live SERP is crowded with Canva, Design.com, LogoAI, Venngage, Adobe Express, and MOO-style template tools that help with layout but not with deterministic print geometry. Free demo art is watermarked; clean production PDF/X-1a downloads require a paid export credit or Pro subscription, and printer specifications still control final acceptance.",
     keywords: [
       "business card maker",
       "business card creator",
@@ -603,7 +643,7 @@ export const toolPages: ToolPage[] = [
       "Check the watermarked demo proof before paying for a clean file",
       "Export the production PDF/X-1a proof when preflight passes"
     ],
-    relatedSlugs: ["free-ai-business-card-generator", "business-card-bleed-size", "business-card-pdf-template"],
+    relatedSlugs: ["free-ai-business-card-generator", "business-card-size-guide", "business-card-bleed-size", "business-card-pdf-template", "pdf-preflight-checker", "pdf-to-cmyk-converter"],
     sections: [
       {
         heading: "What a business card maker needs for print",
@@ -623,7 +663,7 @@ export const toolPages: ToolPage[] = [
       {
         heading: "Where Trim Proof fits",
         body:
-          "Vistaprint, Canva, Adobe Express, MOO, Avery, and print shops can be useful for templates, editing, or ordering printed cards. Trim Proof focuses on generating and checking the print handoff file; it does not sell printed cards or replace printer-specific requirements."
+          "Vistaprint, Canva, Adobe Express, Design.com, LogoAI, Venngage, MOO, Avery, and print shops can be useful for templates, editing, or ordering printed cards. Trim Proof focuses on generating and checking the print handoff file; it does not sell printed cards or replace printer-specific requirements."
       }
     ],
     faq: [
@@ -660,6 +700,11 @@ export const toolPages: ToolPage[] = [
         question: "Can Trim Proof guarantee a printer will accept my business card?",
         answer:
           "No. Trim Proof can create and check a business-card proof, but each printer can set its own trim, bleed, crop-mark, color, PDF/X, paper, finishing, and delivery requirements."
+      },
+      {
+        question: "How is Trim Proof different from Canva or Design.com?",
+        answer:
+          "Canva, Design.com, LogoAI, Venngage, Adobe Express, and similar tools are useful for layout and brand exploration. Trim Proof is built for the print handoff: it keeps final text vector, makes bleed and crop marks explicit, and runs PDF/X preflight before download."
       }
     ]
   },
@@ -668,9 +713,9 @@ export const toolPages: ToolPage[] = [
     title: "Flyer Maker With AI Print-Ready PDF/X",
     metaDescription:
       "Make a flyer from a plain-English brief with AI-assisted art, vector text, bleed, crop marks, preflight, and paid clean PDF/X-1a export.",
-    h1: "Flyer maker with AI and print-ready PDF/X export",
+    h1: "AI flyer generator with print-ready PDF/X export",
     answer:
-      "A flyer maker should create more than a screen preview or flat image. Trim Proof turns plain-English flyer briefs into checked PDF proofs, uses AI only for creative assets when configured, and keeps final headlines, offer copy, dates, prices, disclaimers, URLs, and QR/contact details as embedded vector text. Free demo art is watermarked; clean production PDF/X-1a downloads require a paid export credit or Pro subscription, and printer specifications still control final acceptance.",
+      "An AI flyer generator should create more than a screen preview or flat image. Trim Proof turns plain-English flyer briefs into checked PDF proofs, uses AI only for creative assets when configured, and keeps final headlines, offer copy, dates, prices, disclaimers, URLs, and QR/contact details as embedded vector text. That matters because the live SERP is crowded with Adobe Express, Canva, Design.com, Template.net, Venngage, usekodo.ai, aiflyer.ai, and Manus-style template tools that help with layout ideas but not with deterministic print geometry. Free demo art is watermarked; clean production PDF/X-1a downloads require a paid export credit or Pro subscription, and printer specifications still control final acceptance.",
     keywords: [
       "flyer maker",
       "free flyer maker",
@@ -703,7 +748,7 @@ export const toolPages: ToolPage[] = [
       "Check the watermarked demo proof before paying for a clean file",
       "Download the checked PDF/X-1a file when preflight passes"
     ],
-    relatedSlugs: ["flyer-size-guide", "free-ai-flyer-generator", "flyer-pdf-template"],
+    relatedSlugs: ["free-ai-flyer-generator", "flyer-size-guide", "flyer-pdf-template", "canva-print-ready-pdf", "canva-bleed-and-crop-marks", "canva-cmyk-print-quality", "pdf-preflight-checker"],
     sections: [
       {
         heading: "What a flyer maker needs for print",
@@ -723,7 +768,7 @@ export const toolPages: ToolPage[] = [
       {
         heading: "Where Trim Proof fits",
         body:
-          "Canva, Adobe Express, Microsoft Word, PosterMyWall, Template.net, Venngage, and mobile flyer apps can be useful for design templates. Trim Proof focuses on generating and checking the print handoff file; it does not sell printed flyers or replace printer-specific requirements."
+          "Canva, Adobe Express, Design.com, Template.net, Venngage, PosterMyWall, and mobile flyer apps can be useful for design templates. Trim Proof focuses on generating and checking the print handoff file; it does not sell printed flyers or replace printer-specific requirements."
       }
     ],
     faq: [
@@ -756,21 +801,27 @@ export const toolPages: ToolPage[] = [
         question: "Can Trim Proof guarantee a printer will accept my flyer?",
         answer:
           "No. Trim Proof can create and check a flyer proof, but each printer can set its own trim, bleed, crop-mark, color, PDF/X, paper, finishing, and delivery requirements."
+      },
+      {
+        question: "How is Trim Proof different from Canva or Adobe Express?",
+        answer:
+          "Canva, Adobe Express, Design.com, Template.net, Venngage, and similar tools are useful for layout and fast concepts. Trim Proof is built for the print handoff: it keeps final text vector, makes bleed and crop marks explicit, and runs PDF/X preflight before download."
       }
     ]
   },
   {
     slug: "free-ai-flyer-generator",
-    title: "Free Flyer Maker Demo",
+    title: "Free Flyer Maker Demo with AI",
     metaDescription:
-      "Try a free flyer maker demo with watermarked art, bleed, crop marks, vector text, preflight, and paid clean PDF/X-1a export.",
-    h1: "Free flyer maker demo with a print-ready export path",
+      "Try a free AI flyer maker demo with watermarked art, bleed, crop marks, vector text, preflight, and paid clean PDF/X-1a export.",
+    h1: "Free AI flyer generator demo with a print-ready export path",
     answer:
-      "A free flyer maker should make the paid boundary clear before you spend time on a real print job. Trim Proof lets you test a watermarked flyer proof first, then unlock a clean checked PDF/X-1a export when the file is ready for print. The demo covers flyer brief intake, bleed, safe area, vector text, crop marks when requested, CMYK-oriented output, and preflight evidence.",
+      "A free AI flyer maker should make the paid boundary clear before you spend time on a real print job. Trim Proof lets you test a watermarked flyer proof first, then unlock a clean checked PDF/X-1a export when the file is ready for print. That gives the free path a clearer job than Adobe Express, Canva, Design.com, Template.net, or Venngage previews alone: you can see the bleed, safe area, vector text, crop marks when requested, CMYK-oriented output, and preflight evidence before paying.",
     keywords: [
       "free flyer maker",
       "free flyer creator",
       "free flyer generator",
+      "free AI flyer maker",
       "flyer maker free",
       "free AI flyer generator",
       "AI flyer generator",
@@ -780,7 +831,7 @@ export const toolPages: ToolPage[] = [
     intent: "Use this page when you want to try AI flyer creation first, but you still care whether the finished file can move toward a commercial print workflow.",
     checks: ["Free watermarked demo account path", "Flyer brief intake", "Vector headline and body text", "Bleed and safe-area review", "CMYK-oriented output settings", "PDF/X-1a preflight before production download"],
     steps: ["Create a free demo account", "Describe the flyer offer, audience, and required copy", "Review the watermarked proof and print guides", "Switch to advanced mode when a clean production file is needed", "Use an export credit or Pro to download the checked PDF/X-1a file"],
-    relatedSlugs: ["flyer-size-guide", "ai-flyer-generator", "flyer-pdf-template"],
+    relatedSlugs: ["ai-flyer-generator", "flyer-size-guide", "flyer-pdf-template", "canva-print-ready-pdf", "pdf-preflight-checker"],
     sections: [
       {
         heading: "What is free in the flyer demo?",
@@ -816,15 +867,16 @@ export const toolPages: ToolPage[] = [
   },
   {
     slug: "free-ai-business-card-generator",
-    title: "Free Business Card Maker Demo",
+    title: "Free Business Card Maker Demo with AI",
     metaDescription:
-      "Try a free business card maker demo with watermarked art, 3.5 x 2 trim, 0.125 inch bleed, vector text, preflight, and paid clean PDF/X export.",
-    h1: "Free business card maker demo for print-ready proofs",
+      "Try a free AI business card maker demo with watermarked art, 3.5 x 2 trim, 0.125 inch bleed, vector text, preflight, and paid clean PDF/X export.",
+    h1: "Free AI business card generator demo for print-ready proofs",
     answer:
-      "A free business card maker should make the paid boundary clear before you spend time on a real job. Trim Proof lets you test a watermarked business-card proof first, then unlock a clean checked PDF/X-1a export when the file is ready for print. The demo covers 3.5 x 2 inch trim, 0.125 inch bleed, safe area, embedded vector text, and preflight evidence.",
+      "A free AI business card maker should make the paid boundary clear before you spend time on a real job. Trim Proof lets you test a watermarked business-card proof first, then unlock a clean checked PDF/X-1a export when the file is ready for print. That gives the free path a clearer job than Canva, Design.com, LogoAI, Venngage, Adobe Express, or MOO previews alone: you can see the 3.5 x 2 inch trim, 0.125 inch bleed, safe area, embedded vector text, and preflight evidence before paying.",
     keywords: [
       "free business card maker",
       "free business card generator",
+      "free AI business card maker",
       "free AI business card generator",
       "AI business card generator",
       "AI business card maker",
@@ -833,7 +885,7 @@ export const toolPages: ToolPage[] = [
     intent: "Use this page when you want to test AI-assisted business-card creation before committing to a print-ready PDF/X export.",
     checks: ["Free watermarked demo account path", "3.5 x 2 inch business-card trim", "0.125 inch bleed", "Vector contact text", "Embedded fonts", "PDF/X-1a preflight report"],
     steps: ["Create a free demo account", "Write the business-card brief and contact details", "Review the watermarked proof, safe-area guide, and bleed guide", "Check the preflight report", "Unlock the clean production PDF/X-1a download when the proof is ready"],
-    relatedSlugs: ["ai-business-card-generator", "business-card-bleed-size", "business-card-pdf-template"],
+    relatedSlugs: ["ai-business-card-generator", "business-card-size-guide", "business-card-bleed-size", "business-card-pdf-template", "pdf-preflight-checker"],
     sections: [
       {
         heading: "Why free business card makers can fail at print",
@@ -1404,9 +1456,9 @@ export const toolPages: ToolPage[] = [
     title: "Poster Maker With AI Print-Ready PDF/X",
     metaDescription:
       "Make poster designs from a brief with an 11 x 17 starter profile, bleed, safe area, vector text, preflight, watermarked free demo art, and paid clean PDF/X export.",
-    h1: "Poster maker for checked print-ready PDF proofs",
+    h1: "AI poster generator for checked print-ready PDF proofs",
     answer:
-      "A poster maker should do more than create a screen preview or send you straight to a print order. Trim Proof turns plain-English poster briefs into checked PDF proofs, uses an 11 x 17 inch starter poster profile, keeps final event, offer, title, URL, and QR/contact text in the deterministic vector layer, and checks bleed, safe area, crop marks, color workflow, and PDF/X-1a status before production download. Free demo art is watermarked; clean production PDF/X-1a downloads require a paid export credit or Pro subscription, and printer specifications still control final acceptance.",
+      "An AI poster generator should do more than create a screen preview or send you straight to a print order. Trim Proof turns plain-English poster briefs into checked PDF proofs, uses an 11 x 17 inch starter poster profile, keeps final event, offer, title, URL, and QR/contact text in the deterministic vector layer, and checks bleed, safe area, crop marks, color workflow, and PDF/X-1a status before production download. Free demo art is watermarked; clean production PDF/X-1a downloads require a paid export credit or Pro subscription, and printer specifications still control final acceptance.",
     keywords: [
       "poster maker",
       "poster creator",
@@ -1440,7 +1492,7 @@ export const toolPages: ToolPage[] = [
       "Check the watermarked demo proof before paying for a clean file",
       "Download the checked PDF/X-1a file when preflight passes"
     ],
-    relatedSlugs: ["free-poster-maker", "poster-size-guide", "poster-pdf-template"],
+    relatedSlugs: ["free-poster-maker", "poster-size-guide", "poster-pdf-template", "pdf-preflight-checker"],
     sections: [
       {
         heading: "What a poster maker needs for print",
@@ -1493,16 +1545,17 @@ export const toolPages: ToolPage[] = [
   },
   {
     slug: "free-poster-maker",
-    title: "Free Poster Maker Demo",
+    title: "Free Poster Maker Demo with AI",
     metaDescription:
-      "Try a free poster maker demo with watermarked art, 11 x 17 trim, bleed, safe area, vector text, preflight, and paid clean PDF/X export.",
-    h1: "Free poster maker demo with a print-ready export path",
+      "Try a free AI poster maker demo with watermarked art, 11 x 17 trim, bleed, safe area, vector text, preflight, and paid clean PDF/X export.",
+    h1: "Free AI poster generator demo with a print-ready export path",
     answer:
-      "A free poster maker should make the paid boundary clear before you spend time on a real print job. Trim Proof lets you test a watermarked poster proof first, then unlock a clean checked PDF/X-1a export when the file is ready for production. The demo covers poster brief intake, 11 x 17 inch starter trim, bleed, safe area, vector title and event text, crop marks when requested, CMYK-oriented output, and preflight evidence.",
+      "A free AI poster maker should make the paid boundary clear before you spend time on a real print job. Trim Proof lets you test a watermarked poster proof first, then unlock a clean checked PDF/X-1a export when the file is ready for production. The demo covers poster brief intake, 11 x 17 inch starter trim, bleed, safe area, vector title and event text, crop marks when requested, CMYK-oriented output, and preflight evidence.",
     keywords: [
       "free poster maker",
       "free poster creator",
       "free poster generator",
+      "free AI poster maker",
       "poster maker free",
       "free AI poster generator",
       "AI poster generator",
@@ -1526,7 +1579,7 @@ export const toolPages: ToolPage[] = [
       "Switch to advanced mode when a clean production file is needed",
       "Use an export credit or Pro to download the checked PDF/X-1a file"
     ],
-    relatedSlugs: ["poster-maker", "poster-size-guide", "poster-pdf-template"],
+    relatedSlugs: ["poster-maker", "poster-size-guide", "poster-pdf-template", "pdf-preflight-checker"],
     sections: [
       {
         heading: "What is free in the poster demo?",
@@ -2781,6 +2834,256 @@ export const toolPages: ToolPage[] = [
     ]
   },
   {
+    slug: "menu-maker",
+    title: "Menu Maker for Print-Ready PDFs",
+    metaDescription:
+      "Make a single-sheet menu from a brief with a print-ready PDF/X proof, optional bleed, crop marks, vector text, and a free watermarked demo path.",
+    h1: "Menu maker for checked print-ready PDF proofs",
+    answer:
+      "A menu maker should do more than create a decorative mockup. Trim Proof turns plain-English menu briefs into checked PDF proofs, keeps the restaurant name, menu title, section copy, prices, and ordering details in the deterministic vector layer, and checks page size, safe margins, optional bleed, crop marks when requested, color workflow, and PDF/X-1a status before production download. The supported starter profile uses a single-sheet 11 x 8.5 inch landscape menu profile. Free demo art is watermarked; clean production PDF/X-1a downloads require a paid export credit or Pro subscription, and printer specifications still control final acceptance.",
+    keywords: [
+      "menu maker",
+      "menu creator",
+      "menu generator",
+      "online menu maker",
+      "free menu maker",
+      "AI menu generator",
+      "restaurant menu maker",
+      "print ready menu maker"
+    ],
+    intent:
+      "Use this page when a menu design or maker workflow needs a print-production path for size, margins, optional bleed, vector text, PDF/X, and preflight instead of only a template or web menu.",
+    checks: [
+      "11 x 8.5 inch landscape menu profile",
+      "Safe margins for restaurant name, menu title, sections, prices, and ordering details",
+      "Optional 0.125 inch bleed when artwork reaches the edge",
+      "Vector text for menu copy and prices",
+      "Crop marks when requested",
+      "PDF/X-1a preflight report before download"
+    ],
+    steps: [
+      "Describe the restaurant, menu size, section hierarchy, pricing, and printer requirements",
+      "Generate or place decorative art separately from the final menu text",
+      "Keep menu titles, item names, and prices in vector type",
+      "Review page size, margins, safe area, optional bleed, and crop marks",
+      "Check the watermarked demo proof before paying for a clean file",
+      "Download the checked PDF/X-1a file when preflight passes"
+    ],
+    relatedSlugs: ["free-menu-maker", "menu-pdf-template", "print-ready-pdf-generator"],
+    sections: [
+      {
+        heading: "What a menu maker needs for print",
+        body:
+          "A menu needs readable hierarchy, enough breathing room, predictable margins, and a production PDF setup. A print-ready menu maker should keep the restaurant name, menu title, sections, prices, and ordering details visible before the file is sent."
+      },
+      {
+        heading: "Menu design to checked proof",
+        body:
+          "Design tools can help with mood and illustration, but the finished PDF still has to prove its page setup and final text. Trim Proof separates creative assets from the deterministic PDF layer so the proof can be checked for margins, optional bleed, color workflow, and PDF/X-1a status."
+      },
+      {
+        heading: "Free menu maker versus paid clean export",
+        body:
+          "The free demo is for testing the workflow and reviewing a watermarked menu proof before checkout. Paid export credits and Pro subscriptions unlock clean production-oriented PDF/X downloads when the file needs to go to a printer."
+      },
+      {
+        heading: "Where Trim Proof fits",
+        body:
+          "Template libraries and restaurant design tools can help with visual direction, but Trim Proof focuses on generating and checking the print handoff file. It does not sell printed menus, replace menu platforms, or replace printer-specific requirements."
+      }
+    ],
+    faq: [
+      {
+        question: "What is the best free menu maker?",
+        answer:
+          "The best free menu maker depends on whether you need an editable restaurant template, a design preview, or a print handoff file. Trim Proof's free demo shows a watermarked menu proof and print checks, while clean production PDF/X downloads require a paid export credit or Trim Proof Pro."
+      },
+      {
+        question: "How do I make my own menu?",
+        answer:
+          "Start with the restaurant name, menu title, sections, item names, prices, and printer requirements. Trim Proof can turn that brief into a checked menu proof with safe margins, optional bleed, crop marks when requested, and preflight evidence."
+      },
+      {
+        question: "Can Trim Proof make menu proofs with bleed?",
+        answer:
+          "Yes. Menu is a supported starter product, and Trim Proof can create checked menu proofs with page size, safe margins, optional 0.125 inch bleed when artwork reaches the edge, crop marks when requested, vector text, and PDF/X-1a preflight."
+      },
+      {
+        question: "Is Trim Proof a menu printing service?",
+        answer:
+          "No. Trim Proof creates checked menu PDF proofs and production downloads, but it does not sell printed menus, paper, finishing, shipping, or restaurant ordering services."
+      },
+      {
+        question: "Can Trim Proof guarantee a printer will accept my menu?",
+        answer:
+          "No. Trim Proof can create and check a menu proof, but each printer can set its own page size, margin, bleed, crop-mark, color, PDF/X, paper, finishing, and delivery requirements."
+      }
+    ]
+  },
+  {
+    slug: "free-menu-maker",
+    title: "Free Menu Maker Demo",
+    metaDescription:
+      "Try a free menu maker demo with a watermarked proof, safe margins, optional bleed, preflight, and paid clean PDF/X export.",
+    h1: "Free menu maker demo with a print-ready export path",
+    answer:
+      "A free menu maker should make the paid boundary clear before you spend time on a restaurant or cafe menu. Trim Proof lets you test a watermarked menu proof first, then unlock a clean checked PDF/X-1a export when the file is ready for production. The demo covers menu brief intake, page size, margins, section hierarchy, optional bleed, crop marks when requested, CMYK-oriented output, and preflight evidence.",
+    keywords: [
+      "free menu maker",
+      "menu maker free",
+      "free menu generator",
+      "free AI menu generator",
+      "AI menu generator",
+      "menu maker with bleed",
+      "print ready menu maker",
+      "free menu template"
+    ],
+    intent:
+      "Use this page when you want to try menu creation for free first, but you still need a clear path to a clean print-ready PDF/X export.",
+    checks: [
+      "Free watermarked demo account path",
+      "Menu brief intake for sections, prices, layout direction, and ordering details",
+      "Vector restaurant name, menu title, item names, and prices",
+      "Page size, margin, safe-area, and optional bleed review",
+      "CMYK-oriented output settings",
+      "PDF/X-1a preflight before production download"
+    ],
+    steps: [
+      "Create a free demo account",
+      "Describe the menu brand, page size, sections, prices, and printer requirements",
+      "Review the watermarked proof and print guides",
+      "Switch to advanced mode when a clean production file is needed",
+      "Use an export credit or Pro to download the checked PDF/X-1a file"
+    ],
+    relatedSlugs: ["menu-maker", "menu-pdf-template", "print-ready-pdf-generator"],
+    sections: [
+      {
+        heading: "What is free in the menu demo?",
+        body:
+          "The free path shows the proof workflow and print checks before checkout. It helps you decide whether the brief, layout, margins, section hierarchy, optional bleed, vector text, and preflight evidence are suitable for the job, but the demo art stays watermarked."
+      },
+      {
+        heading: "Free watermarked demo versus paid clean export",
+        body:
+          "Use paid export when the proof is for a real restaurant, cafe, bar, or takeout job and you need the clean downloadable PDF/X-1a file, explicit color workflow, crop marks when requested, and delivery evidence."
+      }
+    ],
+    faq: [
+      {
+        question: "Where can I create a menu for free?",
+        answer:
+          "You can use many free menu makers or template tools for early layouts. Trim Proof lets you test a watermarked menu proof for free after account creation, then requires paid export for a clean production PDF/X download."
+      },
+      {
+        question: "Is the final print-ready menu export free?",
+        answer:
+          "The demo workflow is free after account creation and uses watermarked art. Clean production PDF/X-1a downloads are unlocked with a paid export credit or Trim Proof Pro."
+      },
+      {
+        question: "Can I make a menu with bleed for free?",
+        answer:
+          "You can test the menu proof workflow with watermarked art for free. The clean production file with checked margins, optional bleed, vector text, crop marks when requested, and PDF/X-1a export is paid."
+      },
+      {
+        question: "Does Trim Proof print the menu?",
+        answer:
+          "No. Trim Proof creates checked menu PDF proofs and clean production downloads, but it does not sell printing, paper, shipping, or finishing services."
+      }
+    ]
+  },
+  {
+    slug: "menu-pdf-template",
+    title: "Menu Template for Print-Ready PDFs",
+    metaDescription:
+      "Create a menu template for print-ready PDFs with a single-sheet landscape menu profile, optional bleed, vector text, PDF/X export, and preflight checks.",
+    h1: "Menu template for print-ready PDF proofs",
+    answer:
+      "A good menu template should do more than open in a browser or look polished on screen. For print, it should define the page size, margins, section hierarchy, optional bleed, embedded vector text, color workflow, PDF/X target, and preflight checks. The supported starter profile uses a single-sheet 11 x 8.5 inch landscape menu profile. Trim Proof generates a fresh menu PDF proof from a structured brief instead of distributing static templates, free demo art is watermarked, clean production downloads are paid, and printer specifications still control final acceptance.",
+    keywords: [
+      "menu template",
+      "menu templates",
+      "free menu template",
+      "restaurant menu template",
+      "menu PDF template",
+      "menu template PDF",
+      "print ready menu template",
+      "food menu template"
+    ],
+    intent:
+      "Use this page when a menu template needs to become a checked print-ready PDF rather than a screen-only document or static download.",
+    checks: [
+      "11 x 8.5 inch landscape menu profile",
+      "Section hierarchy for menu categories, item names, prices, and notes",
+      "0.125 inch bleed only when artwork or color reaches the edge",
+      "Embedded vector text and fonts instead of flattened menu copy",
+      "PDF/X-1a preflight for boxes, fonts, image DPI, and output status"
+    ],
+    steps: [
+      "Confirm the printer's menu size, margin, bleed, color, and PDF requirements",
+      "Write the menu brief with sections, item names, prices, and brand direction",
+      "Generate the proof from the structured menu profile",
+      "Review page size, margins, section hierarchy, optional bleed, and crop-mark guides",
+      "Keep final menu copy as embedded vector type in the PDF",
+      "Run preflight and compare the report against the printer's specification",
+      "Use advanced mode for the paid clean production PDF/X export when the proof is ready"
+    ],
+    relatedSlugs: ["menu-maker", "free-menu-maker", "print-ready-pdf-generator"],
+    sections: [
+      {
+        heading: "What a good menu template includes",
+        body:
+          "A good menu template has the correct page size, clear section hierarchy, readable item names and prices, enough open space, safe margins, embedded fonts or vector text, and a production export path. A pretty document preview is not enough if the final PDF cannot prove those print requirements."
+      },
+      {
+        heading: "Free template versus print-ready proof",
+        body:
+          "Template libraries and office-document tools are useful for editable layouts, but they can still leave the commercial print handoff uncertain. Trim Proof focuses on the finished proof: explicit page geometry, margin checks, optional bleed, vector menu text, color workflow, and preflight evidence before production export."
+      },
+      {
+        heading: "Menu template size, margins, and bleed",
+        body:
+          "The supported starter menu profile uses a landscape 11 x 8.5 inch sheet. If artwork reaches the cut edge, add 0.125 inch bleed on every side, which creates an 11.25 x 8.75 inch full-bleed file. At 300 DPI, the menu trim is 3300 x 2550 px or 3375 x 2625 px with bleed for raster artwork."
+      },
+      {
+        heading: "Where Trim Proof fits",
+        body:
+          "Trim Proof creates a fresh menu proof from a plain-English brief, keeps final brand and menu copy in the deterministic PDF layer, applies menu geometry, and checks the PDF/X-1a export before production download. It is not a universal template marketplace, menu platform, print vendor, or guarantee of every printer's acceptance."
+      }
+    ],
+    faq: [
+      {
+        question: "How do I create my own menu?",
+        answer:
+          "Start with the restaurant name, menu title, sections, item names, prices, and ordering details. Trim Proof can turn those details into a generated menu proof, then check the PDF/X export before a paid clean production download."
+      },
+      {
+        question: "Where can I get free menu templates?",
+        answer:
+          "Free menu templates are available from design and office-document tools. Trim Proof is different: the free demo proof uses watermarked art, and clean production PDF/X downloads require a paid export credit or Trim Proof Pro."
+      },
+      {
+        question: "How do I get a menu template in Word?",
+        answer:
+          "Microsoft Word has its own editable menu and table-layout workflows. Trim Proof focuses on generated print-ready PDF/X proof output, so Word templates remain a separate office-document path."
+      },
+      {
+        question: "What does a good menu look like?",
+        answer:
+          "A good menu looks clear, easy to scan, and readable. It should show the brand, section hierarchy, item names, and prices, keep important content inside safe margins, and use a final PDF setup that matches printer requirements."
+      },
+      {
+        question: "Is this a downloadable static menu template?",
+        answer:
+          "No. Trim Proof generates a fresh menu proof from a structured brief and product profile; it does not distribute one static template file."
+      },
+      {
+        question: "Can Trim Proof guarantee a printer will accept my menu template?",
+        answer:
+          "No. Trim Proof can create and check a menu proof, but each printer can set its own size, margin, bleed, crop-mark, color, PDF/X, paper, and delivery requirements."
+      }
+    ]
+  },
+  {
     slug: "add-crop-marks-to-pdf",
     title: "Add Crop Marks to PDF",
     metaDescription:
@@ -2792,7 +3095,7 @@ export const toolPages: ToolPage[] = [
     intent: "Use this page when a printer asks for crop marks or when you need a visible cut guide around a print-ready PDF.",
     checks: ["TrimBox dimensions", "BleedBox dimensions", "Crop marks outside trim", "Safe-area guide", "PDF/X subtype", "Embedded fonts"],
     steps: ["Choose the product profile", "Keep artwork through the bleed edge", "Enable crop marks", "Generate the proof", "Review the preflight report before sending the file"],
-    relatedSlugs: ["add-bleed-to-pdf-online", "print-ready-pdf-generator", "pdf-preflight-checker"],
+    relatedSlugs: ["add-bleed-to-pdf-online", "canva-bleed-and-crop-marks", "print-ready-pdf-generator", "pdf-preflight-checker"],
     sections: [
       {
         heading: "Crop marks versus bleed",

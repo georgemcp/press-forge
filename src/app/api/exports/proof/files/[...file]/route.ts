@@ -1,11 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import { canServeProofFile } from "@/lib/print/delivery-manifest";
+import { canServeProofFile, isAllowedProofFileName } from "@/lib/print/delivery-manifest";
 
 export const runtime = "nodejs";
 
-const allowedFilePattern = /^(?:trimproof-(?:business-card|postcard|flyer|poster|brochure|letterhead)\.(?:source\.pdf|pdfx\.pdf|master\.svg)|asset-[a-z0-9-]+\.png|preflight-report\.json)$/;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function getContentType(fileName: string) {
@@ -17,6 +16,12 @@ function getContentType(fileName: string) {
   }
   if (fileName.endsWith(".json")) {
     return "application/json; charset=utf-8";
+  }
+  if (fileName.endsWith(".html")) {
+    return "text/html; charset=utf-8";
+  }
+  if (fileName.endsWith(".txt")) {
+    return "text/plain; charset=utf-8";
   }
   if (fileName.endsWith(".png")) {
     return "image/png";
@@ -33,7 +38,7 @@ interface FileRouteContext {
 export async function GET(_request: Request, { params }: FileRouteContext) {
   const { file } = await params;
   const [jobId, fileName, extra] = file;
-  if (!jobId || !fileName || extra || !uuidPattern.test(jobId) || !allowedFilePattern.test(fileName)) {
+  if (!jobId || !fileName || extra || !uuidPattern.test(jobId) || !isAllowedProofFileName(fileName)) {
     return NextResponse.json({ error: "Invalid proof file path." }, { status: 400 });
   }
 

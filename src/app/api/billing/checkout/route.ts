@@ -121,7 +121,7 @@ export async function POST(request: Request) {
     client_reference_id: account.userId,
     customer_email: account.email,
     branding_settings: {
-      display_name: "Press Forge"
+      display_name: "Trim Proof"
     },
     wallet_options: {
       link: {

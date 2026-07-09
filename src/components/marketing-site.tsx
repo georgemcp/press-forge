@@ -2,30 +2,33 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
+  Building2,
   CheckCircle2,
+  ClipboardCheck,
   FileCheck2,
+  Gauge,
   Layers3,
-  Mail,
   MoveRight,
   Ruler,
   SearchCheck,
   ShieldCheck,
   Sparkles,
+  Store,
+  UsersRound,
   WalletCards
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { trackEvent } from "@/lib/analytics/events";
-import { getAnalyticsAttribution } from "@/lib/analytics/attribution";
+import { EmailCaptureForm } from "@/components/email-capture-form";
 
 const answerBlocks = [
   {
     question: "What does Trim Proof do?",
     answer:
-      "Trim Proof turns plain-English briefs for flyers, posters, brochures, business cards, postcards, and letterhead into print-ready PDF/X proofs with bleed, crop marks, embedded vector text, CMYK-oriented output, and preflight checks."
+      "Trim Proof turns plain-English briefs for flyers, posters, menus, brochures, business cards, postcards, and letterhead into print-ready PDF/X proofs with bleed, crop marks, embedded vector text, CMYK-oriented output, and preflight checks."
   },
   {
     question: "What is a print-ready PDF?",
@@ -45,23 +48,28 @@ const answerBlocks = [
 ];
 
 const keywordTargets = [
-  { label: "AI flyer generator", href: "/tools/ai-flyer-generator" },
-  { label: "AI flyer maker", href: "/tools/ai-flyer-generator" },
+  { label: "Business card maker", href: "/tools/ai-business-card-generator" },
+  { label: "Business card creator", href: "/tools/ai-business-card-generator" },
+  { label: "Business card generator", href: "/tools/ai-business-card-generator" },
+  { label: "Poster size", href: "/tools/poster-size-guide" },
+  { label: "Business card size", href: "/tools/business-card-size-guide" },
+  { label: "Poster maker", href: "/tools/poster-maker" },
   { label: "Flyer maker", href: "/tools/ai-flyer-generator" },
   { label: "Free flyer maker", href: "/tools/free-ai-flyer-generator" },
   { label: "Free AI flyer generator", href: "/tools/free-ai-flyer-generator" },
-  { label: "Business card maker", href: "/tools/ai-business-card-generator" },
-  { label: "Free business card maker", href: "/tools/free-ai-business-card-generator" },
   { label: "AI business card generator", href: "/tools/ai-business-card-generator" },
-  { label: "Poster maker", href: "/tools/poster-maker" },
+  { label: "Free business card maker", href: "/tools/free-ai-business-card-generator" },
   { label: "Free poster maker", href: "/tools/free-poster-maker" },
   { label: "AI poster generator", href: "/tools/poster-maker" },
-  { label: "Poster size", href: "/tools/poster-size-guide" },
   { label: "Poster template", href: "/tools/poster-pdf-template" },
+  { label: "Postcard size", href: "/tools/postcard-size-guide" },
   { label: "Brochure maker", href: "/tools/brochure-maker" },
   { label: "Free brochure maker", href: "/tools/free-brochure-maker" },
   { label: "Tri-fold brochure template", href: "/tools/tri-fold-brochure-template" },
   { label: "Brochure size", href: "/tools/brochure-size-guide" },
+  { label: "Menu maker", href: "/tools/menu-maker" },
+  { label: "Free menu maker", href: "/tools/free-menu-maker" },
+  { label: "Menu template", href: "/tools/menu-pdf-template" },
   { label: "Print ready PDF", href: "/tools/print-ready-pdf-generator" },
   { label: "Print-ready artwork", href: "/tools/print-ready-artwork" },
   { label: "Convert PDF to CMYK", href: "/tools/pdf-to-cmyk-converter" },
@@ -76,14 +84,12 @@ const keywordTargets = [
   { label: "Prepress software", href: "/tools/prepress-automation-software" },
   { label: "Proofing software", href: "/tools/online-proofing-software" },
   { label: "Flyer size", href: "/tools/flyer-size-guide" },
-  { label: "Business card size", href: "/tools/business-card-size-guide" },
   { label: "Business card pixel size", href: "/tools/business-card-pixel-size" },
   { label: "Business card bleed size", href: "/tools/business-card-bleed-size" },
   { label: "Flyer PDF template", href: "/tools/flyer-pdf-template" },
   { label: "Postcard maker", href: "/tools/postcard-maker" },
   { label: "Free postcard maker", href: "/tools/free-postcard-maker" },
   { label: "Postcard template", href: "/tools/postcard-pdf-template" },
-  { label: "Postcard size", href: "/tools/postcard-size-guide" },
   { label: "Letterhead maker", href: "/tools/letterhead-maker" },
   { label: "Free letterhead maker", href: "/tools/free-letterhead-maker" },
   { label: "Letterhead format", href: "/tools/letterhead-format-guide" },
@@ -100,10 +106,53 @@ const proofMetrics = [
 ];
 
 const workflowCards: Array<[string, string, LucideIcon]> = [
-  ["01 Brief", "Plain-English job intake for cards, flyers, posters, brochures, postcards, and letterhead.", Sparkles],
+  ["01 Brief", "Plain-English job intake for cards, flyers, posters, menus, brochures, postcards, and letterhead.", Sparkles],
   ["02 Creative", "Image models create decorative art while final text stays deterministic.", Layers3],
   ["03 Geometry", "Trim, bleed, safe area, crop marks, ICC profile, and boxes are built exactly.", Ruler],
   ["04 Gate", "PDF/X, fonts, color, and DPI checks decide whether the file is safe to export.", ShieldCheck]
+];
+
+const buyerSegments: Array<[string, string, string, string, LucideIcon]> = [
+  [
+    "Print shops",
+    "Move small customer jobs from rough notes to checked starter proofs before production staff touch the file.",
+    "Use Trim Proof for repeatable first-pass setup, preflight evidence, and fewer avoidable file-prep conversations.",
+    "/for-print-shops",
+    Store
+  ],
+  [
+    "In-house marketers",
+    "Create local flyers, menus, postcards, posters, and handouts without guessing the printer's file rules.",
+    "Use Trim Proof when the deadline is close and the final file still needs bleed, crop marks, and vector text.",
+    "/for-marketers",
+    Building2
+  ],
+  [
+    "Freelance designers",
+    "Turn client copy into a structured proof, then hand over a PDF/X-oriented file with a visible checklist.",
+    "Use Trim Proof as a production safety layer around fast creative work instead of a generic template library.",
+    "/for-designers",
+    UsersRound
+  ]
+];
+
+const comparisonRows = [
+  ["Generic AI design tools", "Fast visual concepts, template browsing, and social assets.", "They often stop at screen-ready art, raster text, RGB output, or unclear print boxes."],
+  ["Traditional preflight tools", "Deep inspection and repair for production specialists.", "They expect the file already exists and usually assume Acrobat, plugins, or prepress training."],
+  ["Trim Proof", "A guided path from brief to checked proof.", "AI helps upstream; deterministic code owns PDF/X, CMYK-oriented output, bleed, crop marks, vector text, and the preflight report."]
+];
+
+const launchPlays: Array<[string, string, LucideIcon]> = [
+  ["10-credit print-shop pilot", "Test repeat jobs with a short feedback program built for printers, designers, and high-volume local marketers.", ClipboardCheck],
+  ["Free prepress checklist", "Start with the print checks buyers already search for: bleed, CMYK, PDF/X, Canva print quality, and preflight.", SearchCheck],
+  ["Founder follow-up", "Get help turning real job details into supported proofs, then use the same account for paid exports when a file is ready.", Gauge]
+];
+
+const productEvidence = [
+  ["Guided brief intake", "Sample jobs and a readiness checklist help new users start without a blank canvas."],
+  ["Visible print geometry", "Trim, bleed, and safe-area guides appear around the proof before export."],
+  ["Preflight path", "The workspace leads toward a press proof, report, and paid clean PDF/X download."],
+  ["Honest limits", "Demo art stays watermarked and production files stay locked until an export is paid."]
 ];
 
 const pricingPlans = [
@@ -186,7 +235,11 @@ function JsonLd() {
         "@type": "HowTo",
         name: "How to create a print-ready PDF with Trim Proof",
         step: [
-          { "@type": "HowToStep", name: "Write a brief", text: "Describe the business card, flyer, poster, brochure, postcard, or letterhead you need." },
+          {
+            "@type": "HowToStep",
+            name: "Write a brief",
+            text: "Describe the business card, flyer, poster, menu, brochure, postcard, or letterhead you need."
+          },
           { "@type": "HowToStep", name: "Choose a proof mode", text: "Use dummy proof mode for a fast watermarked sample or advanced mode for full PDF/X export controls." },
           { "@type": "HowToStep", name: "Run preflight", text: "Trim Proof checks trim, bleed, fonts, color workflow, image DPI, and PDF/X status." },
           { "@type": "HowToStep", name: "Download the file", text: "Use paid advanced export to download the clean production PDF/X file after the preflight gate passes or is flagged for review." }
@@ -196,56 +249,6 @@ function JsonLd() {
   };
 
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />;
-}
-
-function EmailCapture() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
-
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setStatus("loading");
-    const response = await fetch("/api/email-signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, source: "marketing_home", analytics: getAnalyticsAttribution() })
-    });
-    if (!response.ok) {
-      setStatus("error");
-      return;
-    }
-    trackEvent("email_signup_submitted", { source: "marketing_home" });
-    setEmail("");
-    setStatus("sent");
-  }
-
-  return (
-    <form className="flex flex-col gap-2 sm:flex-row" onSubmit={submit}>
-      <label className="sr-only" htmlFor="email">
-        Email address
-      </label>
-      <input
-        id="email"
-        className="h-11 min-w-0 flex-1 rounded-[8px] border border-border bg-surface px-3 text-sm text-surface-ink"
-        placeholder="you@printshop.com"
-        type="email"
-        value={email}
-        required
-        onChange={(event) => setEmail(event.target.value)}
-      />
-      <button
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] bg-surface-ink px-5 text-sm font-semibold text-white disabled:opacity-60"
-        disabled={status === "loading"}
-        type="submit"
-      >
-        <Mail aria-hidden className="h-4 w-4" />
-        Get launch updates
-      </button>
-      <span className="sr-only" aria-live="polite">
-        {status === "sent" ? "Signup received" : status === "error" ? "Signup failed" : ""}
-      </span>
-    </form>
-  );
 }
 
 export function MarketingSite() {
@@ -265,6 +268,9 @@ export function MarketingSite() {
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-semibold text-muted md:flex">
             <a href="#how-it-works">How it works</a>
+            <a href="#for-teams">For teams</a>
+            <a href="#compare">Compare</a>
+            <Link href="/sample-reports">Sample reports</Link>
             <Link href="/pricing">Pricing</Link>
             <a href="#seo-pages">Tools</a>
             <Link href="/about">About</Link>
@@ -299,7 +305,7 @@ export function MarketingSite() {
                 AI upstream <MoveRight aria-hidden className="h-3.5 w-3.5" /> deterministic prepress downstream
               </p>
               <h1 className="max-w-4xl font-display text-[clamp(2.65rem,7.4vw,6.4rem)] font-bold leading-[0.92] text-white">
-                AI print-ready PDF generator for flyers, posters, brochures, and business cards.
+                AI print-ready PDF generator for flyers, posters, menus, brochures, and business cards.
             </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-white/86 md:mt-6 md:text-lg md:leading-8">
                 Trim Proof turns a plain-English print brief into a checked PDF/X proof with CMYK output, crop marks,
@@ -377,6 +383,141 @@ export function MarketingSite() {
         </div>
       </section>
 
+      <section className="border-b border-border bg-surface" id="product-evidence">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 lg:grid-cols-[0.74fr_1.26fr] lg:items-center">
+          <div>
+            <FileCheck2 aria-hidden className="h-6 w-6 text-brand" />
+            <p className="mt-4 text-sm font-bold uppercase text-brand">Current workspace</p>
+            <h2 className="mt-3 font-display text-4xl font-bold leading-tight text-surface-ink">Show the proof surface before asking buyers to believe the pitch.</h2>
+            <p className="mt-4 text-base leading-7 text-muted">
+              The public message now has a real app image behind it: brief intake, sample jobs, print guides, proof readiness,
+              chat, save, and export controls on the same surface.
+            </p>
+            <div className="mt-6 divide-y divide-border border-y border-border">
+              {productEvidence.map(([label, body]) => (
+                <div key={label} className="grid gap-2 py-4 sm:grid-cols-[170px_1fr]">
+                  <p className="text-xs font-bold uppercase text-brand">{label}</p>
+                  <p className="text-sm font-semibold leading-6 text-surface-ink">{body}</p>
+                </div>
+              ))}
+            </div>
+            <Link className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-[8px] bg-surface-ink px-4 text-sm font-bold text-white" href="/sample-reports">
+              View sample reports
+              <ArrowRight aria-hidden className="h-4 w-4" />
+            </Link>
+          </div>
+          <figure>
+            <div className="overflow-hidden rounded-[8px] border border-border bg-background shadow-[0_22px_70px_oklch(0.18_0.02_252_/_0.14)]">
+              <Image
+                alt="Trim Proof workspace with design brief, sample print jobs, business card proof guides, design chat, and press proof controls."
+                className="h-auto w-full"
+                height={860}
+                sizes="(min-width: 1024px) 58vw, 100vw"
+                src="/images/product/trim-proof-workspace-app.png"
+                width={1440}
+              />
+            </div>
+            <figcaption className="mt-3 text-xs font-semibold leading-5 text-muted">
+              Local product screenshot captured from the current Trim Proof workspace with non-customer sample content.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section className="border-b border-border bg-surface" id="for-teams">
+        <div className="mx-auto max-w-7xl px-4 py-16">
+          <div className="grid gap-5 lg:grid-cols-[0.76fr_1fr] lg:items-end">
+            <div>
+              <Store aria-hidden className="h-6 w-6 text-brand" />
+              <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Built for the teams stuck between Canva and the press room.</h2>
+            </div>
+            <p className="text-base leading-7 text-muted">
+              Use Trim Proof when a normal design tool feels fast, but the printer still needs a real
+              handoff: trim size, bleed, safe area, crop marks, embedded vector text, color workflow, PDF/X status, and
+              a report someone can inspect.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-0 overflow-hidden rounded-[8px] border border-border bg-background lg:grid-cols-3">
+            {buyerSegments.map(([title, problem, outcome, href, Icon]) => (
+              <article key={title} className="border-b border-border p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
+                <Icon aria-hidden className="h-5 w-5 text-accent" />
+                <h3 className="mt-4 font-display text-2xl font-bold text-surface-ink">{title}</h3>
+                <p className="mt-3 text-sm leading-6 text-muted">{problem}</p>
+                <p className="mt-4 border-t border-border pt-4 text-sm font-semibold leading-6 text-surface-ink">{outcome}</p>
+                <Link className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-brand transition hover:text-surface-ink" href={href}>
+                  View use case
+                  <ArrowRight aria-hidden className="h-4 w-4" />
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border bg-background" id="compare">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 lg:grid-cols-[0.76fr_1fr]">
+          <div>
+            <Gauge aria-hidden className="h-6 w-6 text-brand" />
+            <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Not better templates. Proof before download.</h2>
+            <p className="mt-4 text-base leading-7 text-muted">
+              The market is split between creative generators and expert preflight software. Trim Proof can sit between
+              them: easy enough for the buyer who only has a brief, rigorous enough to make print risks visible.
+            </p>
+          </div>
+          <div className="divide-y divide-border border-y border-border">
+            {comparisonRows.map(([label, strength, gap]) => (
+              <div key={label} className="grid gap-3 py-5 md:grid-cols-[190px_1fr_1fr]">
+                <p className="text-xs font-bold uppercase text-brand">{label}</p>
+                <p className="text-sm leading-6 text-surface-ink">{strength}</p>
+                <p className="text-sm leading-6 text-muted">{gap}</p>
+              </div>
+            ))}
+            <div className="py-5">
+              <Link className="inline-flex items-center gap-2 text-sm font-bold text-brand transition hover:text-surface-ink" href="/compare/canva-print-ready-pdf">
+                Read the Canva print-ready PDF comparison
+                <ArrowRight aria-hidden className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border bg-surface">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 lg:grid-cols-[0.76fr_1fr] lg:items-start">
+          <div>
+            <ClipboardCheck aria-hidden className="h-6 w-6 text-success" />
+            <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Join the print-shop pilot.</h2>
+            <p className="mt-4 text-base leading-7 text-muted">
+              We are inviting printers, designers, and high-volume local marketers to test real jobs, pressure-check
+              the preflight path, and shape the next supported print workflows.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] bg-brand px-5 text-sm font-bold text-white transition hover:bg-surface-ink" href="/pilot-application">
+                Apply for pilot
+                <ArrowRight aria-hidden className="h-4 w-4" />
+              </Link>
+              <Link className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] border border-border bg-background px-5 text-sm font-bold text-surface-ink transition hover:border-brand hover:text-brand" href="/sample-reports">
+                View sample reports
+              </Link>
+            </div>
+            <div className="mt-5 max-w-xl">
+              <EmailCaptureForm buttonLabel="Join pilot list" id="pilot-email" source="print_shop_pilot" />
+            </div>
+          </div>
+          <div className="grid gap-3">
+            {launchPlays.map(([title, body, Icon]) => (
+              <article key={title} className="grid gap-3 rounded-[8px] border border-border bg-background p-5 sm:grid-cols-[auto_1fr]">
+                <Icon aria-hidden className="h-5 w-5 text-brand" />
+                <div>
+                  <h3 className="font-display text-2xl font-bold text-surface-ink">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="border-b border-border bg-surface" id="pricing">
         <div className="mx-auto max-w-7xl px-4 py-16">
           <div className="grid gap-5 lg:grid-cols-[0.8fr_1fr] lg:items-end">
@@ -432,12 +573,10 @@ export function MarketingSite() {
             <SearchCheck aria-hidden className="h-6 w-6 text-brand" />
             <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Built around the searches print buyers actually make.</h2>
             <p className="mt-4 text-base leading-7 text-muted">
-              DataForSEO research refreshed on June 6 and June 7, 2026 showed demand around AI flyer generation, AI
-              flyer makers, flyer size, poster maker, free poster maker, poster size, poster templates, AI poster
-              generator, AI business cards, CMYK PDF conversion, PDF/X-1a, print-ready PDFs, Canva print quality and
-              CMYK questions, prepress checklists, proofing software, prepress software, brochures, postcards, letterhead format,
-              and business cards with bleed. The product and content architecture target those jobs
-              directly.
+              DataForSEO research refreshed on June 12, 2026 across the United States and Canada showed the strongest
+              demand around business card maker and size terms, poster size and poster maker terms, flyer maker terms,
+              postcard size terms, brochure template demand, menu maker and menu template searches, and letterhead
+              format/template searches. The product and content architecture target those jobs directly.
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -476,7 +615,7 @@ export function MarketingSite() {
           Join the early list for product updates, SEO pages, print-profile notes, and the first production export tests.
         </p>
         <div className="mx-auto mt-6 max-w-xl">
-          <EmailCapture />
+          <EmailCaptureForm buttonLabel="Get launch updates" id="launch-email" source="marketing_home" />
         </div>
       </section>
 

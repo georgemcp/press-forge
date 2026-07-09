@@ -64,5 +64,5 @@ Implemented pages:
 
 Deferred:
 
-- `menu pdf template`: measurable volume, but menus are not currently listed as a supported starter product. Do not target this until a menu product profile exists.
+- `menu pdf template`: measurable volume, and the menu product profile now exists. Keep the dedicated menu template page in the supported product-template cluster.
 - Broader print-file setup pages beyond the checklist: exact demand was low in this refresh, so expand only after Search Console shows impressions around product-specific file setup terms.

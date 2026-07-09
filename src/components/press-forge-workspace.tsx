@@ -26,9 +26,21 @@ import {
   Save,
   FolderOpen,
   Clock,
+  CheckCircle2,
+  FileText,
 } from "lucide-react";
-import { PRINT_PROFILES, PRODUCT_PROFILES, type PrintProfileId, type ProductType } from "@/lib/print/constants";
+import {
+  PRINT_PROFILES,
+  PRINT_WORKFLOW_PRESETS,
+  PRODUCT_PROFILES,
+  getPrintWorkflowPresetSummary,
+  type PrintProfileId,
+  type PrintWorkflowPresetId,
+  type ProductType
+} from "@/lib/print/constants";
+import { deriveLayoutSpecFromBrief } from "@/lib/print/brief-layout";
 import type { LayoutSpec } from "@/lib/print/layout-spec";
+import { sampleBriefs, type SampleBrief } from "@/lib/print/sample-briefs";
 import type { PreflightReport } from "@/lib/print/preflight";
 import type { BriefEnhancementResult } from "@/lib/ai/brief-enhancer";
 import { trackEvent } from "@/lib/analytics/events";
@@ -53,6 +65,8 @@ interface ProofApiResponse {
   sourceUrl?: string;
   svgUrl?: string;
   reportUrl?: string;
+  reportHtmlUrl?: string;
+  reportTextUrl?: string;
   assetUrls?: Array<{
     slotId: string;
     provider: "openai" | "gemini" | "recraft" | "deterministic";
@@ -76,6 +90,7 @@ interface UploadedFile {
   url: string;
   size: number;
   contentType: string;
+  category?: UploadCategory;
   createdAt?: string;
 }
 
@@ -96,6 +111,8 @@ type CheckoutMode = "payment" | "subscription";
 type WorkspaceMode = "dummy" | "advanced";
 type PdfxLevel = LayoutSpec["pdfxLevel"];
 type LeftPanelTab = "brief" | "uploads" | "specs";
+type UploadCategory = "reference" | "source";
+type UploadIntent = UploadCategory;
 
 interface PaidSession {
   id: string;
@@ -123,6 +140,8 @@ interface WorkspaceState {
   isEnhancing: boolean;
   isGenerating: boolean;
   uploadedFiles: UploadedFile[];
+  isUploading: boolean;
+  uploadMessage: string | null;
   designVariations: DesignVariation[];
   chatMessages: ChatMessage[];
   activeVariationId: string | null;
@@ -133,6 +152,8 @@ interface WorkspaceState {
   isChatPending: boolean;
   savedDesigns: SavedDesignSummary[];
   currentDesignId: string | null;
+  clientName: string;
+  jobName: string;
   isSaving: boolean;
   isLoadingDesigns: boolean;
   saveMessage: string | null;
@@ -141,6 +162,8 @@ interface WorkspaceState {
 interface SavedDesignSummary {
   id: string;
   name: string;
+  clientName?: string;
+  jobName?: string;
   productType: string;
   updatedAt: string;
 }
@@ -148,7 +171,7 @@ interface SavedDesignSummary {
 type WorkspaceAction =
   | { type: "SET_MODE"; mode: WorkspaceMode }
   | { type: "SET_BRIEF"; brief: string }
-  | { type: "SET_ENHANCED_BRIEF"; enhancedBrief: BriefEnhancementResult }
+  | { type: "SET_ENHANCED_BRIEF"; enhancedBrief: BriefEnhancementResult | null }
   | { type: "SET_PRODUCT_TYPE"; productType: ProductType }
   | { type: "SET_PRINT_PROFILE"; printProfile: PrintProfileId }
   | { type: "SET_PDFX_LEVEL"; pdfxLevel: PdfxLevel }
@@ -168,6 +191,8 @@ type WorkspaceAction =
   | { type: "ADD_UPLOADED_FILE"; file: UploadedFile }
   | { type: "REMOVE_UPLOADED_FILE"; fileId: string }
   | { type: "SET_UPLOADED_FILES"; files: UploadedFile[] }
+  | { type: "SET_IS_UPLOADING"; isUploading: boolean }
+  | { type: "SET_UPLOAD_MESSAGE"; message: string | null }
   | { type: "ADD_DESIGN_VARIATION"; variation: DesignVariation }
   | { type: "SET_DESIGN_VARIATIONS"; variations: DesignVariation[] }
   | { type: "ADD_CHAT_MESSAGE"; message: ChatMessage }
@@ -181,6 +206,8 @@ type WorkspaceAction =
   | { type: "UPDATE_VARIATION_PROOF"; variationId: string; proof: ProofApiResponse }
   | { type: "SET_SAVED_DESIGNS"; designs: SavedDesignSummary[] }
   | { type: "SET_CURRENT_DESIGN_ID"; id: string | null }
+  | { type: "SET_CLIENT_NAME"; clientName: string }
+  | { type: "SET_JOB_NAME"; jobName: string }
   | { type: "SET_IS_SAVING"; isSaving: boolean }
   | { type: "SET_IS_LOADING_DESIGNS"; isLoading: boolean }
   | { type: "SET_SAVE_MESSAGE"; message: string | null };
@@ -191,9 +218,9 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
     case "SET_BRIEF": return { ...state, brief: action.brief };
     case "SET_ENHANCED_BRIEF": return { ...state, enhancedBrief: action.enhancedBrief };
     case "SET_PRODUCT_TYPE": return { ...state, productType: action.productType };
-    case "SET_PRINT_PROFILE": return { ...state, printProfile: action.printProfile };
-    case "SET_PDFX_LEVEL": return { ...state, pdfxLevel: action.pdfxLevel };
-    case "SET_CROP_MARKS": return { ...state, cropMarks: action.cropMarks };
+    case "SET_PRINT_PROFILE": return { ...state, printProfile: action.printProfile, spec: { ...state.spec, printProfile: action.printProfile } };
+    case "SET_PDFX_LEVEL": return { ...state, pdfxLevel: action.pdfxLevel, spec: { ...state.spec, pdfxLevel: action.pdfxLevel } };
+    case "SET_CROP_MARKS": return { ...state, cropMarks: action.cropMarks, spec: { ...state.spec, cropMarks: action.cropMarks } };
     case "SET_SPEC": return { ...state, spec: action.spec };
     case "SET_PROOF": return { ...state, proof: action.proof };
     case "SET_ERROR": return { ...state, error: action.error };
@@ -209,6 +236,8 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
     case "ADD_UPLOADED_FILE": return { ...state, uploadedFiles: [...state.uploadedFiles, action.file] };
     case "REMOVE_UPLOADED_FILE": return { ...state, uploadedFiles: state.uploadedFiles.filter(f => f.id !== action.fileId) };
     case "SET_UPLOADED_FILES": return { ...state, uploadedFiles: action.files };
+    case "SET_IS_UPLOADING": return { ...state, isUploading: action.isUploading };
+    case "SET_UPLOAD_MESSAGE": return { ...state, uploadMessage: action.message };
     case "ADD_DESIGN_VARIATION": return { ...state, designVariations: [...state.designVariations, action.variation] };
     case "SET_DESIGN_VARIATIONS": return { ...state, designVariations: action.variations };
     case "ADD_CHAT_MESSAGE": return { ...state, chatMessages: [...state.chatMessages, action.message] };
@@ -231,6 +260,10 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
       return { ...state, savedDesigns: action.designs };
     case "SET_CURRENT_DESIGN_ID":
       return { ...state, currentDesignId: action.id };
+    case "SET_CLIENT_NAME":
+      return { ...state, clientName: action.clientName };
+    case "SET_JOB_NAME":
+      return { ...state, jobName: action.jobName };
     case "SET_IS_SAVING":
       return { ...state, isSaving: action.isSaving };
     case "SET_IS_LOADING_DESIGNS":
@@ -255,6 +288,136 @@ function GuideLabel({ children, tone }: { children: React.ReactNode; tone: "blee
   );
 }
 
+function toDisplayName(value: string | undefined) {
+  if (!value) {
+    return "";
+  }
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+}
+
+function getSpecBrand(spec: LayoutSpec) {
+  return toDisplayName(spec.textBlocks.find((block) => block.id === "brand")?.content);
+}
+
+function defaultJobName(productType: ProductType) {
+  return `${PRODUCT_PROFILES[productType].label} proof`;
+}
+
+function buildSavedDesignMetadata(state: WorkspaceState, specOverride?: LayoutSpec) {
+  const spec = specOverride ?? state.spec;
+  const clientName = state.clientName.trim() || state.enhancedBrief?.brandName?.trim() || getSpecBrand(spec);
+  const jobName = state.jobName.trim() || defaultJobName(state.productType);
+  const name = clientName ? `${clientName} - ${jobName}` : jobName;
+
+  return {
+    name,
+    clientName,
+    jobName
+  };
+}
+
+function getFileBaseName(name: string) {
+  return name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function getUploadDisplayName(file: UploadedFile) {
+  return toDisplayName(getFileBaseName(file.name)) || "Uploaded customer file";
+}
+
+function isPdfUpload(file: UploadedFile) {
+  return file.contentType === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+}
+
+function canPreviewUploadedImage(file: UploadedFile) {
+  return ["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.contentType);
+}
+
+function getDesignReferenceImageUrls(files: UploadedFile[]) {
+  return files.filter(canPreviewUploadedImage).map((file) => file.url);
+}
+
+function getReferenceDescriptions(files: UploadedFile[]) {
+  return files.map((file) => `${file.name} (${isPdfUpload(file) ? "PDF source file" : "image reference"})`);
+}
+
+function formatFileSize(size: number) {
+  if (!Number.isFinite(size) || size <= 0) {
+    return "Stored file";
+  }
+  if (size >= 1024 * 1024) {
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  return `${Math.max(1, Math.round(size / 1024))} KB`;
+}
+
+function inferProductTypeFromFileName(name: string, fallback: ProductType): ProductType {
+  const normalized = name.toLowerCase();
+  const entries: Array<[ProductType, RegExp]> = [
+    ["business_card", /\b(business[-_\s]?card|calling[-_\s]?card|card)\b/],
+    ["postcard", /\b(postcard|mailer)\b/],
+    ["flyer", /\b(flyer|flier|one[-_\s]?sheet|sell[-_\s]?sheet)\b/],
+    ["poster", /\b(poster|sign)\b/],
+    ["brochure", /\b(brochure|tri[-_\s]?fold|trifold)\b/],
+    ["letterhead", /\b(letterhead|stationery)\b/],
+    ["menu", /\b(menu|takeout|restaurant|cafe|bar)\b/],
+  ];
+  return entries.find(([, pattern]) => pattern.test(normalized))?.[0] ?? fallback;
+}
+
+function buildUploadedFileBrief(file: UploadedFile, productType: ProductType) {
+  const fileLabel = getUploadDisplayName(file);
+  const productLabel = PRODUCT_PROFILES[productType].label.toLowerCase();
+  const sourceKind = isPdfUpload(file) ? "PDF" : "image";
+
+  return [
+    `Brand: ${fileLabel}.`,
+    `Create a print-ready ${productLabel} proof based on the uploaded customer ${sourceKind} "${file.name}".`,
+    "Rebuild it as a fresh Trim Proof layout; keep the useful offer, hierarchy, and visual cues, but do not assume the source file is production-ready.",
+    "Check bleed, trim, safe area, crop marks, vector text, color workflow, and image resolution before export."
+  ].join(" ");
+}
+
+function getActivePrintWorkflowPreset(state: WorkspaceState): PrintWorkflowPresetId | undefined {
+  return (Object.keys(PRINT_WORKFLOW_PRESETS) as PrintWorkflowPresetId[]).find((presetId) => {
+    const preset = PRINT_WORKFLOW_PRESETS[presetId];
+    return (
+      preset.printProfile === state.printProfile &&
+      preset.pdfxLevel === state.pdfxLevel &&
+      preset.cropMarks === state.cropMarks
+    );
+  });
+}
+
+function formatPreflightStatus(status: PreflightReport["status"]) {
+  if (status === "passed") {
+    return "Passed";
+  }
+  if (status === "needs_attention") {
+    return "Needs attention";
+  }
+  return "Failed";
+}
+
+function getProofCheckCounts(report: PreflightReport) {
+  return report.checks.reduce(
+    (counts, check) => {
+      if (check.status === "passed") {
+        counts.passed += 1;
+      } else if (check.status === "needs_attention") {
+        counts.needsAttention += 1;
+      } else {
+        counts.failed += 1;
+      }
+      counts.total += 1;
+      return counts;
+    },
+    { passed: 0, needsAttention: 0, failed: 0, total: 0 }
+  );
+}
+
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function PrintPreview({
@@ -270,7 +433,7 @@ function PrintPreview({
 }) {
   const productProfile = PRODUCT_PROFILES[spec.productType];
   const aspect = productProfile.trimWidthIn / productProfile.trimHeightIn;
-  const brand = spec.textBlocks.find((b) => b.id === "brand")?.content ?? "PRESS FORGE";
+  const brand = spec.textBlocks.find((b) => b.id === "brand")?.content ?? "TRIM PROOF";
   const tagline = spec.textBlocks.find((b) => b.id === "tagline")?.content ?? "AI-powered print design.";
   const name = spec.textBlocks.find((b) => b.id === "name")?.content ?? "";
   const contact = spec.textBlocks.find((b) => b.id === "contact")?.content ?? "";
@@ -371,6 +534,8 @@ export function PressForgeWorkspace({
     isEnhancing: false,
     isGenerating: false,
     uploadedFiles: [],
+    isUploading: false,
+    uploadMessage: null,
     designVariations: [],
     chatMessages: [],
     activeVariationId: null,
@@ -381,6 +546,8 @@ export function PressForgeWorkspace({
     isChatPending: false,
     savedDesigns: [],
     currentDesignId: null,
+    clientName: getSpecBrand(initialSpec),
+    jobName: defaultJobName(initialSpec.productType),
     isSaving: false,
     isLoadingDesigns: false,
     saveMessage: null,
@@ -388,6 +555,7 @@ export function PressForgeWorkspace({
 
   const chatInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadIntentRef = useRef<UploadIntent>("reference");
 
   // Handle checkout session verification on mount
   useEffect(() => {
@@ -419,11 +587,20 @@ export function PressForgeWorkspace({
   useEffect(() => {
     void (async () => {
       try {
-        const res = await fetch("/api/upload");
-        if (res.ok) {
-          const data = await res.json() as { files: UploadedFile[] };
-          dispatch({ type: "SET_UPLOADED_FILES", files: data.files || [] });
-        }
+        const responses = await Promise.all([
+          fetch("/api/upload?category=reference"),
+          fetch("/api/upload?category=source")
+        ]);
+        const files = await Promise.all(
+          responses.map(async (res) => {
+            if (!res.ok) {
+              return [];
+            }
+            const data = await res.json() as { files?: UploadedFile[] };
+            return data.files || [];
+          })
+        );
+        dispatch({ type: "SET_UPLOADED_FILES", files: files.flat() });
       } catch { /* noop */ }
     })();
   }, []);
@@ -432,6 +609,34 @@ export function PressForgeWorkspace({
   useEffect(() => {
     void loadSavedDesigns();
   }, []);
+
+  function handleApplySampleBrief(sample: SampleBrief) {
+    const sampleSpec = deriveLayoutSpecFromBrief({
+      brief: sample.brief,
+      productType: sample.productType,
+      printProfile: state.printProfile,
+      pdfxLevel: state.pdfxLevel,
+      cropMarks: state.cropMarks
+    });
+
+    dispatch({ type: "SET_BRIEF", brief: sample.brief });
+    dispatch({ type: "SET_PRODUCT_TYPE", productType: sample.productType });
+    dispatch({ type: "SET_SPEC", spec: sampleSpec });
+    dispatch({ type: "SET_ENHANCED_BRIEF", enhancedBrief: null });
+    dispatch({ type: "SET_PROOF", proof: undefined });
+    dispatch({ type: "SET_DESIGN_VARIATIONS", variations: [] });
+    dispatch({ type: "SET_ACTIVE_VARIATION", variationId: null });
+    dispatch({ type: "SET_DESIGN_RATIONALE", rationale: null });
+    dispatch({ type: "SET_CURRENT_DESIGN_ID", id: null });
+    dispatch({ type: "SET_CLIENT_NAME", clientName: getSpecBrand(sampleSpec) });
+    dispatch({ type: "SET_JOB_NAME", jobName: defaultJobName(sample.productType) });
+    dispatch({ type: "SET_SAVE_MESSAGE", message: null });
+    dispatch({ type: "SET_ERROR", error: undefined });
+    trackEvent("sample_brief_selected", {
+      sample_id: sample.id,
+      productType: sample.productType
+    });
+  }
 
   async function loadSavedDesigns() {
     dispatch({ type: "SET_IS_LOADING_DESIGNS", isLoading: true });
@@ -452,20 +657,21 @@ export function PressForgeWorkspace({
     dispatch({ type: "SET_IS_SAVING", isSaving: true });
     dispatch({ type: "SET_SAVE_MESSAGE", message: null });
     try {
+      const metadata = buildSavedDesignMetadata(state);
       const res = await fetch("/api/designs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: state.currentDesignId || undefined,
-          name: state.enhancedBrief?.brandName
-            ? `${state.enhancedBrief.brandName} ${PRODUCT_PROFILES[state.productType].label}`
-            : `Untitled ${PRODUCT_PROFILES[state.productType].label}`,
+          name: metadata.name,
+          clientName: metadata.clientName,
+          jobName: metadata.jobName,
           brief: state.brief,
           enhancedBrief: state.enhancedBrief,
           layoutSpec: state.spec,
           designRationale: state.designRationale,
           productType: state.productType,
-          referenceImageUrls: state.uploadedFiles.map(f => f.url),
+          referenceImageUrls: state.uploadedFiles.map((file) => file.url),
           iterationCount: state.designVariations.length + 1,
         }),
       });
@@ -489,14 +695,16 @@ export function PressForgeWorkspace({
     dispatch({ type: "SET_ERROR", error: undefined });
     try {
       const res = await fetch(`/api/designs?id=${encodeURIComponent(designId)}`);
-      const data = await res.json() as { design?: { layoutSpec: LayoutSpec; brief: string; enhancedBrief: BriefEnhancementResult | null; designRationale: string | null; productType: string; referenceImageUrls: string[] }; error?: string };
+      const data = await res.json() as { design?: { layoutSpec: LayoutSpec; brief: string; enhancedBrief: BriefEnhancementResult | null; designRationale: string | null; productType: string; referenceImageUrls: string[]; clientName?: string; jobName?: string }; error?: string };
       if (data.design) {
         dispatch({ type: "SET_SPEC", spec: data.design.layoutSpec });
         dispatch({ type: "SET_BRIEF", brief: data.design.brief || state.brief });
-        if (data.design.enhancedBrief) dispatch({ type: "SET_ENHANCED_BRIEF", enhancedBrief: data.design.enhancedBrief });
+        dispatch({ type: "SET_ENHANCED_BRIEF", enhancedBrief: data.design.enhancedBrief });
         if (data.design.designRationale) dispatch({ type: "SET_DESIGN_RATIONALE", rationale: data.design.designRationale });
         dispatch({ type: "SET_PRODUCT_TYPE", productType: (data.design.productType as ProductType) || state.productType });
         dispatch({ type: "SET_CURRENT_DESIGN_ID", id: designId });
+        dispatch({ type: "SET_CLIENT_NAME", clientName: data.design.clientName || getSpecBrand(data.design.layoutSpec) });
+        dispatch({ type: "SET_JOB_NAME", jobName: data.design.jobName || defaultJobName((data.design.productType as ProductType) || state.productType) });
         dispatch({ type: "SET_SAVE_MESSAGE", message: "Design loaded." });
         trackEvent("design_generation_completed", { action: "load" });
       } else {
@@ -521,19 +729,20 @@ export function PressForgeWorkspace({
   // Silent save used for auto-save after generation (no UI messages)
   async function handleSaveDesignSilent(specOverride?: LayoutSpec, rationaleOverride?: string) {
     try {
+      const metadata = buildSavedDesignMetadata(state, specOverride);
       const res = await fetch("/api/designs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: state.enhancedBrief?.brandName
-            ? `${state.enhancedBrief.brandName} ${PRODUCT_PROFILES[state.productType].label}`
-            : `Untitled ${PRODUCT_PROFILES[state.productType].label}`,
+          name: metadata.name,
+          clientName: metadata.clientName,
+          jobName: metadata.jobName,
           brief: state.brief,
           enhancedBrief: state.enhancedBrief,
           layoutSpec: specOverride || state.spec,
           designRationale: rationaleOverride || state.designRationale,
           productType: state.productType,
-          referenceImageUrls: state.uploadedFiles.map(f => f.url),
+          referenceImageUrls: state.uploadedFiles.map((file) => file.url),
           iterationCount: state.designVariations.length + 1,
         }),
       });
@@ -560,7 +769,7 @@ export function PressForgeWorkspace({
         body: JSON.stringify({
           brief: state.brief,
           productType: state.productType,
-          referenceImageDescriptions: state.uploadedFiles.map(f => f.name),
+          referenceImageDescriptions: getReferenceDescriptions(state.uploadedFiles),
         }),
       });
 
@@ -596,7 +805,7 @@ export function PressForgeWorkspace({
           printProfile: state.printProfile,
           pdfxLevel: state.pdfxLevel,
           cropMarks: state.cropMarks,
-          referenceImageUrls: state.uploadedFiles.map(f => f.url),
+          referenceImageUrls: getDesignReferenceImageUrls(state.uploadedFiles),
           designIteration: state.designVariations.length + 1,
         }),
       });
@@ -690,25 +899,89 @@ export function PressForgeWorkspace({
     }
   }
 
+  function startFileUpload(intent: UploadIntent) {
+    uploadIntentRef.current = intent;
+    fileInputRef.current?.click();
+  }
+
+  function applyUploadedFileAsSource(file: UploadedFile) {
+    const productType = inferProductTypeFromFileName(file.name, state.productType);
+    const brief = buildUploadedFileBrief(file, productType);
+    const spec = deriveLayoutSpecFromBrief({
+      brief,
+      productType,
+      printProfile: state.printProfile,
+      pdfxLevel: state.pdfxLevel,
+      cropMarks: state.cropMarks
+    });
+
+    dispatch({ type: "SET_BRIEF", brief });
+    dispatch({ type: "SET_PRODUCT_TYPE", productType });
+    dispatch({ type: "SET_SPEC", spec });
+    dispatch({ type: "SET_ENHANCED_BRIEF", enhancedBrief: null });
+    dispatch({ type: "SET_PROOF", proof: undefined });
+    dispatch({ type: "SET_DESIGN_VARIATIONS", variations: [] });
+    dispatch({ type: "SET_ACTIVE_VARIATION", variationId: null });
+    dispatch({ type: "SET_DESIGN_RATIONALE", rationale: null });
+    dispatch({ type: "SET_CURRENT_DESIGN_ID", id: null });
+    dispatch({ type: "SET_CLIENT_NAME", clientName: getUploadDisplayName(file) });
+    dispatch({ type: "SET_JOB_NAME", jobName: `${PRODUCT_PROFILES[productType].label} rebuild proof` });
+    dispatch({ type: "SET_LEFT_PANEL_TAB", tab: "brief" });
+    dispatch({ type: "SET_SAVE_MESSAGE", message: null });
+    dispatch({ type: "SET_ERROR", error: undefined });
+    trackEvent("source_file_applied", {
+      file_type: file.contentType,
+      productType
+    });
+  }
+
+  function applyPrintWorkflowPreset(presetId: PrintWorkflowPresetId) {
+    const preset = PRINT_WORKFLOW_PRESETS[presetId];
+    dispatch({ type: "SET_PRINT_PROFILE", printProfile: preset.printProfile });
+    dispatch({ type: "SET_PDFX_LEVEL", pdfxLevel: preset.pdfxLevel });
+    dispatch({ type: "SET_CROP_MARKS", cropMarks: preset.cropMarks });
+    dispatch({ type: "SET_ERROR", error: undefined });
+  }
+
   async function handleUpload(file: File) {
+    const intent = file.type === "application/pdf" ? "source" : uploadIntentRef.current;
+    const category: UploadCategory = intent === "source" ? "source" : "reference";
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("category", "reference");
+    formData.append("category", category);
 
     try {
+      dispatch({ type: "SET_IS_UPLOADING", isUploading: true });
+      dispatch({ type: "SET_UPLOAD_MESSAGE", message: null });
+      dispatch({ type: "SET_ERROR", error: undefined });
       const response = await fetch("/api/upload", { method: "POST", body: formData });
       if (!response.ok) {
         const err = await response.json().catch(() => ({ error: "Upload failed" })) as { error?: string };
         throw new Error(err.error || "Upload failed");
       }
-      const data = await response.json() as { success: boolean; fileId: string; url: string; originalName: string; size: number; contentType: string };
-      dispatch({
-        type: "ADD_UPLOADED_FILE",
-        file: { id: data.fileId, name: data.originalName, url: data.url, size: data.size, contentType: data.contentType },
-      });
-      trackEvent("reference_image_uploaded", { file_type: data.contentType });
+      const data = await response.json() as { success: boolean; fileId: string; url: string; originalName: string; size: number; contentType: string; category?: UploadCategory };
+      const uploadedFile: UploadedFile = {
+        id: data.fileId,
+        name: data.originalName,
+        url: data.url,
+        size: data.size,
+        contentType: data.contentType,
+        category: data.category ?? category
+      };
+      dispatch({ type: "ADD_UPLOADED_FILE", file: uploadedFile });
+      if (category === "source") {
+        applyUploadedFileAsSource(uploadedFile);
+        dispatch({ type: "SET_UPLOAD_MESSAGE", message: "Brief started from uploaded customer file." });
+        trackEvent("source_file_uploaded", { file_type: data.contentType });
+      } else {
+        dispatch({ type: "SET_UPLOAD_MESSAGE", message: "Reference image uploaded." });
+        trackEvent("reference_image_uploaded", { file_type: data.contentType });
+      }
     } catch (error) {
       dispatch({ type: "SET_ERROR", error: error instanceof Error ? error.message : "Upload failed." });
+    } finally {
+      dispatch({ type: "SET_IS_UPLOADING", isUploading: false });
+      uploadIntentRef.current = "reference";
     }
   }
 
@@ -870,7 +1143,33 @@ export function PressForgeWorkspace({
 
   const activeVariation = state.designVariations.find(v => v.id === state.activeVariationId);
   const currentProof = activeVariation?.proof || state.proof;
+  const proofReportUrl = currentProof?.reportHtmlUrl ?? currentProof?.reportUrl;
+  const proofCheckCounts = currentProof ? getProofCheckCounts(currentProof.report) : undefined;
   const advancedLocked = state.mode === "advanced" && !state.paidSession;
+  const selectedSampleId = sampleBriefs.find((sample) => sample.brief === state.brief)?.id;
+  const activePrintPresetId = getActivePrintWorkflowPreset(state);
+  const activePrintPreset = activePrintPresetId ? PRINT_WORKFLOW_PRESETS[activePrintPresetId] : undefined;
+  const activePrintPresetSummary = activePrintPresetId
+    ? getPrintWorkflowPresetSummary(state.productType, activePrintPresetId)
+    : undefined;
+  const readinessChecks = [
+    {
+      label: "Brand and print job named",
+      complete: state.brief.trim().length >= 80 && /brand\s*:/i.test(state.brief)
+    },
+    {
+      label: `${PRODUCT_PROFILES[state.productType].label} profile selected`,
+      complete: Boolean(state.productType)
+    },
+    {
+      label: `${state.pdfxLevel} target set`,
+      complete: Boolean(state.pdfxLevel)
+    },
+    {
+      label: currentProof ? `Preflight ${currentProof.report.status.replace("_", " ")}` : "Proof report pending",
+      complete: Boolean(currentProof)
+    }
+  ];
 
   return (
     <main className="min-h-screen overflow-auto p-2 text-foreground xl:h-screen xl:overflow-hidden">
@@ -882,7 +1181,7 @@ export function PressForgeWorkspace({
               <Box aria-hidden className="h-4 w-4" />
             </div>
             <div>
-              <h1 className="font-display text-lg font-bold text-surface-ink">Press Forge</h1>
+              <h1 className="font-display text-lg font-bold text-surface-ink">Trim Proof</h1>
               <p className="text-xs font-medium text-muted">AI-powered print design studio</p>
             </div>
           </div>
@@ -935,11 +1234,44 @@ export function PressForgeWorkspace({
                 </button>
               ))}
             </div>
+            <input
+              ref={fileInputRef}
+              className="hidden"
+              type="file"
+              accept="application/pdf,image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleUpload(file);
+                e.target.value = "";
+              }}
+            />
 
             {/* Tab content */}
             <div className="min-h-0 flex-1 overflow-auto">
               {state.leftPanelTab === "brief" && (
                 <div className="space-y-3 p-3">
+                  <div className="rounded-[8px] border border-accent/25 bg-accent/5 p-2.5">
+                    <div className="flex items-start gap-2">
+                      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-[7px] bg-surface text-accent">
+                        <Upload aria-hidden className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-display text-sm font-semibold text-surface-ink">Start with a customer file</h3>
+                        <p className="mt-1 text-xs leading-5 text-muted">
+                          Upload an existing PDF or image first. Trim Proof uses it as source material and rebuilds a checked proof.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      className="mt-2 flex h-9 w-full items-center justify-center gap-2 rounded-[8px] bg-surface-ink px-3 text-xs font-bold text-white transition hover:opacity-90 disabled:opacity-60"
+                      disabled={state.isUploading}
+                      onClick={() => startFileUpload("source")}
+                    >
+                      {state.isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                      {state.isUploading ? "Uploading..." : "Upload PDF or image"}
+                    </button>
+                  </div>
+
                   {/* Brief textarea */}
                   <div>
                     <label className="text-xs font-semibold uppercase text-muted">Design Brief</label>
@@ -949,6 +1281,50 @@ export function PressForgeWorkspace({
                       className="mt-1 h-[clamp(5rem,14vh,7rem)] w-full resize-none rounded-[8px] border border-border bg-surface p-3 text-sm leading-5 text-surface-ink shadow-sm focus:border-accent focus:outline-none"
                       placeholder="Describe what you want to create... e.g., A modern business card for a coffee roastery with earthy tones and a minimalist logo"
                     />
+                  </div>
+
+                  <div className="rounded-[8px] border border-border bg-surface p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-display text-sm font-semibold text-surface-ink">Sample briefs</h3>
+                      <span className="text-[10px] font-bold uppercase text-muted">Apply to proof</span>
+                    </div>
+                    <div className="mt-2 grid gap-1.5">
+                      {sampleBriefs.map((sample) => (
+                        <button
+                          key={sample.id}
+                          className={`rounded-[7px] border px-2.5 py-2 text-left transition hover:border-accent ${
+                            selectedSampleId === sample.id
+                              ? "border-accent bg-accent/10 text-surface-ink"
+                              : "border-border bg-background text-muted"
+                          }`}
+                          type="button"
+                          onClick={() => handleApplySampleBrief(sample)}
+                        >
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="font-display text-sm font-bold text-surface-ink">{sample.name}</span>
+                            <span className="rounded-[5px] bg-brand-soft px-1.5 py-0.5 text-[10px] font-bold uppercase text-brand">
+                              {PRODUCT_PROFILES[sample.productType].label}
+                            </span>
+                          </span>
+                          <span className="mt-1 block text-xs leading-5">{sample.goal}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[8px] border border-border bg-background p-2.5">
+                    <h3 className="font-display text-sm font-semibold text-surface-ink">Proof readiness</h3>
+                    <ul className="mt-2 grid gap-1.5">
+                      {readinessChecks.map((check) => (
+                        <li key={check.label} className="flex items-center gap-2 text-xs font-semibold text-surface-ink">
+                          <CheckCircle2
+                            aria-hidden
+                            className={`h-4 w-4 shrink-0 ${check.complete ? "text-success" : "text-muted/45"}`}
+                          />
+                          <span className={check.complete ? "" : "text-muted"}>{check.label}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
                   {/* Enhance button */}
@@ -1037,55 +1413,78 @@ export function PressForgeWorkspace({
               {state.leftPanelTab === "uploads" && (
                 <div className="space-y-3 p-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-display text-sm font-semibold text-surface-ink">Reference Images</h3>
+                    <h3 className="font-display text-sm font-semibold text-surface-ink">Customer files</h3>
                     <span className="text-xs text-muted">{state.uploadedFiles.length} files</span>
                   </div>
-                  <p className="text-xs text-muted">Upload logos, brand assets, or inspiration images. The AI will use these to inform the design.</p>
+                  <p className="text-xs leading-5 text-muted">
+                    Upload source PDFs, customer screenshots, logos, or inspiration images. Source files can start a brief; images can also guide AI art.
+                  </p>
 
                   {/* Upload button */}
-                  <button
-                    className="flex h-10 w-full items-center justify-center gap-2 rounded-[8px] border-2 border-dashed border-border bg-surface px-4 text-sm font-semibold text-muted transition hover:border-accent hover:text-accent"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-4 w-4" />
-                    Upload Image
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    className="hidden"
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleUpload(file);
-                      e.target.value = "";
-                    }}
-                  />
+                  <div className="grid gap-2">
+                    <button
+                      className="flex h-10 w-full items-center justify-center gap-2 rounded-[8px] border-2 border-dashed border-accent/40 bg-accent/5 px-4 text-sm font-semibold text-accent transition hover:border-accent disabled:opacity-60"
+                      disabled={state.isUploading}
+                      onClick={() => startFileUpload("source")}
+                    >
+                      {state.isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      {state.isUploading ? "Uploading..." : "Upload customer PDF or image"}
+                    </button>
+                    <button
+                      className="flex h-9 w-full items-center justify-center gap-2 rounded-[8px] border border-border bg-surface px-4 text-xs font-semibold text-muted transition hover:border-accent hover:text-accent disabled:opacity-60"
+                      disabled={state.isUploading}
+                      onClick={() => startFileUpload("reference")}
+                    >
+                      <ImagePlus className="h-3.5 w-3.5" />
+                      Add logo or reference image
+                    </button>
+                  </div>
+
+                  {state.uploadMessage ? (
+                    <div className="rounded-[8px] border border-success/30 bg-success/10 p-2 text-xs font-semibold text-success">
+                      {state.uploadMessage}
+                    </div>
+                  ) : null}
 
                   {/* Uploaded files list */}
                   {state.uploadedFiles.length > 0 ? (
                     <div className="space-y-2">
                       {state.uploadedFiles.map((file) => (
-                        <div key={file.id} className="flex items-center gap-2 rounded-[8px] border border-border bg-surface p-2">
-                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-[6px] bg-surface-strong">
-                            <Image
-                              src={file.url}
-                              alt={file.name}
-                              width={40}
-                              height={40}
-                              className="h-full w-full object-cover"
-                              unoptimized
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-xs font-semibold text-surface-ink">{file.name}</div>
-                            <div className="text-[10px] text-muted">{(file.size / 1024).toFixed(0)} KB</div>
+                        <div key={file.id} className="rounded-[8px] border border-border bg-surface p-2">
+                          <div className="flex items-center gap-2">
+                            <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-[6px] bg-surface-strong">
+                              {canPreviewUploadedImage(file) ? (
+                                <Image
+                                  src={file.url}
+                                  alt={file.name}
+                                  width={40}
+                                  height={40}
+                                  className="h-full w-full object-cover"
+                                  unoptimized
+                                />
+                              ) : (
+                                <FileText aria-hidden className="h-5 w-5 text-muted" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-xs font-semibold text-surface-ink">{file.name}</div>
+                              <div className="text-[10px] text-muted">
+                                {isPdfUpload(file) ? "PDF source" : "Image reference"} · {formatFileSize(file.size)}
+                              </div>
+                            </div>
+                            <button
+                              aria-label={`Remove ${file.name}`}
+                              className="shrink-0 rounded-[4px] p-1 text-muted hover:bg-danger/10 hover:text-danger"
+                              onClick={() => handleDeleteUpload(file.id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                           <button
-                            className="shrink-0 rounded-[4px] p-1 text-muted hover:bg-danger/10 hover:text-danger"
-                            onClick={() => handleDeleteUpload(file.id)}
+                            className="mt-2 flex h-8 w-full items-center justify-center rounded-[7px] border border-border bg-background px-3 text-xs font-semibold text-surface-ink hover:border-accent hover:text-accent"
+                            onClick={() => applyUploadedFileAsSource(file)}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            Use as starting point
                           </button>
                         </div>
                       ))}
@@ -1093,7 +1492,7 @@ export function PressForgeWorkspace({
                   ) : (
                     <div className="rounded-[8px] border border-border bg-surface p-6 text-center">
                       <ImagePlus className="mx-auto h-8 w-8 text-muted/40" />
-                      <p className="mt-2 text-xs text-muted">No images uploaded yet</p>
+                      <p className="mt-2 text-xs text-muted">No customer files uploaded yet</p>
                     </div>
                   )}
                 </div>
@@ -1117,6 +1516,56 @@ export function PressForgeWorkspace({
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Print workflow presets */}
+                  <div className="rounded-[8px] border border-border bg-surface p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-display text-sm font-semibold text-surface-ink">Shop preset</h3>
+                      <span className="text-[10px] font-bold uppercase text-muted">
+                        {activePrintPreset?.shortLabel ?? "Custom"}
+                      </span>
+                    </div>
+                    <div className="mt-2 grid gap-1.5">
+                      {(Object.keys(PRINT_WORKFLOW_PRESETS) as PrintWorkflowPresetId[]).map((presetId) => {
+                        const preset = PRINT_WORKFLOW_PRESETS[presetId];
+                        const summary = getPrintWorkflowPresetSummary(state.productType, presetId);
+
+                        return (
+                          <button
+                            key={presetId}
+                            className={`rounded-[8px] border px-2.5 py-2 text-left transition hover:border-accent ${
+                              activePrintPresetId === presetId
+                                ? "border-accent bg-accent/10 text-surface-ink"
+                                : "border-border bg-background text-muted"
+                            }`}
+                            onClick={() => applyPrintWorkflowPreset(presetId)}
+                            type="button"
+                          >
+                            <span className="flex items-center justify-between gap-2">
+                              <span className="font-display text-sm font-bold text-surface-ink">{preset.label}</span>
+                              <span className="text-[10px] font-bold uppercase text-muted">{summary.cropMarks}</span>
+                            </span>
+                            <span className="mt-1 block text-xs leading-5">
+                              {summary.printProfile} · {summary.pdfxLevel}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {activePrintPresetSummary ? (
+                      <div className="mt-2 rounded-[7px] border border-border bg-background p-2 text-xs leading-5">
+                        <div className="font-semibold text-surface-ink">{activePrintPresetSummary.trim}</div>
+                        <div className="text-muted">
+                          {activePrintPresetSummary.bleed} · {activePrintPresetSummary.safeMargin}
+                        </div>
+                        <div className="mt-1 text-muted">{activePrintPresetSummary.colorWorkflow}</div>
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-[7px] border border-border bg-background p-2 text-xs leading-5 text-muted">
+                        Custom settings are active. Confirm bleed, trim, safe area, crop marks, and color workflow with the printer before production.
+                      </div>
+                    )}
                   </div>
 
                   {/* Proof mode */}
@@ -1149,6 +1598,7 @@ export function PressForgeWorkspace({
                           onChange={(e) => dispatch({ type: "SET_PDFX_LEVEL", pdfxLevel: e.target.value as PdfxLevel })}
                         >
                           <option value="PDF/X-1a:2001">PDF/X-1a:2001</option>
+                          <option value="PDF/X-4">PDF/X-4</option>
                         </select>
                       </div>
                       <div>
@@ -1323,6 +1773,42 @@ export function PressForgeWorkspace({
                 {advancedLocked ? "Unlock export first" : currentProof ? "Regenerate proof" : "Generate press proof"}
               </button>
 
+              {currentProof && proofCheckCounts && proofReportUrl ? (
+                <div className="rounded-[8px] border border-border bg-background p-2.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-display text-sm font-semibold text-surface-ink">
+                        Preflight {formatPreflightStatus(currentProof.report.status).toLowerCase()}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold leading-5 text-muted">
+                        {proofCheckCounts.passed}/{proofCheckCounts.total} checks passed · {proofCheckCounts.needsAttention + proofCheckCounts.failed} to review
+                      </p>
+                    </div>
+                    <FileText aria-hidden className="h-4 w-4 shrink-0 text-accent" />
+                  </div>
+                  <div className="mt-2 grid gap-1.5">
+                    <a
+                      className="flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-accent/35 bg-accent/5 px-3 text-xs font-bold text-accent hover:bg-accent/10"
+                      href={proofReportUrl}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      Open preflight report
+                    </a>
+                    {currentProof.reportTextUrl ? (
+                      <a
+                        className="flex h-8 w-full items-center justify-center gap-2 rounded-[7px] border border-border bg-surface px-3 text-xs font-semibold text-surface-ink hover:bg-surface-strong"
+                        download
+                        href={currentProof.reportTextUrl}
+                      >
+                        Download text summary
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
               {/* Download */}
               {currentProof?.downloadUrl ? (
                 <a
@@ -1339,6 +1825,39 @@ export function PressForgeWorkspace({
                   Demo art is watermarked. Buy an export credit or start Pro to download a clean PDF/X proof.
                 </div>
               ) : null}
+
+              {/* Client / Job Metadata */}
+              <div className="rounded-[8px] border border-border bg-surface p-2.5 space-y-2">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4 text-brand" />
+                  <h3 className="font-display text-sm font-semibold text-surface-ink">Client job</h3>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+                  <label className="grid gap-1">
+                    <span className="text-[10px] font-bold uppercase text-muted">Client</span>
+                    <input
+                      className="h-8 rounded-[8px] border border-border bg-background px-2.5 text-xs font-semibold text-surface-ink placeholder:text-muted/70 focus:border-accent focus:outline-none"
+                      maxLength={140}
+                      onChange={(event) => dispatch({ type: "SET_CLIENT_NAME", clientName: event.target.value })}
+                      placeholder="Client or company"
+                      value={state.clientName}
+                    />
+                  </label>
+                  <label className="grid gap-1">
+                    <span className="text-[10px] font-bold uppercase text-muted">Job</span>
+                    <input
+                      className="h-8 rounded-[8px] border border-border bg-background px-2.5 text-xs font-semibold text-surface-ink placeholder:text-muted/70 focus:border-accent focus:outline-none"
+                      maxLength={140}
+                      onChange={(event) => dispatch({ type: "SET_JOB_NAME", jobName: event.target.value })}
+                      placeholder={`${PRODUCT_PROFILES[state.productType].label} proof`}
+                      value={state.jobName}
+                    />
+                  </label>
+                </div>
+                <p className="text-[10px] font-semibold leading-4 text-muted">
+                  Saved designs use this label so print shops can separate customer jobs.
+                </p>
+              </div>
 
               {/* Save Design */}
               <button
@@ -1375,8 +1894,11 @@ export function PressForgeWorkspace({
                           className="flex-1 text-left min-w-0"
                           onClick={() => handleLoadDesign(design.id)}
                         >
-                          <div className="truncate font-semibold text-surface-ink">{design.name}</div>
-                          <div className="flex items-center gap-2 mt-0.5">
+                          <div className="truncate font-semibold text-surface-ink">{design.clientName || design.name}</div>
+                          <div className="truncate text-[10px] font-semibold text-muted">
+                            {design.jobName || PRODUCT_PROFILES[design.productType as ProductType]?.label || design.productType}
+                          </div>
+                          <div className="mt-0.5 flex items-center gap-2">
                             <span className="text-[10px] text-muted">{PRODUCT_PROFILES[design.productType as ProductType]?.label || design.productType}</span>
                             <Clock className="h-2.5 w-2.5 text-muted/50" />
                             <span className="text-[10px] text-muted/60">{new Date(design.updatedAt).toLocaleDateString()}</span>

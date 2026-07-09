@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getSiteOrigin } from "@/lib/seo/site-url";
+import { audiencePages } from "@/lib/seo/audience-pages";
+import { comparisonPages } from "@/lib/seo/comparison-pages";
 import { toolPages } from "@/lib/seo/tool-pages";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -30,6 +32,36 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.7
     },
+    ...audiencePages.map((page) => ({
+      url: `${host}${page.path}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.72
+    })),
+    {
+      url: `${host}/prepress-checklist`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.76
+    },
+    {
+      url: `${host}/sample-reports`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.74
+    },
+    {
+      url: `${host}/pilot-application`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.78
+    },
+    ...comparisonPages.map((page) => ({
+      url: `${host}${page.path}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.74
+    })),
     {
       url: `${host}/privacy`,
       lastModified: now,
