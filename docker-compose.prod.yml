@@ -62,9 +62,17 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     init: true
+    user: redis
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     cpus: "${TRIMPROOF_REDIS_CPUS:-0.5}"
     mem_limit: "${TRIMPROOF_REDIS_MEMORY_LIMIT:-512m}"
     pids_limit: 128
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
     volumes:
       - trimproof-redis:/data
 
