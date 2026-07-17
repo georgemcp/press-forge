@@ -46,6 +46,9 @@ describe("production runtime configuration", () => {
     for (const command of composeCommands) {
       expect(command).toContain("docker compose -p trimproof ");
     }
+    expect(deploymentGuide).toContain("< .release-commit");
+    expect(deploymentGuide).toContain("^[0-9a-f]{40}$");
+    expect(deploymentGuide).not.toContain("git rev-parse HEAD");
   });
 
   it("records source provenance on application images", () => {

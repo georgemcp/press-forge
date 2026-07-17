@@ -19,7 +19,12 @@ The app is deployed with Docker Compose. Nginx terminates public HTTP/HTTPS and 
 Public `NEXT_PUBLIC_*` variables are passed as Docker build args so statically rendered marketing pages include analytics tags after rebuilds. Set the release revision before each production rebuild so the image carries auditable OCI source metadata, then wait for all native health checks:
 
 ```sh
-export TRIMPROOF_IMAGE_REVISION="$(git rev-parse HEAD)"
+TRIMPROOF_IMAGE_REVISION="$(tr -d '\r\n' < .release-commit)"
+if ! printf '%s\n' "$TRIMPROOF_IMAGE_REVISION" | grep -Eq '^[0-9a-f]{40}$'; then
+  printf '%s\n' 'Invalid or missing .release-commit marker.' >&2
+  exit 1
+fi
+export TRIMPROOF_IMAGE_REVISION
 docker compose -p trimproof --env-file .env.production -f docker-compose.prod.yml up -d --build --wait
 ```
 
