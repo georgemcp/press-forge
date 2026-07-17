@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 const dockerfile = readFileSync("Dockerfile", "utf8");
 const productionCompose = readFileSync("docker-compose.prod.yml", "utf8");
 const nginxConfig = readFileSync("deploy/nginx.trimproof.conf", "utf8");
+const deploymentGuide = readFileSync("docs/deploy/trimproof-vps.md", "utf8");
 
 describe("production runtime configuration", () => {
   it("pins every application stage to the Node 24 LTS image digest", () => {
@@ -36,6 +37,15 @@ describe("production runtime configuration", () => {
     expect(initService).toContain("chmod 0750 /generated");
     expect(initService).toContain("chown 1000:1000 /generated");
     expect(productionCompose.match(/condition: service_completed_successfully/g)).toHaveLength(2);
+  });
+
+  it("keeps every documented production command in the stable Compose project", () => {
+    const composeCommands = deploymentGuide.match(/docker compose [^\n`]+/g) ?? [];
+
+    expect(composeCommands.length).toBeGreaterThan(0);
+    for (const command of composeCommands) {
+      expect(command).toContain("docker compose -p trimproof ");
+    }
   });
 
   it("records source provenance on application images", () => {

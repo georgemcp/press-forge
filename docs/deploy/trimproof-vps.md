@@ -20,7 +20,7 @@ Public `NEXT_PUBLIC_*` variables are passed as Docker build args so statically r
 
 ```sh
 export TRIMPROOF_IMAGE_REVISION="$(git rev-parse HEAD)"
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build --wait
+docker compose -p trimproof --env-file .env.production -f docker-compose.prod.yml up -d --build --wait
 ```
 
 `TRIMPROOF_IMAGE_SOURCE` defaults to `https://github.com/georgemcp/press-forge`. Override it only when building from a different canonical source repository. If `TRIMPROOF_IMAGE_REVISION` is omitted, the image label is deliberately `unknown` rather than claiming an unverified commit.
@@ -70,10 +70,10 @@ Production Google DNS and files:
 
 Verification:
 
-- `docker compose -f docker-compose.prod.yml ps`
+- `docker compose -p trimproof -f docker-compose.prod.yml ps`
 - Confirm `generated-volume-init` exits with code `0`, and `web`, `worker`, and `redis` report `healthy`; web checks the public liveness route, worker verifies Redis connectivity through its configured URL, and Redis uses `redis-cli ping`.
 - Confirm the generated volume root reports UID/GID `1000:1000` and mode `750`; the worker performs a forced stale-proof cleanup at startup and hourly thereafter.
-- `docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }} {{ index .Config.Labels "org.opencontainers.image.source" }}' "$(docker compose --env-file .env.production -f docker-compose.prod.yml images -q web)"` should report the deployed Git commit and canonical repository.
+- `docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }} {{ index .Config.Labels "org.opencontainers.image.source" }}' "$(docker compose -p trimproof --env-file .env.production -f docker-compose.prod.yml images -q web)"` should report the deployed Git commit and canonical repository.
 - `curl http://127.0.0.1:3047/api/health`
 - Confirm `/api/health` reports `stripeCheckoutConfigured`, `stripeWebhookConfigured`, and `stripePortalConfigured` as `true` before treating paid exports and subscription management as live.
 - Visit `/app` in a fresh browser context and confirm it redirects to `/signup?next=...`; create an account before demo use.
