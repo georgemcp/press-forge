@@ -64,7 +64,7 @@ describe("production runtime configuration", () => {
     )?.[0];
 
     expect(webService).toBeDefined();
-    expect(webService).toContain("HOSTNAME: 0.0.0.0");
+    expect(webService).toContain('HOSTNAME: "0.0.0.0"');
     expect(webService).toContain("http://127.0.0.1:3000/api/health");
     expect(productionCompose.match(/^    healthcheck:/gm)).toHaveLength(3);
     expect(productionCompose.match(/condition: service_healthy/g)).toHaveLength(2);
