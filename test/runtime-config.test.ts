@@ -59,6 +59,13 @@ describe("production runtime configuration", () => {
   });
 
   it("defines health checks and gates application startup on Redis readiness", () => {
+    const webService = productionCompose.match(
+      /  web:\n[\s\S]*?\n  worker:/
+    )?.[0];
+
+    expect(webService).toBeDefined();
+    expect(webService).toContain('HOSTNAME: "0.0.0.0"');
+    expect(webService).toContain("http://127.0.0.1:3000/api/health");
     expect(productionCompose.match(/^    healthcheck:/gm)).toHaveLength(3);
     expect(productionCompose.match(/condition: service_healthy/g)).toHaveLength(2);
     expect(productionCompose).toContain('["CMD", "redis-cli", "ping"]');
