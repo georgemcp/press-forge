@@ -1,4 +1,23 @@
 services:
+  generated-volume-init:
+    image: node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
+    restart: "no"
+    user: "0:0"
+    read_only: true
+    network_mode: none
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+    cpus: "0.1"
+    mem_limit: "32m"
+    pids_limit: 16
+    command: ["sh", "-ceu", "chown 0:0 /generated && chmod 0750 /generated && chown 1000:1000 /generated"]
+    volumes:
+      - trimproof-generated:/generated
+
   web:
     build:
       context: .
@@ -6,6 +25,8 @@ services:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trimproof.com}
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
         NEXT_PUBLIC_GTM_CONTAINER_ID: ${NEXT_PUBLIC_GTM_CONTAINER_ID:-}
+        OCI_REVISION: ${TRIMPROOF_IMAGE_REVISION:-unknown}
+        OCI_SOURCE: ${TRIMPROOF_IMAGE_SOURCE:-https://github.com/georgemcp/press-forge}
     restart: unless-stopped
     init: true
     security_opt:
@@ -26,8 +47,25 @@ services:
       TRIMPROOF_GENERATED_DIR: /app/.trimproof-generated
     volumes:
       - trimproof-generated:/app/.trimproof-generated
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - --input-type=module
+        - -e
+        - >-
+          try { const response = await fetch('http://127.0.0.1:3000/api/health',
+          { signal: AbortSignal.timeout(3000) }); const body = await response.json();
+          if (!response.ok || body.ok !== true) process.exit(1); } catch { process.exit(1); }
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
-      - redis
+      generated-volume-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
   worker:
     build:
@@ -36,6 +74,8 @@ services:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trimproof.com}
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
         NEXT_PUBLIC_GTM_CONTAINER_ID: ${NEXT_PUBLIC_GTM_CONTAINER_ID:-}
+        OCI_REVISION: ${TRIMPROOF_IMAGE_REVISION:-unknown}
+        OCI_SOURCE: ${TRIMPROOF_IMAGE_SOURCE:-https://github.com/georgemcp/press-forge}
     restart: unless-stopped
     init: true
     security_opt:
@@ -55,11 +95,29 @@ services:
       TRIMPROOF_GENERATED_DIR: /app/.trimproof-generated
     volumes:
       - trimproof-generated:/app/.trimproof-generated
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - --input-type=module
+        - -e
+        - >-
+          import Redis from 'ioredis'; const redis = new Redis(process.env.REDIS_URL,
+          { lazyConnect: true, maxRetriesPerRequest: 0, connectTimeout: 2000 });
+          try { await redis.connect(); if (await redis.ping() !== 'PONG') process.exitCode = 1; }
+          catch { process.exitCode = 1; } finally { redis.disconnect(); }
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
-      - redis
+      generated-volume-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
     restart: unless-stopped
     init: true
     user: redis
@@ -75,6 +133,12 @@ services:
       - /tmp:rw,noexec,nosuid,size=16m
     volumes:
       - trimproof-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
 volumes:
   trimproof-redis:

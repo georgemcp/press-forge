@@ -1,6 +1,11 @@
 import { Worker } from "bullmq";
 import { layoutSpecSchema } from "@/lib/print/layout-spec";
 import { generateProof } from "@/lib/print/proof";
+import {
+  createWorkerProofOutputDir,
+  startWorkerProofRetention,
+  workerGeneratedProofRoot
+} from "./runtime";
 
 const redisUrl = process.env.REDIS_URL;
 
@@ -19,11 +24,25 @@ const connection = {
   maxRetriesPerRequest: null
 };
 
+const generatedRoot = workerGeneratedProofRoot();
+
+try {
+  await startWorkerProofRetention(generatedRoot, (error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Trim Proof worker proof cleanup failed: ${message}`);
+  });
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`Trim Proof worker startup cleanup failed: ${message}`);
+  process.exit(1);
+}
+
 const worker = new Worker(
   "trimproof-exports",
   async (job) => {
     const spec = layoutSpecSchema.parse(job.data.spec);
-    const proof = await generateProof(spec);
+    const outputDir = createWorkerProofOutputDir(generatedRoot);
+    const proof = await generateProof(spec, outputDir);
     if (proof.report.status === "failed") {
       throw new Error(`Preflight failed for job ${job.id}`);
     }
