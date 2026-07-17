@@ -50,7 +50,7 @@ function decodeSegment(value: string) {
 }
 
 export function isAccountAuthConfigured() {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY && getAccountSessionSecret());
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && getAccountSessionSecret());
 }
 
 export function createAccountSessionValue(session: AccountSession, now = Date.now()) {

@@ -10,6 +10,46 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
+function acceptedSignupResponse(formPost: boolean, request: Request) {
+  return formPost
+    ? NextResponse.redirect(new URL("/login?check_email=1", request.url), { status: 303 })
+    : NextResponse.json({
+        ok: true,
+        requiresEmailConfirmation: true,
+        message: "Check your email and verify your address before signing in."
+      }, { status: 202 });
+}
+
+function isExistingAccountResponse(
+  user: { identities?: unknown[] | null } | null,
+  error: { code?: string; message: string } | null
+) {
+  if (user?.identities?.length === 0) {
+    return true;
+  }
+  return error?.code === "user_already_exists" || /already (?:registered|exists)/i.test(error?.message ?? "");
+}
+
+async function persistMarketingConsent(email: string, source: string) {
+  const serviceClient = createServiceSupabaseClient();
+  if (!serviceClient) {
+    console.error("Trim Proof signup marketing consent persistence is unavailable");
+    return;
+  }
+
+  try {
+    const { error } = await serviceClient.from("email_signups").upsert(
+      { email, source },
+      { onConflict: "email" }
+    );
+    if (error) {
+      console.error("Trim Proof signup marketing consent persistence failed");
+    }
+  } catch {
+    console.error("Trim Proof signup marketing consent persistence failed");
+  }
+}
+
 async function readSignupPayload(request: Request) {
   const contentType = request.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
@@ -61,18 +101,16 @@ export async function POST(request: Request) {
   }
 
   const authClient = createAnonSupabaseClient();
-  const serviceClient = createServiceSupabaseClient();
-  if (!authClient || !serviceClient) {
-    return NextResponse.json({ error: "Supabase account services are not configured." }, { status: 503 });
+  if (!authClient) {
+    return NextResponse.json({ error: "Supabase account service is not configured." }, { status: 503 });
   }
 
   const profile = profileToUserUpdate(parsed.data);
-  let authUser;
-  let authError;
+  let authResult;
   try {
     const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
     const emailRedirectTo = new URL("/login?verified=1", appOrigin).toString();
-    const authResult = await authClient.auth.signUp({
+    authResult = await authClient.auth.signUp({
       email: profile.email,
       password: parsed.data.password,
       options: {
@@ -81,12 +119,15 @@ export async function POST(request: Request) {
           full_name: profile.full_name,
           company_name: profile.company_name,
           role: profile.role,
-          plan_interest: profile.plan_interest
+          company_website: profile.company_website,
+          phone: profile.phone,
+          monthly_print_jobs: profile.monthly_print_jobs,
+          primary_use_case: profile.primary_use_case,
+          plan_interest: profile.plan_interest,
+          marketing_consent: profile.marketing_consent
         }
       }
     });
-    authUser = authResult.data;
-    authError = authResult.error;
   } catch (error) {
     console.error("Trim Proof account signup auth request failed", {
       error: getErrorMessage(error)
@@ -94,43 +135,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Account signup is temporarily unavailable. Try again in a moment." }, { status: 503 });
   }
 
-  if (authError || !authUser.user) {
-    const isExisting = authError?.message.toLowerCase().includes("already");
-    return NextResponse.json(
-      { error: isExisting ? "Check your email for a verification link, or sign in if the account already exists." : "Account could not be created." },
-      { status: isExisting ? 202 : 400 }
-    );
+  if (isExistingAccountResponse(authResult.data.user, authResult.error)) {
+    return acceptedSignupResponse(formPost, request);
   }
 
-  const { error: profileError } = await serviceClient.from("users").upsert(
-    {
-      id: authUser.user.id,
-      ...profile
-    },
-    {
-      onConflict: "id"
-    }
-  );
-  if (profileError) {
-    return NextResponse.json({ error: profileError.message }, { status: 500 });
+  if (authResult.error || !authResult.data.user) {
+    return NextResponse.json({ error: "Account could not be created." }, { status: 400 });
   }
 
-  await serviceClient.from("email_signups").upsert(
-    {
-      email: profile.email,
-      source: `account_${profile.plan_interest}`
-    },
-    {
-      onConflict: "email"
-    }
-  );
+  if (profile.marketing_consent) {
+    await persistMarketingConsent(profile.email, `account_${profile.plan_interest}`);
+  }
 
-  const response = formPost
-    ? NextResponse.redirect(new URL("/login?check_email=1", request.url), { status: 303 })
-    : NextResponse.json({
-        ok: true,
-        requiresEmailConfirmation: true,
-        message: "Check your email and verify your address before signing in."
-      }, { status: 202 });
-  return response;
+  return acceptedSignupResponse(formPost, request);
 }
