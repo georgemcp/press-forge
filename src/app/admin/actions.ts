@@ -39,7 +39,7 @@ export async function loginAdmin(_state: AdminLoginState, formData: FormData): P
   if (!isAdminAuthConfigured()) {
     return {
       email,
-      error: "Admin login is not configured. Set TRIMPROOF_ADMIN_EMAIL, TRIMPROOF_ADMIN_PASSWORD, and TRIMPROOF_ADMIN_SESSION_SECRET."
+      error: "Admin login is not configured. Set TRIMPROOF_ADMIN_EMAIL, TRIMPROOF_ADMIN_PASSWORD_HASH, and TRIMPROOF_ADMIN_SESSION_SECRET."
     };
   }
 
