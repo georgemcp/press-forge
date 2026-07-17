@@ -1,10 +1,10 @@
-FROM node:26-bookworm-slim AS deps
+FROM node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d AS deps
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
-FROM node:26-bookworm-slim AS builder
+FROM node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_APP_URL=https://trimproof.com
 ARG NEXT_PUBLIC_GA_MEASUREMENT_ID=
@@ -17,7 +17,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-FROM node:26-bookworm-slim AS runner
+FROM node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d AS runner
 WORKDIR /app
 ARG OCI_REVISION=unknown
 ARG OCI_SOURCE=https://github.com/georgemcp/press-forge

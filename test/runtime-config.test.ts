@@ -6,6 +6,19 @@ const productionCompose = readFileSync("docker-compose.prod.yml", "utf8");
 const nginxConfig = readFileSync("deploy/nginx.trimproof.conf", "utf8");
 
 describe("production runtime configuration", () => {
+  it("pins every application stage to the Node 24 LTS image digest", () => {
+    expect(
+      dockerfile.match(/^FROM node:24-bookworm-slim@sha256:[a-f0-9]{64}/gm)
+    ).toHaveLength(3);
+    expect(dockerfile).not.toContain("node:26");
+  });
+
+  it("pins the Redis runtime image while retaining its readable tag", () => {
+    expect(productionCompose).toMatch(
+      /image: redis:7-alpine@sha256:[a-f0-9]{64}/
+    );
+  });
+
   it("records source provenance on application images", () => {
     expect(dockerfile).toContain('org.opencontainers.image.revision="${OCI_REVISION}"');
     expect(dockerfile).toContain('org.opencontainers.image.source="${OCI_SOURCE}"');
