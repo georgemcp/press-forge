@@ -1,7 +1,8 @@
 FROM node:26-bookworm-slim AS deps
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
 
 FROM node:26-bookworm-slim AS builder
 WORKDIR /app
@@ -11,6 +12,7 @@ ARG NEXT_PUBLIC_GTM_CONTAINER_ID=
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID
 ENV NEXT_PUBLIC_GTM_CONTAINER_ID=$NEXT_PUBLIC_GTM_CONTAINER_ID
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
@@ -18,6 +20,7 @@ RUN npm run build
 FROM node:26-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ghostscript poppler-utils fontconfig ca-certificates \
   && rm -rf /var/lib/apt/lists/*
@@ -29,5 +32,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/src ./src
+RUN mkdir -p /app/.next/cache /app/.trimproof-generated \
+  && chown -R node:node /app/.next /app/.trimproof-generated
+USER node
 EXPOSE 3000
 CMD ["node", "server.js"]

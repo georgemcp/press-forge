@@ -28,6 +28,29 @@ describe("LayoutSpec schema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("bounds attacker-controlled rendering work", () => {
+    const tooManySlots = Array.from({ length: 9 }, (_, index) => ({
+      id: `asset-${index}`,
+      kind: "background",
+      prompt: "paper texture",
+      x: 0,
+      y: 0,
+      width: 3.5,
+      height: 2,
+      minimumDpi: 300
+    }));
+
+    expect(layoutSpecSchema.safeParse({ ...sampleBusinessCardLayout, assetSlots: tooManySlots }).success).toBe(false);
+    expect(layoutSpecSchema.safeParse({
+      ...sampleBusinessCardLayout,
+      assetSlots: [{ ...tooManySlots[0], minimumDpi: 5000 }]
+    }).success).toBe(false);
+    expect(layoutSpecSchema.safeParse({
+      ...sampleBusinessCardLayout,
+      textBlocks: [{ ...sampleBusinessCardLayout.textBlocks[0], content: "x".repeat(4001) }]
+    }).success).toBe(false);
+  });
+
   it("derives customer-facing text from a natural-language brief", () => {
     const spec = deriveLayoutSpecFromBrief({
       brief: "Create a luxury business card for Bare Getaways with contact trips@baregetaways.com and a premium travel feel."

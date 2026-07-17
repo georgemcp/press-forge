@@ -16,10 +16,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const session = await verifyPaidCheckoutSession(sessionId);
-    if (session?.customerEmail && session.customerEmail.trim().toLowerCase() !== account.email) {
-      return NextResponse.json({ paid: false, error: "This checkout belongs to a different account email." }, { status: 403 });
-    }
+    const session = await verifyPaidCheckoutSession(sessionId, account);
     return NextResponse.json({
       paid: Boolean(session),
       session

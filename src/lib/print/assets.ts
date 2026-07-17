@@ -23,6 +23,7 @@ export interface ResolvedAsset {
 
 interface ResolveLayoutAssetsOptions {
   watermarkDemoArt?: boolean;
+  allowModelAssets?: boolean;
 }
 
 function toRgb(color: CmykColor) {
@@ -53,16 +54,34 @@ function maxAssetPixels() {
   return Number.isFinite(requested) ? Math.max(1_000_000, Math.min(200_000_000, Math.round(requested))) : 18_000_000;
 }
 
+function maxTotalAssetPixels() {
+  const requested = Number(process.env.TRIMPROOF_MAX_TOTAL_ASSET_PIXELS ?? 40_000_000);
+  return Number.isFinite(requested) ? Math.max(1_000_000, Math.min(400_000_000, Math.round(requested))) : 40_000_000;
+}
+
 function targetSize(slot: AssetSlot) {
   const desiredDpi = targetDpi(slot);
   const areaIn = Math.max(0.01, slot.width * slot.height);
   const maxDpiByPixels = Math.floor(Math.sqrt(maxAssetPixels() / areaIn));
-  const dpi = Math.max(slot.minimumDpi, Math.min(desiredDpi, maxDpiByPixels));
+  if (maxDpiByPixels < slot.minimumDpi) {
+    throw new Error(`Asset slot ${slot.id} exceeds the safe rendering pixel budget.`);
+  }
+  const dpi = Math.min(desiredDpi, maxDpiByPixels);
   return {
     dpi,
     widthPx: Math.max(1, Math.ceil(slot.width * dpi)),
     heightPx: Math.max(1, Math.ceil(slot.height * dpi))
   };
+}
+
+export function validateAssetRenderingBudget(spec: Pick<LayoutSpec, "assetSlots">) {
+  const totalPixels = spec.assetSlots.reduce((total, slot) => {
+    const size = targetSize(slot);
+    return total + size.widthPx * size.heightPx;
+  }, 0);
+  if (totalPixels > maxTotalAssetPixels()) {
+    throw new Error("Layout assets exceed the safe total rendering pixel budget.");
+  }
 }
 
 function pngCompressionLevel(widthPx: number, heightPx: number) {
@@ -196,11 +215,12 @@ async function applyDemoWatermarkIfNeeded(png: Buffer, widthPx: number, heightPx
 }
 
 export async function resolveLayoutAssets(spec: LayoutSpec, outputDir: string, options: ResolveLayoutAssetsOptions = {}) {
+  validateAssetRenderingBudget(spec);
   await fs.mkdir(outputDir, { recursive: true });
   const assets: ResolvedAsset[] = [];
 
   for (const slot of spec.assetSlots) {
-    const generated = await tryModelAsset(slot, spec);
+    const generated = options.allowModelAssets === false ? undefined : await tryModelAsset(slot, spec);
     assets.push(await normalizeAsset(slot, generated, spec, outputDir, options));
   }
 

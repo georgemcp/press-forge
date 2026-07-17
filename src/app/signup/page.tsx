@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Box, CheckCircle2 } from "lucide-react";
 import { SignupForm } from "@/components/account/account-access-form";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
+import { safeInternalPath } from "@/lib/security/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +24,6 @@ interface SignupPageProps {
   }>;
 }
 
-function safeNextPath(value?: string) {
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/app";
-}
-
 function planInterest(value?: string, nextPath?: string): "demo" | "single_export" | "pro" {
   if (value === "pro" || nextPath?.includes("mode=advanced")) {
     return "pro";
@@ -39,7 +36,7 @@ function planInterest(value?: string, nextPath?: string): "demo" | "single_expor
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
   const params = await searchParams;
-  const nextPath = safeNextPath(params.next);
+  const nextPath = safeInternalPath(params.next);
   const session = await getAccountSessionFromCookies();
   if (session) {
     redirect(nextPath);

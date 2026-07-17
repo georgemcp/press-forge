@@ -5,10 +5,11 @@ export const ACCOUNT_SESSION_COOKIE = "trimproof_account";
 export interface AccountSession {
   userId: string;
   email: string;
+  issuedAt?: number;
 }
 
-const sessionVersion = "v1";
-const sessionTtlSeconds = 60 * 60 * 24 * 30;
+const sessionVersion = "v2";
+const sessionTtlSeconds = 60 * 60 * 24 * 7;
 
 function firstValue(...values: Array<string | undefined>) {
   return values.find((value) => typeof value === "string" && value.trim().length > 0)?.trim();
@@ -57,7 +58,7 @@ export function createAccountSessionValue(session: AccountSession, now = Date.no
     throw new Error("Account session secret is not configured.");
   }
   const expiresAt = now + sessionTtlSeconds * 1000;
-  const payload = `${sessionVersion}.${expiresAt}.${encodeSegment(session.userId)}.${encodeSegment(normalizeEmail(session.email))}`;
+  const payload = `${sessionVersion}.${now}.${expiresAt}.${encodeSegment(session.userId)}.${encodeSegment(normalizeEmail(session.email))}`;
   const signature = sign(payload);
   if (!signature) {
     throw new Error("Account session secret is not configured.");
@@ -69,15 +70,16 @@ export function verifyAccountSessionValue(value: string | undefined, now = Date.
   if (!value) {
     return undefined;
   }
-  const [version, expiresAtValue, userIdSegment, emailSegment, signature, extra] = value.split(".");
-  if (version !== sessionVersion || !expiresAtValue || !userIdSegment || !emailSegment || !signature || extra) {
+  const [version, issuedAtValue, expiresAtValue, userIdSegment, emailSegment, signature, extra] = value.split(".");
+  if (version !== sessionVersion || !issuedAtValue || !expiresAtValue || !userIdSegment || !emailSegment || !signature || extra) {
     return undefined;
   }
+  const issuedAt = Number(issuedAtValue);
   const expiresAt = Number(expiresAtValue);
-  if (!Number.isFinite(expiresAt) || expiresAt <= now) {
+  if (!Number.isFinite(issuedAt) || issuedAt > now + 30_000 || !Number.isFinite(expiresAt) || expiresAt <= now || expiresAt <= issuedAt) {
     return undefined;
   }
-  const expected = sign(`${version}.${expiresAtValue}.${userIdSegment}.${emailSegment}`);
+  const expected = sign(`${version}.${issuedAtValue}.${expiresAtValue}.${userIdSegment}.${emailSegment}`);
   if (!expected || !safeEqual(signature, expected)) {
     return undefined;
   }
@@ -88,7 +90,8 @@ export function verifyAccountSessionValue(value: string | undefined, now = Date.
   }
   return {
     userId,
-    email: normalizeEmail(email)
+    email: normalizeEmail(email),
+    issuedAt
   };
 }
 

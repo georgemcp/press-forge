@@ -1,12 +1,25 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { generateDesignSpec } from "@/lib/ai/design-generator";
 import { layoutSpecSchema } from "@/lib/print/layout-spec";
-import type { ProductType, PrintProfileId } from "@/lib/print/constants";
-import type { BriefEnhancementResult } from "@/lib/ai/brief-enhancer";
+import { briefEnhancementSchema } from "@/lib/ai/brief-enhancer";
+import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
 
 export const runtime = "nodejs";
+
+const uploadReferenceSchema = z.string().max(200).regex(/^\/api\/upload\?file_id=[0-9a-f-]{36}$/i);
+const generateRequestSchema = z.object({
+  enhancedBrief: briefEnhancementSchema,
+  brief: z.string().max(6000).optional(),
+  productType: z.enum(["business_card", "postcard", "flyer", "poster", "brochure", "letterhead"]),
+  printProfile: z.enum(["USWebCoatedSWOP", "GRACoL2013", "FOGRA39"]).optional(),
+  pdfxLevel: z.enum(["PDF/X-1a:2001", "PDF/X-4"]).optional(),
+  cropMarks: z.boolean().optional(),
+  referenceImageUrls: z.array(uploadReferenceSchema).max(8).optional(),
+  designIteration: z.number().int().min(1).max(100).optional()
+});
 
 export async function POST(request: Request) {
   const account = await getAccountSessionFromCookies();
@@ -17,37 +30,31 @@ export async function POST(request: Request) {
     );
   }
 
-  const payload = (await request.json().catch(() => ({}))) as {
-    enhancedBrief?: BriefEnhancementResult;
-    brief?: string;
-    productType?: ProductType;
-    printProfile?: PrintProfileId;
-    pdfxLevel?: string;
-    cropMarks?: boolean;
-    referenceImageUrls?: string[];
-    designIteration?: number;
-  };
+  const rateLimit = checkRateLimit({
+    namespace: "design-generate",
+    key: `${account.userId}:${getRequestIp(request)}`,
+    limit: 10,
+    windowMs: 60 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit, "Design generation limit reached. Try again later.");
+  }
 
-  if (!payload.enhancedBrief) {
+  const parsedRequest = generateRequestSchema.safeParse(await request.json().catch(() => undefined));
+  if (!parsedRequest.success) {
     return NextResponse.json(
-      { error: "Please enhance your brief first before generating a design." },
+      { error: "Design generation request failed validation." },
       { status: 400 }
     );
   }
-
-  if (!payload.productType) {
-    return NextResponse.json(
-      { error: "Please select a product type." },
-      { status: 400 }
-    );
-  }
+  const payload = parsedRequest.data;
 
   try {
     const result = await generateDesignSpec({
       enhancedBrief: payload.enhancedBrief,
       productType: payload.productType,
       printProfile: payload.printProfile,
-      pdfxLevel: (payload.pdfxLevel as "PDF/X-1a:2001" | "PDF/X-4") || "PDF/X-1a:2001",
+      pdfxLevel: payload.pdfxLevel || "PDF/X-1a:2001",
       cropMarks: payload.cropMarks !== false,
       referenceImageUrls: payload.referenceImageUrls,
       designIteration: payload.designIteration || 1,

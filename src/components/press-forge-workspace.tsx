@@ -713,7 +713,15 @@ export function PressForgeWorkspace({
   }
 
   async function handleDeleteUpload(fileId: string) {
-    dispatch({ type: "REMOVE_UPLOADED_FILE", fileId });
+    try {
+      const response = await fetch(`/api/upload?file_id=${encodeURIComponent(fileId)}`, { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error("Upload could not be deleted.");
+      }
+      dispatch({ type: "REMOVE_UPLOADED_FILE", fileId });
+    } catch (error) {
+      dispatch({ type: "SET_ERROR", error: error instanceof Error ? error.message : "Upload could not be deleted." });
+    }
   }
 
   async function handleChatSubmit(e: React.FormEvent) {
@@ -1054,7 +1062,7 @@ export function PressForgeWorkspace({
                     ref={fileInputRef}
                     className="hidden"
                     type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+                    accept="image/png,image/jpeg,image/webp"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) handleUpload(file);

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { resolveLayoutAssets } from "@/lib/print/assets";
+import { resolveLayoutAssets, validateAssetRenderingBudget } from "@/lib/print/assets";
 import { sampleBusinessCardLayout } from "@/lib/print/sample-layout";
 
 const tempDirs: string[] = [];
@@ -67,5 +67,16 @@ describe("demo asset watermarking", () => {
 
     expect(Buffer.compare(Buffer.from(cleanAsset.bytes), Buffer.from(watermarkedAsset.bytes))).not.toBe(0);
     expect(Buffer.compare(cleanPreview, watermarkedPreview)).not.toBe(0);
+  });
+
+  it("rejects asset geometry that would bypass the pixel budget", () => {
+    expect(() => validateAssetRenderingBudget({
+      assetSlots: [{
+        ...layoutWithAsset.assetSlots[0],
+        width: 40,
+        height: 40,
+        minimumDpi: 1200
+      }]
+    })).toThrow("pixel budget");
   });
 });

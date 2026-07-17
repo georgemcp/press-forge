@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
-import { generateProof } from "@/lib/print/proof";
-import { writeProofDeliveryManifest } from "@/lib/print/delivery-manifest";
+import { generateProof, publicPreflightReport } from "@/lib/print/proof";
+import { cleanupStaleProofJobs, writeProofDeliveryManifest } from "@/lib/print/delivery-manifest";
 import { layoutSpecSchema } from "@/lib/print/layout-spec";
 import { sampleBusinessCardLayout } from "@/lib/print/sample-layout";
 import {
@@ -17,8 +18,21 @@ import {
   type PaidCheckoutSession,
   verifyPaidCheckoutSession
 } from "@/lib/billing/paid-session";
+import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
 
 export const runtime = "nodejs";
+
+const proofRequestSchema = z.object({
+  spec: layoutSpecSchema.optional(),
+  brief: z.string().max(6000).optional(),
+  mode: z.enum(["dummy", "advanced"]).optional(),
+  checkoutSessionId: z.string().min(4).max(255).regex(/^cs_[A-Za-z0-9_]+$/).optional(),
+  analytics: z.object({
+    gaClientId: z.string().max(120).optional(),
+    gaSessionId: z.string().max(120).optional(),
+    pagePath: z.string().max(240).optional()
+  }).optional()
+});
 
 export async function POST(request: Request) {
   const account = await getAccountSessionFromCookies();
@@ -26,32 +40,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Create an account before generating a Press Forge demo or export." }, { status: 401 });
   }
 
-  const payload = (await request.json().catch(() => ({}))) as {
-    spec?: unknown;
-    brief?: string;
-    mode?: "dummy" | "advanced";
-    checkoutSessionId?: string;
-    analytics?: {
-      gaClientId?: string;
-      gaSessionId?: string;
-      pagePath?: string;
-    };
-  };
-  const parsed = layoutSpecSchema.safeParse(payload.spec ?? sampleBusinessCardLayout);
-  if (!parsed.success) {
+  const rateLimit = checkRateLimit({
+    namespace: "proof-export",
+    key: `${account.userId}:${getRequestIp(request)}`,
+    limit: 12,
+    windowMs: 60 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit, "Proof generation limit reached. Try again later.");
+  }
+
+  const parsedRequest = proofRequestSchema.safeParse(await request.json().catch(() => undefined));
+  if (!parsedRequest.success) {
     return NextResponse.json(
       {
-        error: "LayoutSpec failed validation.",
-        issues: parsed.error.issues
+        error: "Proof request failed validation.",
+        issues: parsedRequest.error.issues
       },
       { status: 400 }
     );
   }
+  const payload = parsedRequest.data;
+  const spec = payload.spec ?? layoutSpecSchema.parse(sampleBusinessCardLayout);
 
   const mode = payload.mode === "advanced" ? "advanced" : "dummy";
   let paidSession: PaidCheckoutSession | undefined;
   try {
-    paidSession = mode === "advanced" ? await verifyPaidCheckoutSession(payload.checkoutSessionId) : undefined;
+    paidSession = mode === "advanced" ? await verifyPaidCheckoutSession(payload.checkoutSessionId, account) : undefined;
   } catch (error) {
     return NextResponse.json(
       {
@@ -100,11 +115,13 @@ export async function POST(request: Request) {
 
   try {
     const generatedRoot = process.env.TRIMPROOF_GENERATED_DIR ?? path.join(process.cwd(), ".trimproof-generated");
+    await cleanupStaleProofJobs(generatedRoot);
     const outputDir = path.join(generatedRoot, jobId);
-    const proof = await generateProof(parsed.data, outputDir, {
-      watermarkDemoArt: mode === "dummy"
+    const proof = await generateProof(spec, outputDir, {
+      watermarkDemoArt: mode === "dummy",
+      allowModelAssets: mode === "advanced"
     });
-    const manifest = await writeProofDeliveryManifest(outputDir, mode);
+    const manifest = await writeProofDeliveryManifest(outputDir, mode, account.userId);
     const fileBase = `/api/exports/proof/files/${jobId}`;
     if (paidSession?.entitlement === "export_credit") {
       await finalizeExportCredit(paidSession.id, jobId);
@@ -123,7 +140,7 @@ export async function POST(request: Request) {
       clientId: payload.analytics?.gaClientId,
       params: {
         mode,
-        product_type: parsed.data.productType,
+        product_type: spec.productType,
         report_status: proof.report.status,
         print_profile: proof.report.printProfile,
         pdfx_level: proof.report.pdfxLevel,
@@ -146,7 +163,7 @@ export async function POST(request: Request) {
       jobId,
       mode,
       productionDownloadLocked: !manifest.canDownloadProductionFiles,
-      report: proof.report,
+      report: publicPreflightReport(proof.report),
       analytics,
       demoArtWatermarked: mode === "dummy",
       ...productionUrls,

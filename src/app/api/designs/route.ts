@@ -1,11 +1,25 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import type { Json } from "@/types/supabase";
-import type { LayoutSpec } from "@/lib/print/layout-spec";
-import type { BriefEnhancementResult } from "@/lib/ai/brief-enhancer";
+import { layoutSpecSchema, type LayoutSpec } from "@/lib/print/layout-spec";
+import { briefEnhancementSchema, type BriefEnhancementResult } from "@/lib/ai/brief-enhancer";
 
 export const runtime = "nodejs";
+
+const uploadReferenceSchema = z.string().max(200).regex(/^\/api\/upload\?file_id=[0-9a-f-]{36}$/i);
+const saveDesignSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().trim().min(1).max(200).optional(),
+  brief: z.string().max(6000).optional(),
+  enhancedBrief: briefEnhancementSchema.nullable().optional(),
+  layoutSpec: layoutSpecSchema,
+  designRationale: z.string().max(4000).optional(),
+  productType: z.enum(["business_card", "postcard", "flyer", "poster", "brochure", "letterhead"]).optional(),
+  referenceImageUrls: z.array(uploadReferenceSchema).max(8).optional(),
+  iterationCount: z.number().int().min(1).max(100).optional()
+});
 
 export interface SavedDesign {
   id: string;
@@ -52,6 +66,10 @@ export async function GET(request: Request) {
     }
 
     const row = data as Record<string, unknown>;
+    const parsedSpec = layoutSpecSchema.safeParse(row.layout_spec);
+    if (!parsedSpec.success) {
+      return NextResponse.json({ error: "Saved design data failed validation." }, { status: 422 });
+    }
     return NextResponse.json({
       design: {
         id: row.id as string,
@@ -59,7 +77,7 @@ export async function GET(request: Request) {
         name: (row.name as string) || "Untitled Design",
         brief: (row.brief as string) || "",
         enhancedBrief: (row.enhanced_brief as BriefEnhancementResult | null) || null,
-        layoutSpec: row.layout_spec as LayoutSpec,
+        layoutSpec: parsedSpec.data,
         designRationale: (row.design_rationale as string) || null,
         productType: (row.product_type as string) || "business_card",
         referenceImageUrls: (row.reference_image_urls as string[]) || [],
@@ -144,21 +162,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Sign in to save designs." }, { status: 401 });
   }
 
-  const payload = (await request.json().catch(() => ({}))) as {
-    id?: string;              // if provided, update existing design
-    name?: string;
-    brief?: string;
-    enhancedBrief?: BriefEnhancementResult | null;
-    layoutSpec?: LayoutSpec;
-    designRationale?: string;
-    productType?: string;
-    referenceImageUrls?: string[];
-    iterationCount?: number;
-  };
-
-  if (!payload.layoutSpec) {
-    return NextResponse.json({ error: "Missing layout spec." }, { status: 400 });
+  const parsed = saveDesignSchema.safeParse(await request.json().catch(() => undefined));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Saved design request failed validation." }, { status: 400 });
   }
+  const payload = parsed.data;
 
   const supabase = createServiceSupabaseClient();
   if (!supabase) {

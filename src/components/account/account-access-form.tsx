@@ -29,11 +29,13 @@ async function parseError(response: Response) {
 
 export function SignupForm({ nextPath, planInterest }: SignupFormProps) {
   const [error, setError] = useState<string>();
+  const [notice, setNotice] = useState<string>();
   const [pending, setPending] = useState(false);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(undefined);
+    setNotice(undefined);
     setPending(true);
     const form = new FormData(event.currentTarget);
     const payload = {
@@ -60,7 +62,8 @@ export function SignupForm({ nextPath, planInterest }: SignupFormProps) {
         setError(await parseError(response));
         return;
       }
-      window.location.assign(nextPath);
+      const result = (await response.json().catch(() => undefined)) as { message?: string } | undefined;
+      setNotice(result?.message ?? "Check your email and verify your address before signing in.");
     } finally {
       setPending(false);
     }
@@ -99,7 +102,7 @@ export function SignupForm({ nextPath, planInterest }: SignupFormProps) {
           <option value="mixed_print">Mixed print work</option>
         </SelectField>
       </div>
-      <Field icon={LockKeyhole} label="Password" minLength={8} name="password" placeholder="At least 8 characters" required type="password" />
+      <Field icon={LockKeyhole} label="Password" minLength={12} name="password" placeholder="At least 12 characters" required type="password" />
 
       <label className="flex gap-3 text-sm leading-6 text-muted">
         <input className="mt-1 h-4 w-4 rounded border-border accent-surface-ink" defaultChecked name="marketingConsent" type="checkbox" />
@@ -107,6 +110,7 @@ export function SignupForm({ nextPath, planInterest }: SignupFormProps) {
       </label>
 
       {error ? <p className="rounded-[8px] border border-danger/30 bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">{error}</p> : null}
+      {notice ? <p className="rounded-[8px] border border-success/30 bg-success/10 px-3 py-2 text-sm font-semibold text-success">{notice}</p> : null}
 
       <button className="inline-flex h-12 items-center justify-center gap-2 rounded-[8px] bg-surface-ink px-5 text-sm font-bold text-white disabled:opacity-60" disabled={pending} type="submit">
         {pending ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : <ArrowRight aria-hidden className="h-4 w-4" />}

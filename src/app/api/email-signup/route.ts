@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { getAdminSignupRecipients, sendTransactionalEmail } from "@/lib/email/transactional";
+import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
 
 const analyticsSchema = z
   .object({
@@ -80,29 +81,71 @@ function adminNotificationEmail(email: string, source: string, recipients: strin
 }
 
 export async function POST(request: Request) {
+  const ipLimit = checkRateLimit({
+    namespace: "email-signup-ip",
+    key: getRequestIp(request),
+    limit: 5,
+    windowMs: 60 * 60 * 1000
+  });
+  if (!ipLimit.allowed) {
+    return rateLimitResponse(ipLimit, "Too many signup requests. Try again later.");
+  }
+
   const payload = await request.json().catch(() => undefined);
   const parsed = emailSignupSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid email signup payload." }, { status: 400 });
   }
 
-  const supabase = createServiceSupabaseClient();
-  if (supabase) {
-    await supabase.from("email_signups").upsert(
-      {
-        email: parsed.data.email,
-        source: parsed.data.source
-      },
-      {
-        onConflict: "email"
-      }
-    );
+  const email = parsed.data.email.trim().toLowerCase();
+  const emailLimit = checkRateLimit({
+    namespace: "email-signup-address",
+    key: email,
+    limit: 1,
+    windowMs: 24 * 60 * 60 * 1000
+  });
+  if (!emailLimit.allowed) {
+    return rateLimitResponse(emailLimit, "This email was already submitted recently.");
   }
 
-  const confirmation = await sendTransactionalEmail(confirmationEmail(parsed.data.email));
+  const supabase = createServiceSupabaseClient();
+  let isNewSignup = true;
+  if (supabase) {
+    const { data: existing, error: lookupError } = await supabase
+      .from("email_signups")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    if (lookupError) {
+      return NextResponse.json({ error: "Signup could not be saved." }, { status: 503 });
+    }
+    isNewSignup = !existing;
+    if (isNewSignup) {
+      const { error } = await supabase.from("email_signups").insert({ email, source: parsed.data.source });
+      if (error && !error.message.toLowerCase().includes("duplicate")) {
+        return NextResponse.json({ error: "Signup could not be saved." }, { status: 503 });
+      }
+      if (error) {
+        isNewSignup = false;
+      }
+    }
+  }
+
+  if (!isNewSignup) {
+    return NextResponse.json({
+      ok: true,
+      persisted: Boolean(supabase),
+      email: {
+        confirmation: { status: "skipped", configured: true, reason: "Email already registered." },
+        adminNotification: { status: "skipped", configured: true, reason: "Email already registered." }
+      }
+    });
+  }
+
+  const confirmation = await sendTransactionalEmail(confirmationEmail(email));
   const adminRecipients = getAdminSignupRecipients();
   const adminNotification = adminRecipients?.length
-    ? await sendTransactionalEmail(adminNotificationEmail(parsed.data.email, parsed.data.source, adminRecipients))
+    ? await sendTransactionalEmail(adminNotificationEmail(email, parsed.data.source, adminRecipients))
     : {
         status: "skipped" as const,
         configured: false,

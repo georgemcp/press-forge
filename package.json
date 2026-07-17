@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "proof:pdf": "tsx scripts/generate-proof.ts",
+    "admin:hash-password": "tsx scripts/hash-admin-password.ts",
     "worker": "tsx src/worker/index.ts"
   },
   "dependencies": {
@@ -43,5 +44,10 @@
     "tsx": "4.22.4",
     "typescript": "6.0.3",
     "vitest": "4.1.8"
+  },
+  "overrides": {
+    "esbuild": "0.28.1",
+    "postcss": "8.5.15",
+    "protobufjs": "7.6.3"
   }
 }

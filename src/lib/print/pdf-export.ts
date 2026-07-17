@@ -30,6 +30,15 @@ function svgColor(color: CmykColor) {
   return `rgb(${r} ${g} ${b})`;
 }
 
+export function escapeSvgText(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
 function lineBreak(content: string, maxChars: number) {
   const words = content.split(/\s+/);
   const lines: string[] = [];
@@ -142,7 +151,7 @@ function createSvgMaster(spec: LayoutSpec, assets: ResolvedAsset[] = []) {
     .map((block) => {
       const x = geometry.trim.x + inchesToPoints(block.x);
       const y = height - geometry.trim.y - inchesToPoints(block.y);
-      return `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" font-family="Bricolage Grotesque" font-size="${block.fontSize}" fill="${svgColor(block.color)}">${block.content}</text>`;
+      return `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" font-family="Bricolage Grotesque" font-size="${block.fontSize}" fill="${svgColor(block.color)}">${escapeSvgText(block.content)}</text>`;
     })
     .join("\n");
 

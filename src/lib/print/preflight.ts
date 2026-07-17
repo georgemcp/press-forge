@@ -90,7 +90,7 @@ function checkBoxDimensions(box: Box | undefined, expectedWidth: number, expecte
 }
 
 async function getCommandOutput(command: string, args: string[]) {
-  const result = await execFileAsync(command, args, { maxBuffer: 1024 * 1024 * 8 });
+  const result = await execFileAsync(command, args, { maxBuffer: 1024 * 1024 * 8, timeout: 30_000, killSignal: "SIGKILL" });
   return `${result.stdout}\n${result.stderr}`.trim();
 }
 

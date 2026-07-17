@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { recordAdminAuditEvent } from "@/lib/admin/audit";
@@ -17,6 +17,7 @@ import { buildAccessLinkEmail } from "@/lib/billing/access-link-email";
 import { getAppUrl, getStripeClient } from "@/lib/billing/stripe";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { sendTransactionalEmail } from "@/lib/email/transactional";
+import { checkRateLimit, getForwardedIp } from "@/lib/security/request";
 
 export interface AdminLoginState {
   error?: string;
@@ -25,6 +26,16 @@ export interface AdminLoginState {
 
 export async function loginAdmin(_state: AdminLoginState, formData: FormData): Promise<AdminLoginState> {
   const email = String(formData.get("email") ?? "");
+  const requestHeaders = await headers();
+  const rateLimit = checkRateLimit({
+    namespace: "admin-login",
+    key: `${getForwardedIp(requestHeaders)}:${email.trim().toLowerCase()}`,
+    limit: 5,
+    windowMs: 15 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return { email, error: "Too many admin login attempts. Try again later." };
+  }
   if (!isAdminAuthConfigured()) {
     return {
       email,
