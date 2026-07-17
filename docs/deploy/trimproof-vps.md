@@ -25,7 +25,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d --bui
 
 `TRIMPROOF_IMAGE_SOURCE` defaults to `https://github.com/georgemcp/press-forge`. Override it only when building from a different canonical source repository. If `TRIMPROOF_IMAGE_REVISION` is omitted, the image label is deliberately `unknown` rather than claiming an unverified commit.
 
-The production image uses Node 24 LTS on Bookworm Slim, and both Node and Redis retain human-readable tags while pinning their multi-platform image digests for reproducible base-image resolution. The production Compose file applies non-root execution, drops Linux capabilities, blocks privilege escalation, and sets adjustable CPU, memory, and process limits. Override `TRIMPROOF_WEB_CPUS`, `TRIMPROOF_WEB_MEMORY_LIMIT`, `TRIMPROOF_WORKER_CPUS`, `TRIMPROOF_WORKER_MEMORY_LIMIT`, `TRIMPROOF_REDIS_CPUS`, or `TRIMPROOF_REDIS_MEMORY_LIMIT` in the deployment shell only when the VPS capacity requires different budgets.
+The production image uses Node 24 LTS on Bookworm Slim, and both Node and Redis retain human-readable tags while pinning their multi-platform image digests for reproducible base-image resolution. Before web or worker startup, the one-shot `generated-volume-init` service sets the shared proof volume root to UID/GID `1000:1000` with mode `0750`; it has no network, a read-only root filesystem, and only the `CHOWN` capability. The production Compose file otherwise applies non-root execution, drops Linux capabilities, blocks privilege escalation, and sets adjustable CPU, memory, and process limits. Override `TRIMPROOF_WEB_CPUS`, `TRIMPROOF_WEB_MEMORY_LIMIT`, `TRIMPROOF_WORKER_CPUS`, `TRIMPROOF_WORKER_MEMORY_LIMIT`, `TRIMPROOF_REDIS_CPUS`, or `TRIMPROOF_REDIS_MEMORY_LIMIT` in the deployment shell only when the VPS capacity requires different budgets.
 
 Install `deploy/nginx.trimproof.conf` as a site file included from nginx's `http` context (the rate-limit zones and WebSocket map must remain outside the `server` block), then validate before reloading:
 
@@ -71,7 +71,8 @@ Production Google DNS and files:
 Verification:
 
 - `docker compose -f docker-compose.prod.yml ps`
-- Confirm `web`, `worker`, and `redis` report `healthy`; web checks the public liveness route, worker verifies Redis connectivity through its configured URL, and Redis uses `redis-cli ping`.
+- Confirm `generated-volume-init` exits with code `0`, and `web`, `worker`, and `redis` report `healthy`; web checks the public liveness route, worker verifies Redis connectivity through its configured URL, and Redis uses `redis-cli ping`.
+- Confirm the generated volume root reports UID/GID `1000:1000` and mode `750`; the worker performs a forced stale-proof cleanup at startup and hourly thereafter.
 - `docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }} {{ index .Config.Labels "org.opencontainers.image.source" }}' "$(docker compose --env-file .env.production -f docker-compose.prod.yml images -q web)"` should report the deployed Git commit and canonical repository.
 - `curl http://127.0.0.1:3047/api/health`
 - Confirm `/api/health` reports `stripeCheckoutConfigured`, `stripeWebhookConfigured`, and `stripePortalConfigured` as `true` before treating paid exports and subscription management as live.

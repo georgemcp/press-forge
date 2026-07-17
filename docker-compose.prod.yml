@@ -1,4 +1,23 @@
 services:
+  generated-volume-init:
+    image: node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
+    restart: "no"
+    user: "0:0"
+    read_only: true
+    network_mode: none
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+    cpus: "0.1"
+    mem_limit: "32m"
+    pids_limit: 16
+    command: ["sh", "-ceu", "chown 0:0 /generated && chmod 0750 /generated && chown 1000:1000 /generated"]
+    volumes:
+      - trimproof-generated:/generated
+
   web:
     build:
       context: .
@@ -43,6 +62,8 @@ services:
       retries: 5
       start_period: 30s
     depends_on:
+      generated-volume-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
@@ -90,6 +111,8 @@ services:
       retries: 5
       start_period: 30s
     depends_on:
+      generated-volume-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 

@@ -19,6 +19,25 @@ describe("production runtime configuration", () => {
     );
   });
 
+  it("initializes generated storage with one narrowly privileged service", () => {
+    const initService = productionCompose.match(
+      /  generated-volume-init:\n[\s\S]*?\n  web:/
+    )?.[0];
+
+    expect(initService).toBeDefined();
+    expect(initService).toMatch(/image: node:24-bookworm-slim@sha256:[a-f0-9]{64}/);
+    expect(initService).toContain("user: \"0:0\"");
+    expect(initService).toContain("read_only: true");
+    expect(initService).toContain("network_mode: none");
+    expect(initService).toContain("no-new-privileges:true");
+    expect(initService).toContain("cap_drop:\n      - ALL");
+    expect(initService).toContain("cap_add:\n      - CHOWN");
+    expect(initService).not.toContain("DAC_OVERRIDE");
+    expect(initService).toContain("chmod 0750 /generated");
+    expect(initService).toContain("chown 1000:1000 /generated");
+    expect(productionCompose.match(/condition: service_completed_successfully/g)).toHaveLength(2);
+  });
+
   it("records source provenance on application images", () => {
     expect(dockerfile).toContain('org.opencontainers.image.revision="${OCI_REVISION}"');
     expect(dockerfile).toContain('org.opencontainers.image.source="${OCI_SOURCE}"');
