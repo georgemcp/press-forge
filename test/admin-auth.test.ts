@@ -6,9 +6,9 @@ describe("admin auth", () => {
     vi.unstubAllEnvs();
   });
 
-  it("requires an email, a password, and a signing secret", () => {
+  it("requires an email, a password hash, and a signing secret", () => {
     vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "");
-    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD", "secret");
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", createAdminPasswordHash("a-strong-admin-password", Buffer.alloc(16, 3)));
     vi.stubEnv("TRIMPROOF_ADMIN_SESSION_SECRET", "session-secret");
 
     expect(isAdminAuthConfigured()).toBe(false);
@@ -18,33 +18,48 @@ describe("admin auth", () => {
     expect(isAdminAuthConfigured()).toBe(true);
   });
 
-  it("validates super admin credentials without exposing the stored value", () => {
+  it.each(["development", "test", "production"])("validates a scrypt-hashed admin credential in %s", (nodeEnv) => {
+    const password = "a-strong-admin-password";
+    vi.stubEnv("NODE_ENV", nodeEnv);
     vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "Owner@TrimProof.com");
-    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD", "correct-password");
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", createAdminPasswordHash(password, Buffer.alloc(16, 7)));
 
-    expect(validateAdminCredentials("owner@trimproof.com", "correct-password")).toBe(true);
-    expect(validateAdminCredentials("wrong@trimproof.com", "correct-password")).toBe(false);
+    expect(validateAdminCredentials("owner@trimproof.com", password)).toBe(true);
+    expect(validateAdminCredentials("wrong@trimproof.com", password)).toBe(false);
     expect(validateAdminCredentials("owner@trimproof.com", "wrong-password")).toBe(false);
   });
 
-  it("validates a scrypt password hash and rejects plaintext in production", () => {
-    const password = "a-strong-admin-password";
+  it.each([
+    ["development", "TRIMPROOF_ADMIN_PASSWORD"],
+    ["development", "ADMIN_DASHBOARD_PASSWORD"],
+    ["test", "TRIMPROOF_ADMIN_PASSWORD"],
+    ["test", "ADMIN_DASHBOARD_PASSWORD"],
+    ["production", "TRIMPROOF_ADMIN_PASSWORD"],
+    ["production", "ADMIN_DASHBOARD_PASSWORD"]
+  ])("ignores %s plaintext admin password variable %s", (nodeEnv, variableName) => {
+    const plaintextPassword = "a-strong-admin-password";
     vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "owner@trimproof.com");
-    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", createAdminPasswordHash(password, Buffer.alloc(16, 7)));
+    vi.stubEnv("TRIMPROOF_ADMIN_SESSION_SECRET", "session-secret");
+    vi.stubEnv(variableName, plaintextPassword);
+    vi.stubEnv("NODE_ENV", nodeEnv);
+
+    expect(isAdminAuthConfigured()).toBe(false);
+    expect(validateAdminCredentials("owner@trimproof.com", plaintextPassword)).toBe(false);
+  });
+
+  it("rejects a value that is not an encoded scrypt hash", () => {
+    vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "owner@trimproof.com");
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", "a-strong-admin-password");
     vi.stubEnv("TRIMPROOF_ADMIN_SESSION_SECRET", "session-secret");
 
-    expect(validateAdminCredentials("owner@trimproof.com", password)).toBe(true);
-    expect(validateAdminCredentials("owner@trimproof.com", "wrong-password")).toBe(false);
-
-    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", "");
-    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD", password);
-    vi.stubEnv("NODE_ENV", "production");
     expect(isAdminAuthConfigured()).toBe(false);
+    expect(validateAdminCredentials("owner@trimproof.com", "a-strong-admin-password")).toBe(false);
+    expect(() => createAdminSessionValue()).toThrow("Admin password hash is not configured.");
   });
 
   it("signs, verifies, rejects tampered, and expires admin sessions", () => {
     vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "owner@trimproof.com");
-    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD", "secret");
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", createAdminPasswordHash("a-strong-admin-password", Buffer.alloc(16, 4)));
     vi.stubEnv("TRIMPROOF_ADMIN_SESSION_SECRET", "session-secret");
     const now = new Date("2026-06-05T12:00:00Z").getTime();
     const session = createAdminSessionValue(now);
