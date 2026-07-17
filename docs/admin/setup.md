@@ -5,14 +5,22 @@ The admin center lives at `/admin` and is protected by a signed HTTP-only sessio
 ## Required Env
 
 ```bash
-TRIMPROOF_ADMIN_PASSWORD=...
+TRIMPROOF_ADMIN_PASSWORD_HASH=scrypt$...
 TRIMPROOF_ADMIN_SESSION_SECRET=...
 TRIMPROOF_ADMIN_EMAIL=owner@example.com
 SUPABASE_SERVICE_ROLE_KEY=...
 NEXT_PUBLIC_SUPABASE_URL=...
 ```
 
-Use a long random value for `TRIMPROOF_ADMIN_SESSION_SECRET`. The email and password are checked server-side, and only a signed HTTP-only cookie is stored in the browser. Changing `TRIMPROOF_ADMIN_EMAIL` invalidates existing admin sessions.
+Use a strong unique password, store only its application-generated scrypt hash in production, and keep a separate long random `TRIMPROOF_ADMIN_SESSION_SECRET`. Production rejects plaintext `TRIMPROOF_ADMIN_PASSWORD`. Changing the email, password hash, or session secret invalidates existing admin sessions.
+
+Generate the hash without putting the password in shell history:
+
+```bash
+read -s ADMIN_PASSWORD_INPUT
+printf %s "$ADMIN_PASSWORD_INPUT" | npm run admin:hash-password
+unset ADMIN_PASSWORD_INPUT
+```
 
 ## Optional Margin Assumptions
 

@@ -18,6 +18,17 @@ Production target:
 The app is deployed with Docker Compose. Nginx terminates public HTTP/HTTPS and proxies to the app container on `127.0.0.1:3047`.
 Public `NEXT_PUBLIC_*` variables are passed as Docker build args so statically rendered marketing pages include analytics tags after rebuilds. Use `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build` for production rebuilds.
 
+The production Compose file applies non-root execution, drops Linux capabilities, blocks privilege escalation, and sets adjustable CPU, memory, and process limits. Override `TRIMPROOF_WEB_CPUS`, `TRIMPROOF_WEB_MEMORY_LIMIT`, `TRIMPROOF_WORKER_CPUS`, `TRIMPROOF_WORKER_MEMORY_LIMIT`, `TRIMPROOF_REDIS_CPUS`, or `TRIMPROOF_REDIS_MEMORY_LIMIT` in the deployment shell only when the VPS capacity requires different budgets.
+
+Install `deploy/nginx.trimproof.conf` as a site file included from nginx's `http` context (the rate-limit zones and WebSocket map must remain outside the `server` block), then validate before reloading:
+
+```sh
+sudo install -m 0644 deploy/nginx.trimproof.conf /etc/nginx/sites-available/trimproof.com
+sudo ln -sfn /etc/nginx/sites-available/trimproof.com /etc/nginx/sites-enabled/trimproof.com
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
 Required production env:
 
 - `NEXT_PUBLIC_APP_URL=https://trimproof.com`
@@ -28,7 +39,8 @@ Required production env:
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `GA4_PROPERTY_ID`, `GOOGLE_ANALYTICS_PROPERTY_ID`, or `NEXT_PUBLIC_GTM_CONTAINER_ID` when analytics tags are live
 - `GA4_API_SECRET` or `GA4_MEASUREMENT_PROTOCOL_API_SECRET` when verified Stripe/webhook purchases, launch signups, checkout starts, and proof exports should send server-side GA4 conversion events
-- `TRIMPROOF_ADMIN_EMAIL`, `TRIMPROOF_ADMIN_PASSWORD`, and `TRIMPROOF_ADMIN_SESSION_SECRET` for the protected `/admin` management center
+- `TRIMPROOF_ADMIN_EMAIL`, `TRIMPROOF_ADMIN_PASSWORD_HASH`, and `TRIMPROOF_ADMIN_SESSION_SECRET` for the protected `/admin` management center; plaintext admin passwords are rejected in production
+- `TRIMPROOF_HEALTH_TOKEN` for authenticated detailed readiness checks; public `/api/health` exposes liveness only
 - `EMAIL_PROVIDER`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, `TRIMPROOF_ADMIN_EMAIL`, and either `RESEND_API_KEY` or `SENDGRID_API_KEY` when transactional signup email is live
 - `OPENAI_API_KEY` and/or `GEMINI_API_KEY` when creative image providers are enabled
 - `OPENAI_IMAGE_MODEL=gpt-image-2` and `GEMINI_IMAGE_MODEL=gemini-3-pro-image` for the current premium creative model defaults
@@ -62,6 +74,8 @@ Verification:
 - For a paid subscription checkout session, submit `/api/billing/portal` and confirm Stripe opens subscription management with a return URL back to `/app`.
 - `curl -I http://trimproof.com`
 - `curl -I https://trimproof.com` after the certificate is issued
+- Confirm the HTTPS response includes HSTS, CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`, omits `X-Powered-By`, and does not expose the nginx version.
+- Confirm `https://trimproof.com/leviathan.html` returns `404`; the retired embedded command-center page must not be restored from an older release.
 - Browser-check `https://trimproof.com` and `https://trimproof.com/app` for `https://www.googletagmanager.com/gtag/js?id=G-20N2FZHDHV`
 - Confirm `https://trimproof.com/google43b9c98a02f6c033.html` returns the Search Console verification file and `dig TXT trimproof.com` includes the domain verification token.
 - Confirm `https://trimproof.com/sitemap.xml` returns HTTP 200 with `application/xml` and remains listed in `robots.txt`.

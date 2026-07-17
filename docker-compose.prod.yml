@@ -7,6 +7,14 @@ services:
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
         NEXT_PUBLIC_GTM_CONTAINER_ID: ${NEXT_PUBLIC_GTM_CONTAINER_ID:-}
     restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cpus: "${TRIMPROOF_WEB_CPUS:-2.0}"
+    mem_limit: "${TRIMPROOF_WEB_MEMORY_LIMIT:-2g}"
+    pids_limit: 256
     ports:
       - "127.0.0.1:${TRIMPROOF_HOST_PORT:-3047}:3000"
     env_file:
@@ -29,6 +37,14 @@ services:
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
         NEXT_PUBLIC_GTM_CONTAINER_ID: ${NEXT_PUBLIC_GTM_CONTAINER_ID:-}
     restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cpus: "${TRIMPROOF_WORKER_CPUS:-2.0}"
+    mem_limit: "${TRIMPROOF_WORKER_MEMORY_LIMIT:-3g}"
+    pids_limit: 256
     command: ["npm", "run", "worker"]
     env_file:
       - .env.production
@@ -45,6 +61,10 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    init: true
+    cpus: "${TRIMPROOF_REDIS_CPUS:-0.5}"
+    mem_limit: "${TRIMPROOF_REDIS_MEMORY_LIMIT:-512m}"
+    pids_limit: 128
     volumes:
       - trimproof-redis:/data
 
