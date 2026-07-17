@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
 import { getAppUrl, getStripeClient } from "@/lib/billing/stripe";
+import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
@@ -29,6 +30,15 @@ export async function POST(request: Request) {
   if (!account) {
     return NextResponse.json({ error: "Sign in before opening subscription management." }, { status: 401 });
   }
+  const rateLimit = checkRateLimit({
+    namespace: "billing-portal",
+    key: `${account.userId}:${getRequestIp(request)}`,
+    limit: 10,
+    windowMs: 60 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit, "Portal request limit reached. Try again later.");
+  }
 
   const stripe = getStripeClient();
   if (!stripe) {
@@ -47,12 +57,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const paidSession = await verifyPaidCheckoutSession(parsed.data.sessionId);
+    const paidSession = await verifyPaidCheckoutSession(parsed.data.sessionId, account);
     if (!paidSession) {
       return NextResponse.json({ error: "Checkout session could not be verified." }, { status: 402 });
-    }
-    if (paidSession.customerEmail && paidSession.customerEmail.trim().toLowerCase() !== account.email) {
-      return NextResponse.json({ error: "This subscription belongs to a different account email." }, { status: 403 });
     }
     if (paidSession.entitlement !== "subscription") {
       return NextResponse.json({ error: "Subscription management is only available for Trim Proof Pro customers." }, { status: 403 });

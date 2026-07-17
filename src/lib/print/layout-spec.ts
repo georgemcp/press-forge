@@ -8,27 +8,27 @@ export const cmykColorSchema = z.object({
 });
 
 export const textBlockSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().min(1).max(80).regex(/^[a-zA-Z0-9_-]+$/),
   role: z.enum(["brand", "headline", "subhead", "body", "contact", "legal"]),
-  content: z.string().min(1),
-  x: z.number(),
-  y: z.number(),
-  width: z.number().positive(),
-  fontSize: z.number().positive(),
+  content: z.string().min(1).max(4000),
+  x: z.number().finite().min(-1).max(40),
+  y: z.number().finite().min(-1).max(40),
+  width: z.number().finite().positive().max(40),
+  fontSize: z.number().finite().min(4).max(240),
   weight: z.enum(["regular", "medium", "bold"]),
   color: cmykColorSchema
 });
 
 export const assetSlotSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().min(1).max(80).regex(/^[a-zA-Z0-9_-]+$/),
   kind: z.enum(["background", "photo", "illustration", "logo", "icon"]),
-  prompt: z.string().min(1),
+  prompt: z.string().min(1).max(4000),
   providerHint: z.enum(["openai", "gemini", "recraft", "deterministic"]).optional(),
-  x: z.number(),
-  y: z.number(),
-  width: z.number().positive(),
-  height: z.number().positive(),
-  minimumDpi: z.number().int().min(300).default(300)
+  x: z.number().finite().min(-1).max(40),
+  y: z.number().finite().min(-1).max(40),
+  width: z.number().finite().positive().max(40),
+  height: z.number().finite().positive().max(40),
+  minimumDpi: z.number().int().min(300).max(1200).default(300)
 });
 
 export const layoutSpecSchema = z.object({
@@ -41,9 +41,9 @@ export const layoutSpecSchema = z.object({
     ink: cmykColorSchema,
     accent: cmykColorSchema
   }),
-  textBlocks: z.array(textBlockSchema).min(1),
-  assetSlots: z.array(assetSlotSchema).default([]),
-  styleDirection: z.string().min(1)
+  textBlocks: z.array(textBlockSchema).min(1).max(64),
+  assetSlots: z.array(assetSlotSchema).max(8).default([]),
+  styleDirection: z.string().min(1).max(2000)
 });
 
 export type CmykColor = z.infer<typeof cmykColorSchema>;

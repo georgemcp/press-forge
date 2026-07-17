@@ -6,6 +6,7 @@ import { PDFDocument } from "pdf-lib";
 import { PRINT_PROFILES, type PrintProfileId } from "./constants";
 
 const execFileAsync = promisify(execFile);
+const commandTimeoutMs = 60_000;
 
 export interface GhostscriptResult {
   available: boolean;
@@ -175,7 +176,7 @@ export async function convertToPdfX(sourcePdfPath: string, outputDir: string, bo
   args.push(sourcePdfPath);
 
   try {
-    const result = await execFileAsync("gs", args, { maxBuffer: 1024 * 1024 * 8 });
+    const result = await execFileAsync("gs", args, { maxBuffer: 1024 * 1024 * 8, timeout: commandTimeoutMs, killSignal: "SIGKILL" });
     if (boxes) {
       await restorePageBoxes(outputPdfPath, boxes);
     }

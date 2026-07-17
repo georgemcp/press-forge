@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import type { AccountSession } from "@/lib/auth/account-session";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { getStripeClient } from "@/lib/billing/stripe";
 import { stripeObjectId } from "@/lib/billing/order-lifecycle";
@@ -9,6 +10,7 @@ export interface PaidCheckoutSession {
   mode: "payment" | "subscription";
   customerId?: string;
   customerEmail?: string;
+  accountUserId?: string;
   subscriptionId?: string;
   subscriptionStatus?: string;
   subscriptionPeriodStart?: string;
@@ -18,7 +20,6 @@ export interface PaidCheckoutSession {
 
 const activeSubscriptionStatuses = new Set(["active", "trialing"]);
 const unavailableExportCreditStatuses = new Set(["processing", "consumed", "refunded", "expired"]);
-const countedSubscriptionUsageStatuses = ["processing", "completed"];
 
 function parsePositiveInteger(value: string | undefined, fallback: number) {
   const parsed = Number(value);
@@ -31,6 +32,23 @@ export function getSubscriptionMonthlyExportLimit() {
 
 function getSessionCustomerEmail(session: Stripe.Checkout.Session) {
   return session.customer_details?.email ?? session.customer_email ?? undefined;
+}
+
+function normalizeEmail(value: string | undefined) {
+  return value?.trim().toLowerCase();
+}
+
+function getSessionAccountUserId(session: Stripe.Checkout.Session) {
+  return session.client_reference_id ?? session.metadata?.user_id ?? undefined;
+}
+
+export function paidCheckoutSessionBelongsToAccount(session: PaidCheckoutSession, account: Pick<AccountSession, "userId" | "email">) {
+  return Boolean(
+    session.accountUserId &&
+    session.accountUserId === account.userId &&
+    normalizeEmail(session.customerEmail) &&
+    normalizeEmail(session.customerEmail) === normalizeEmail(account.email)
+  );
 }
 
 function unixTimestampToIso(value: unknown) {
@@ -56,7 +74,10 @@ function subscriptionPeriod(subscription: Stripe.Subscription) {
   return fallbackMonthlyPeriod();
 }
 
-export async function verifyPaidCheckoutSession(sessionId?: string): Promise<PaidCheckoutSession | undefined> {
+export async function verifyPaidCheckoutSession(
+  sessionId?: string,
+  expectedAccount?: Pick<AccountSession, "userId" | "email">
+): Promise<PaidCheckoutSession | undefined> {
   if (!sessionId) {
     return undefined;
   }
@@ -77,6 +98,8 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
     throw new Error("Checkout session is not paid.");
   }
   const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+  const customerEmail = getSessionCustomerEmail(session);
+  const accountUserId = getSessionAccountUserId(session);
   let subscriptionId: string | undefined;
   let subscriptionStatus: string | undefined;
   let subscriptionPeriodStart: string | undefined;
@@ -96,6 +119,23 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
     subscriptionPeriodEnd = period.periodEnd;
   }
 
+  const paidSession: PaidCheckoutSession = {
+    id: session.id,
+    entitlement,
+    mode: session.mode,
+    customerId,
+    customerEmail,
+    accountUserId,
+    subscriptionId,
+    subscriptionStatus,
+    subscriptionPeriodStart,
+    subscriptionPeriodEnd,
+    consumed: false
+  };
+  if (expectedAccount && !paidCheckoutSessionBelongsToAccount(paidSession, expectedAccount)) {
+    throw new Error("Checkout session does not belong to this account.");
+  }
+
   const supabase = createServiceSupabaseClient();
   let consumed = false;
   if (supabase) {
@@ -110,18 +150,7 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
 
     consumed = entitlement === "export_credit" && unavailableExportCreditStatuses.has(existingOrder?.status ?? "");
     if (consumed) {
-      return {
-        id: session.id,
-        entitlement,
-        mode: session.mode,
-        customerId,
-        customerEmail: getSessionCustomerEmail(session),
-        subscriptionId,
-        subscriptionStatus,
-        subscriptionPeriodStart,
-        subscriptionPeriodEnd,
-        consumed
-      };
+      return { ...paidSession, consumed };
     }
 
     await supabase.from("export_orders").upsert(
@@ -132,7 +161,7 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
         stripe_subscription_id: subscriptionId ?? null,
         amount_total_cents: session.amount_total ?? null,
         currency: session.currency?.toUpperCase() ?? null,
-        customer_email: getSessionCustomerEmail(session) ?? null,
+        customer_email: customerEmail ?? null,
         entitlement,
         checkout_mode: session.mode,
         status: consumed ? "consumed" : "paid"
@@ -143,18 +172,7 @@ export async function verifyPaidCheckoutSession(sessionId?: string): Promise<Pai
     );
   }
 
-  return {
-    id: session.id,
-    entitlement,
-    mode: session.mode,
-    customerId,
-    customerEmail: getSessionCustomerEmail(session),
-    subscriptionId,
-    subscriptionStatus,
-    subscriptionPeriodStart,
-    subscriptionPeriodEnd,
-    consumed
-  };
+  return { ...paidSession, consumed };
 }
 
 export async function claimSubscriptionExport(session: PaidCheckoutSession, userId: string, proofJobId: string) {
@@ -170,32 +188,20 @@ export async function claimSubscriptionExport(session: PaidCheckoutSession, user
   const periodStart = session.subscriptionPeriodStart ?? fallbackPeriod.periodStart;
   const periodEnd = session.subscriptionPeriodEnd ?? fallbackPeriod.periodEnd;
   const limit = getSubscriptionMonthlyExportLimit();
-  const { count, error: countError } = await supabase
-    .from("subscription_export_usage")
-    .select("id", { count: "exact", head: true })
-    .eq("stripe_subscription_id", session.subscriptionId)
-    .gte("created_at", periodStart)
-    .lt("created_at", periodEnd)
-    .in("status", countedSubscriptionUsageStatuses);
-
-  if (countError) {
-    throw new Error(countError.message);
-  }
-  if ((count ?? 0) >= limit) {
-    throw new Error(`This Pro subscription has reached its ${limit} advanced exports for the current billing month.`);
-  }
-
-  const { error } = await supabase.from("subscription_export_usage").insert({
-    user_id: userId,
-    stripe_subscription_id: session.subscriptionId,
-    stripe_session_id: session.id,
-    proof_job_id: proofJobId,
-    status: "processing",
-    period_start: periodStart,
-    period_end: periodEnd
+  const { error } = await supabase.rpc("claim_subscription_export", {
+    p_user_id: userId,
+    p_stripe_subscription_id: session.subscriptionId,
+    p_stripe_session_id: session.id,
+    p_proof_job_id: proofJobId,
+    p_period_start: periodStart,
+    p_period_end: periodEnd,
+    p_limit: limit
   });
 
   if (error) {
+    if (error.message.toLowerCase().includes("limit reached")) {
+      throw new Error(`This Pro subscription has reached its ${limit} advanced exports for the current billing month.`);
+    }
     throw new Error(error.message);
   }
 }

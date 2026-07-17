@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { claimExportCredit, finalizeExportCredit, releaseExportCredit, verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
+import { claimExportCredit, finalizeExportCredit, paidCheckoutSessionBelongsToAccount, releaseExportCredit, verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
 
 const mocks = vi.hoisted(() => ({
   stripe: {
@@ -69,8 +69,10 @@ function mockPaidExportCreditSession() {
     id: "cs_paid",
     metadata: {
       product: "trimproof",
-      entitlement: "export_credit"
+      entitlement: "export_credit",
+      user_id: "user_paid"
     },
+    client_reference_id: "user_paid",
     mode: "payment",
     status: "complete",
     payment_status: "paid",
@@ -96,6 +98,24 @@ describe("paid checkout sessions", () => {
 
     expect(session?.consumed).toBe(true);
     expect(upsertBuilder.upsert).not.toHaveBeenCalled();
+  });
+
+  it("requires both the stable account id and normalized email to match", async () => {
+    const session = await verifyPaidCheckoutSession("cs_paid");
+
+    expect(paidCheckoutSessionBelongsToAccount(session!, { userId: "user_paid", email: "BUYER@example.com" })).toBe(true);
+    expect(paidCheckoutSessionBelongsToAccount(session!, { userId: "user_other", email: "buyer@example.com" })).toBe(false);
+    expect(paidCheckoutSessionBelongsToAccount(session!, { userId: "user_paid", email: "other@example.com" })).toBe(false);
+  });
+
+  it("rejects a paid session before database mutation when it belongs to another account", async () => {
+    const { supabase } = makeVerifySupabase(undefined);
+    mocks.supabase = supabase;
+
+    await expect(
+      verifyPaidCheckoutSession("cs_paid", { userId: "user_other", email: "buyer@example.com" })
+    ).rejects.toThrow("does not belong");
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 
   it("claims an export credit only while it is paid", async () => {

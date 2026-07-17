@@ -1,8 +1,8 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 export const ADMIN_SESSION_COOKIE = "trimproof_admin";
 
-const sessionVersion = "v2";
+const sessionVersion = "v3";
 const sessionTtlSeconds = 60 * 60 * 8;
 
 function firstValue(...values: Array<string | undefined>) {
@@ -19,6 +19,18 @@ export function getAdminEmail() {
 
 function getAdminPassword() {
   return firstValue(process.env.TRIMPROOF_ADMIN_PASSWORD, process.env.ADMIN_DASHBOARD_PASSWORD);
+}
+
+function getAdminPasswordHash() {
+  return firstValue(process.env.TRIMPROOF_ADMIN_PASSWORD_HASH, process.env.ADMIN_DASHBOARD_PASSWORD_HASH);
+}
+
+function getAdminCredential() {
+  const passwordHash = getAdminPasswordHash();
+  if (passwordHash) {
+    return passwordHash;
+  }
+  return process.env.NODE_ENV === "production" ? undefined : getAdminPassword();
 }
 
 function getAdminSessionSecret() {
@@ -40,15 +52,38 @@ function safeEqual(left: string, right: string) {
 }
 
 export function isAdminAuthConfigured() {
-  return Boolean(getAdminEmail() && getAdminPassword() && getAdminSessionSecret());
+  return Boolean(getAdminEmail() && getAdminCredential() && getAdminSessionSecret());
+}
+
+export function createAdminPasswordHash(password: string, salt = randomBytes(16)) {
+  if (password.length < 12) {
+    throw new Error("Admin password must contain at least 12 characters.");
+  }
+  const digest = scryptSync(password, salt, 64);
+  return `scrypt$${salt.toString("base64url")}$${digest.toString("base64url")}`;
+}
+
+function validateHashedPassword(candidate: string, encoded: string) {
+  const [algorithm, saltValue, digestValue, extra] = encoded.split("$");
+  if (algorithm !== "scrypt" || !saltValue || !digestValue || extra) {
+    return false;
+  }
+  try {
+    const expected = Buffer.from(digestValue, "base64url");
+    const actual = scryptSync(candidate, Buffer.from(saltValue, "base64url"), expected.length);
+    return expected.length > 0 && expected.length === actual.length && timingSafeEqual(expected, actual);
+  } catch {
+    return false;
+  }
 }
 
 function validateAdminPassword(candidate: string) {
-  const expected = getAdminPassword();
-  if (!expected) {
-    return false;
+  const passwordHash = getAdminPasswordHash();
+  if (passwordHash) {
+    return validateHashedPassword(candidate, passwordHash);
   }
-  return safeEqual(candidate, expected);
+  const plaintext = process.env.NODE_ENV === "production" ? undefined : getAdminPassword();
+  return plaintext ? safeEqual(candidate, plaintext) : false;
 }
 
 export function validateAdminCredentials(email: string, password: string) {
@@ -63,13 +98,22 @@ function encodeEmailSegment(email: string) {
   return Buffer.from(normalizeAdminLoginEmail(email), "utf8").toString("base64url");
 }
 
+function credentialFingerprint() {
+  const credential = getAdminCredential();
+  return credential ? createHash("sha256").update(credential).digest("base64url").slice(0, 24) : undefined;
+}
+
 export function createAdminSessionValue(now = Date.now()) {
   const email = getAdminEmail();
   if (!email) {
     throw new Error("Admin email is not configured.");
   }
+  const fingerprint = credentialFingerprint();
+  if (!fingerprint) {
+    throw new Error("Admin password hash is not configured.");
+  }
   const expiresAt = now + sessionTtlSeconds * 1000;
-  const payload = `${sessionVersion}.${expiresAt}.${encodeEmailSegment(email)}`;
+  const payload = `${sessionVersion}.${expiresAt}.${encodeEmailSegment(email)}.${fingerprint}`;
   const signature = sign(payload);
   if (!signature) {
     throw new Error("Admin session secret is not configured.");
@@ -81,8 +125,8 @@ export function verifyAdminSessionValue(value: string | undefined, now = Date.no
   if (!value) {
     return false;
   }
-  const [version, expiresAtValue, emailSegment, signature, extra] = value.split(".");
-  if (version !== sessionVersion || !expiresAtValue || !emailSegment || !signature || extra) {
+  const [version, expiresAtValue, emailSegment, fingerprint, signature, extra] = value.split(".");
+  if (version !== sessionVersion || !expiresAtValue || !emailSegment || !fingerprint || !signature || extra) {
     return false;
   }
   const expiresAt = Number(expiresAtValue);
@@ -90,10 +134,11 @@ export function verifyAdminSessionValue(value: string | undefined, now = Date.no
     return false;
   }
   const expectedEmail = getAdminEmail();
-  if (!expectedEmail || emailSegment !== encodeEmailSegment(expectedEmail)) {
+  const expectedFingerprint = credentialFingerprint();
+  if (!expectedEmail || !expectedFingerprint || emailSegment !== encodeEmailSegment(expectedEmail) || !safeEqual(fingerprint, expectedFingerprint)) {
     return false;
   }
-  const expected = sign(`${version}.${expiresAtValue}.${emailSegment}`);
+  const expected = sign(`${version}.${expiresAtValue}.${emailSegment}.${fingerprint}`);
   if (!expected) {
     return false;
   }

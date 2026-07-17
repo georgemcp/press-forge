@@ -6,6 +6,7 @@ import { verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
 import { buildAccessLinkEmail } from "@/lib/billing/access-link-email";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { sendTransactionalEmail } from "@/lib/email/transactional";
+import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
@@ -25,7 +26,7 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-async function findReusableOrder(email: string) {
+async function findReusableOrder(account: { userId: string; email: string }) {
   const supabase = createServiceSupabaseClient();
   if (!supabase) {
     return { order: undefined, error: "Supabase service client is not configured." };
@@ -34,7 +35,7 @@ async function findReusableOrder(email: string) {
   const { data, error } = await supabase
     .from("export_orders")
     .select("stripe_session_id, entitlement, status, customer_email, created_at")
-    .ilike("customer_email", email)
+    .eq("customer_email", account.email)
     .eq("status", "paid")
     .order("created_at", { ascending: false })
     .limit(10);
@@ -45,7 +46,7 @@ async function findReusableOrder(email: string) {
 
   for (const order of (data ?? []) as AccessOrder[]) {
     try {
-      const session = await verifyPaidCheckoutSession(order.stripe_session_id);
+      const session = await verifyPaidCheckoutSession(order.stripe_session_id, account);
       if (session && !session.consumed) {
         return { order, error: undefined };
       }
@@ -62,6 +63,15 @@ export async function POST(request: Request) {
   if (!account) {
     return NextResponse.json({ error: "Sign in before requesting an access link." }, { status: 401 });
   }
+  const rateLimit = checkRateLimit({
+    namespace: "billing-access-link",
+    key: `${account.userId}:${getRequestIp(request)}`,
+    limit: 3,
+    windowMs: 60 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit, "Access-link request limit reached. Try again later.");
+  }
 
   const payload = await request.json().catch(() => undefined);
   const parsed = accessLinkSchema.safeParse(payload);
@@ -75,7 +85,7 @@ export async function POST(request: Request) {
   }
 
   const email = account.email;
-  const { order, error } = await findReusableOrder(email);
+  const { order, error } = await findReusableOrder(account);
   if (error) {
     return NextResponse.json({ error }, { status: 503 });
   }

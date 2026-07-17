@@ -1,32 +1,38 @@
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
+import { z } from "zod";
 
-export interface BriefEnhancementResult {
-  enhancedBrief: string;
-  brandName: string;
-  tagline: string;
-  styleDirection: string;
-  colorPalette: {
-    name: string;
-    primary: string;
-    secondary: string;
-    accent: string;
-    background: string;
-  };
-  suggestedContent: {
-    headline: string;
-    subhead: string;
-    body: string;
-    contactInfo: string;
-  };
-  designNotes: string[];
-  assetSuggestions: Array<{
-    kind: "background" | "photo" | "illustration" | "logo" | "icon";
-    description: string;
-    placement: string;
-  }>;
-  productTypeHint: string;
-}
+const boundedText = z.string().min(1).max(4000);
+const hexColor = z.string().regex(/^#[0-9a-f]{6}$/i);
+
+export const briefEnhancementSchema = z.object({
+  enhancedBrief: boundedText,
+  brandName: z.string().min(1).max(200),
+  tagline: z.string().max(200),
+  styleDirection: boundedText,
+  colorPalette: z.object({
+    name: z.string().min(1).max(120),
+    primary: hexColor,
+    secondary: hexColor,
+    accent: hexColor,
+    background: hexColor
+  }),
+  suggestedContent: z.object({
+    headline: z.string().max(1000),
+    subhead: z.string().max(1000),
+    body: z.string().max(4000),
+    contactInfo: z.string().max(1000)
+  }),
+  designNotes: z.array(z.string().min(1).max(1000)).max(10),
+  assetSuggestions: z.array(z.object({
+    kind: z.enum(["background", "photo", "illustration", "logo", "icon"]),
+    description: z.string().min(1).max(2000),
+    placement: z.string().min(1).max(1000)
+  })).max(8),
+  productTypeHint: z.enum(["business_card", "postcard", "flyer", "poster", "brochure", "letterhead"])
+});
+
+export type BriefEnhancementResult = z.infer<typeof briefEnhancementSchema>;
 
 export interface BriefEnhanceOptions {
   brief: string;
@@ -106,8 +112,7 @@ export async function enhanceBriefWithOpenAI(
     throw new Error("OpenAI returned empty response for brief enhancement");
   }
 
-  const result = JSON.parse(content) as BriefEnhancementResult;
-  return result;
+  return briefEnhancementSchema.parse(JSON.parse(content));
 }
 
 export async function enhanceBriefWithGemini(
@@ -135,8 +140,7 @@ export async function enhanceBriefWithGemini(
     throw new Error("Gemini returned empty response for brief enhancement");
   }
 
-  const result = JSON.parse(text) as BriefEnhancementResult;
-  return result;
+  return briefEnhancementSchema.parse(JSON.parse(text));
 }
 
 export async function enhanceBrief(

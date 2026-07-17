@@ -6,7 +6,7 @@ export const planInterests = ["demo", "single_export", "pro"] as const;
 
 export const accountProfileSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8).max(120),
+  password: z.string().min(12).max(120),
   fullName: z.string().min(2).max(120),
   companyName: z.string().min(2).max(140),
   role: z.string().min(2).max(100),

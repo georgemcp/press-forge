@@ -603,7 +603,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_subscription_export: {
+        Args: {
+          p_limit: number
+          p_period_end: string
+          p_period_start: string
+          p_proof_job_id: string
+          p_stripe_session_id: string
+          p_stripe_subscription_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

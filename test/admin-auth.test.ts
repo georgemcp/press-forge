@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createAdminSessionValue, isAdminAuthConfigured, validateAdminCredentials, verifyAdminSessionValue } from "@/lib/admin/auth";
+import { createAdminPasswordHash, createAdminSessionValue, isAdminAuthConfigured, validateAdminCredentials, verifyAdminSessionValue } from "@/lib/admin/auth";
 
 describe("admin auth", () => {
   afterEach(() => {
@@ -27,6 +27,21 @@ describe("admin auth", () => {
     expect(validateAdminCredentials("owner@trimproof.com", "wrong-password")).toBe(false);
   });
 
+  it("validates a scrypt password hash and rejects plaintext in production", () => {
+    const password = "a-strong-admin-password";
+    vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "owner@trimproof.com");
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", createAdminPasswordHash(password, Buffer.alloc(16, 7)));
+    vi.stubEnv("TRIMPROOF_ADMIN_SESSION_SECRET", "session-secret");
+
+    expect(validateAdminCredentials("owner@trimproof.com", password)).toBe(true);
+    expect(validateAdminCredentials("owner@trimproof.com", "wrong-password")).toBe(false);
+
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", "");
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD", password);
+    vi.stubEnv("NODE_ENV", "production");
+    expect(isAdminAuthConfigured()).toBe(false);
+  });
+
   it("signs, verifies, rejects tampered, and expires admin sessions", () => {
     vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "owner@trimproof.com");
     vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD", "secret");
@@ -40,5 +55,15 @@ describe("admin auth", () => {
 
     vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "new-owner@trimproof.com");
     expect(verifyAdminSessionValue(session, now + 1000)).toBe(false);
+  });
+
+  it("revokes an existing session when the password credential rotates", () => {
+    vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "owner@trimproof.com");
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", createAdminPasswordHash("first-strong-password", Buffer.alloc(16, 1)));
+    vi.stubEnv("TRIMPROOF_ADMIN_SESSION_SECRET", "session-secret");
+    const session = createAdminSessionValue();
+
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", createAdminPasswordHash("second-strong-password", Buffer.alloc(16, 2)));
+    expect(verifyAdminSessionValue(session)).toBe(false);
   });
 });

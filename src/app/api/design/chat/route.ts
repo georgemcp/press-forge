@@ -1,22 +1,36 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
-import { designChat, type DesignChatMessage } from "@/lib/ai/design-agent";
-import type { BriefEnhancementResult } from "@/lib/ai/brief-enhancer";
-import type { LayoutSpec } from "@/lib/print/layout-spec";
+import { designChat } from "@/lib/ai/design-agent";
+import { briefEnhancementSchema } from "@/lib/ai/brief-enhancer";
+import { assetSlotSchema, layoutSpecSchema, textBlockSchema } from "@/lib/print/layout-spec";
+import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
-interface ChatApiRequest {
-  messages: DesignChatMessage[];
-  context: {
-    brief: string;
-    enhancedBrief?: BriefEnhancementResult;
-    currentSpec?: LayoutSpec;
-    designRationale?: string;
-    iteration: number;
-    productType: string;
-  };
-}
+const chatRequestSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string().min(1).max(4000)
+  })).min(1).max(20),
+  context: z.object({
+    brief: z.string().max(6000),
+    enhancedBrief: briefEnhancementSchema.optional(),
+    currentSpec: layoutSpecSchema.optional(),
+    designRationale: z.string().max(4000).optional(),
+    iteration: z.number().int().min(1).max(100),
+    productType: z.enum(["business_card", "postcard", "flyer", "poster", "brochure", "letterhead"])
+  })
+});
+
+const chatResponseSchema = z.object({
+  message: z.string().min(1).max(4000),
+  specChanges: layoutSpecSchema.partial().optional(),
+  newAssetSlots: z.array(assetSlotSchema).max(8).optional(),
+  newTextBlocks: z.array(textBlockSchema).max(64).optional(),
+  newStyleDirection: z.string().min(1).max(2000).optional(),
+  suggestedAction: z.enum(["regenerate", "tweak", "approve"]).optional()
+});
 
 export async function POST(request: Request) {
   const account = await getAccountSessionFromCookies();
@@ -27,24 +41,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const payload = (await request.json().catch(() => ({}))) as ChatApiRequest;
-
-  if (!payload.messages || payload.messages.length === 0) {
-    return NextResponse.json(
-      { error: "Please include at least one message." },
-      { status: 400 }
-    );
+  const rateLimit = checkRateLimit({
+    namespace: "design-chat",
+    key: `${account.userId}:${getRequestIp(request)}`,
+    limit: 30,
+    windowMs: 60 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit, "Design chat limit reached. Try again later.");
   }
 
-  if (!payload.context) {
+  const parsed = chatRequestSchema.safeParse(await request.json().catch(() => undefined));
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Context is required for design chat." },
+      { error: "Design chat request failed validation." },
       { status: 400 }
     );
   }
 
   try {
-    const response = await designChat(payload.messages, payload.context);
+    const response = chatResponseSchema.parse(await designChat(parsed.data.messages, parsed.data.context));
 
     return NextResponse.json({
       success: true,

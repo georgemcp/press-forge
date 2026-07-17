@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Box, CheckCircle2 } from "lucide-react";
 import { LoginForm } from "@/components/account/account-access-form";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
+import { safeInternalPath } from "@/lib/security/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -22,13 +23,9 @@ interface LoginPageProps {
   }>;
 }
 
-function safeNextPath(value?: string) {
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/app";
-}
-
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const nextPath = safeNextPath(params.next);
+  const nextPath = safeInternalPath(params.next);
   const session = await getAccountSessionFromCookies();
   if (session) {
     redirect(nextPath);

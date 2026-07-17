@@ -4,6 +4,7 @@ import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { getAppUrl, getStripeClient } from "@/lib/billing/stripe";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
+import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
@@ -68,6 +69,15 @@ export async function POST(request: Request) {
   const account = await getAccountSessionFromCookies();
   if (!account) {
     return NextResponse.json({ error: "Create an account before starting checkout." }, { status: 401 });
+  }
+  const rateLimit = checkRateLimit({
+    namespace: "billing-checkout",
+    key: `${account.userId}:${getRequestIp(request)}`,
+    limit: 10,
+    windowMs: 60 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit, "Checkout creation limit reached. Try again later.");
   }
 
   const stripe = getStripeClient();

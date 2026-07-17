@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ACCOUNT_SESSION_COOKIE, createAccountSessionValue, getAccountSessionCookieOptions, isAccountAuthConfigured } from "@/lib/auth/account-session";
 import { createAnonSupabaseClient } from "@/lib/db/supabase";
+import { safeInternalPath } from "@/lib/security/navigation";
+import { checkRateLimit, getRequestIp, isSameOriginMutation, rateLimitResponse } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
@@ -12,10 +14,6 @@ const loginSchema = z.object({
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
-}
-
-function getSafeNextPath(value: unknown) {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/app";
 }
 
 async function readLoginPayload(request: Request) {
@@ -35,6 +33,19 @@ async function readLoginPayload(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!isSameOriginMutation(request)) {
+    return NextResponse.json({ error: "Cross-site login requests are not allowed." }, { status: 403 });
+  }
+  const rateLimit = checkRateLimit({
+    namespace: "account-login",
+    key: getRequestIp(request),
+    limit: 10,
+    windowMs: 15 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit, "Too many login attempts. Try again in a few minutes.");
+  }
+
   if (!isAccountAuthConfigured()) {
     return NextResponse.json({ error: "Account login is not configured." }, { status: 503 });
   }
@@ -71,7 +82,7 @@ export async function POST(request: Request) {
   }
 
   const response = formPost
-    ? NextResponse.redirect(new URL(getSafeNextPath((payload as { nextPath?: string }).nextPath), request.url), { status: 303 })
+    ? NextResponse.redirect(new URL(safeInternalPath((payload as { nextPath?: string }).nextPath), request.url), { status: 303 })
     : NextResponse.json({
         ok: true,
         account: {

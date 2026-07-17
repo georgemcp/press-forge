@@ -1,64 +1,13 @@
 import { NextResponse } from "next/server";
 import { accountProfileSchema, profileToUserUpdate } from "@/lib/auth/account-profile";
-import { ACCOUNT_SESSION_COOKIE, createAccountSessionValue, getAccountSessionCookieOptions, isAccountAuthConfigured } from "@/lib/auth/account-session";
-import { createServiceSupabaseClient } from "@/lib/db/supabase";
-import { getAdminSignupRecipients, sendTransactionalEmail } from "@/lib/email/transactional";
+import { isAccountAuthConfigured } from "@/lib/auth/account-session";
+import { createAnonSupabaseClient, createServiceSupabaseClient } from "@/lib/db/supabase";
+import { checkRateLimit, getRequestIp, isSameOriginMutation, rateLimitResponse } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function adminSignupNotification(profile: ReturnType<typeof profileToUserUpdate>, recipients: string[]) {
-  const lines = [
-    "New Trim Proof account",
-    `Email: ${profile.email}`,
-    `Name: ${profile.full_name}`,
-    `Company: ${profile.company_name}`,
-    `Role: ${profile.role}`,
-    `Website: ${profile.company_website ?? ""}`,
-    `Phone: ${profile.phone ?? ""}`,
-    `Monthly jobs: ${profile.monthly_print_jobs}`,
-    `Use case: ${profile.primary_use_case}`,
-    `Plan interest: ${profile.plan_interest}`,
-    `Marketing consent: ${profile.marketing_consent ? "yes" : "no"}`,
-    `Time: ${profile.onboarding_completed_at}`
-  ];
-
-  return {
-    to: recipients,
-    subject: "New Trim Proof account",
-    text: lines.join("\n"),
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937">
-        <h1 style="font-size:20px;margin:0 0 12px">New Trim Proof account</h1>
-        <p><strong>Email:</strong> ${escapeHtml(profile.email)}</p>
-        <p><strong>Name:</strong> ${escapeHtml(profile.full_name)}</p>
-        <p><strong>Company:</strong> ${escapeHtml(profile.company_name)}</p>
-        <p><strong>Role:</strong> ${escapeHtml(profile.role)}</p>
-        <p><strong>Website:</strong> ${escapeHtml(profile.company_website ?? "")}</p>
-        <p><strong>Phone:</strong> ${escapeHtml(profile.phone ?? "")}</p>
-        <p><strong>Monthly jobs:</strong> ${escapeHtml(profile.monthly_print_jobs)}</p>
-        <p><strong>Use case:</strong> ${escapeHtml(profile.primary_use_case)}</p>
-        <p><strong>Plan interest:</strong> ${escapeHtml(profile.plan_interest)}</p>
-        <p><strong>Marketing consent:</strong> ${profile.marketing_consent ? "yes" : "no"}</p>
-      </div>
-    `
-  };
-}
-
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
-}
-
-function getSafeNextPath(value: unknown) {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/app";
 }
 
 async function readSignupPayload(request: Request) {
@@ -88,6 +37,19 @@ async function readSignupPayload(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!isSameOriginMutation(request)) {
+    return NextResponse.json({ error: "Cross-site signup requests are not allowed." }, { status: 403 });
+  }
+  const rateLimit = checkRateLimit({
+    namespace: "account-signup",
+    key: getRequestIp(request),
+    limit: 5,
+    windowMs: 60 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit, "Too many account creation attempts. Try again later.");
+  }
+
   if (!isAccountAuthConfigured()) {
     return NextResponse.json({ error: "Account signup is not configured." }, { status: 503 });
   }
@@ -98,24 +60,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Complete the required account fields before starting Trim Proof." }, { status: 400 });
   }
 
-  const supabase = createServiceSupabaseClient();
-  if (!supabase) {
-    return NextResponse.json({ error: "Supabase service client is not configured." }, { status: 503 });
+  const authClient = createAnonSupabaseClient();
+  const serviceClient = createServiceSupabaseClient();
+  if (!authClient || !serviceClient) {
+    return NextResponse.json({ error: "Supabase account services are not configured." }, { status: 503 });
   }
 
   const profile = profileToUserUpdate(parsed.data);
   let authUser;
   let authError;
   try {
-    const authResult = await supabase.auth.admin.createUser({
+    const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
+    const emailRedirectTo = new URL("/login?verified=1", appOrigin).toString();
+    const authResult = await authClient.auth.signUp({
       email: profile.email,
       password: parsed.data.password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: profile.full_name,
-        company_name: profile.company_name,
-        role: profile.role,
-        plan_interest: profile.plan_interest
+      options: {
+        emailRedirectTo,
+        data: {
+          full_name: profile.full_name,
+          company_name: profile.company_name,
+          role: profile.role,
+          plan_interest: profile.plan_interest
+        }
       }
     });
     authUser = authResult.data;
@@ -128,11 +95,14 @@ export async function POST(request: Request) {
   }
 
   if (authError || !authUser.user) {
-    const message = authError?.message.toLowerCase().includes("already") ? "An account already exists for this email. Sign in instead." : authError?.message ?? "Account could not be created.";
-    return NextResponse.json({ error: message }, { status: 409 });
+    const isExisting = authError?.message.toLowerCase().includes("already");
+    return NextResponse.json(
+      { error: isExisting ? "Check your email for a verification link, or sign in if the account already exists." : "Account could not be created." },
+      { status: isExisting ? 202 : 400 }
+    );
   }
 
-  const { error: profileError } = await supabase.from("users").upsert(
+  const { error: profileError } = await serviceClient.from("users").upsert(
     {
       id: authUser.user.id,
       ...profile
@@ -145,7 +115,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 
-  await supabase.from("email_signups").upsert(
+  await serviceClient.from("email_signups").upsert(
     {
       email: profile.email,
       source: `account_${profile.plan_interest}`
@@ -155,43 +125,12 @@ export async function POST(request: Request) {
     }
   );
 
-  const recipients = getAdminSignupRecipients();
-  const adminNotification = recipients?.length
-    ? await sendTransactionalEmail(adminSignupNotification(profile, recipients))
-    : {
-        status: "skipped" as const,
-        configured: false,
-        reason: "Admin notification recipient is not configured."
-      };
-
-  if (adminNotification.status === "failed") {
-    console.error("Trim Proof account signup notification failed", {
-      provider: adminNotification.provider,
-      reason: adminNotification.reason
-    });
-  }
-
   const response = formPost
-    ? NextResponse.redirect(new URL(getSafeNextPath((payload as { nextPath?: string }).nextPath), request.url), { status: 303 })
+    ? NextResponse.redirect(new URL("/login?check_email=1", request.url), { status: 303 })
     : NextResponse.json({
         ok: true,
-        account: {
-          id: authUser.user.id,
-          email: profile.email,
-          fullName: profile.full_name,
-          companyName: profile.company_name
-        },
-        email: {
-          adminNotification
-        }
-      });
-  response.cookies.set(
-    ACCOUNT_SESSION_COOKIE,
-    createAccountSessionValue({
-      userId: authUser.user.id,
-      email: profile.email
-    }),
-    getAccountSessionCookieOptions()
-  );
+        requiresEmailConfirmation: true,
+        message: "Check your email and verify your address before signing in."
+      }, { status: 202 });
   return response;
 }

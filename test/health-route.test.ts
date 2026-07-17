@@ -22,7 +22,17 @@ describe("health route", () => {
     vi.unstubAllEnvs();
   });
 
-  it("reports payment, webhook, portal, and analytics readiness separately", async () => {
+  it("returns only generic liveness to public callers", async () => {
+    const response = await GET(new Request("https://trimproof.com/api/health"));
+    const payload = await response.json();
+
+    expect(payload).toMatchObject({ ok: true, service: "trimproof" });
+    expect(payload.checks).toBeUndefined();
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("reports detailed readiness only to an authorized operations caller", async () => {
+    vi.stubEnv("TRIMPROOF_HEALTH_TOKEN", "health-secret");
     vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_ready");
     vi.stubEnv("STRIPE_EXPORT_PRICE_ID", "price_export");
     vi.stubEnv("STRIPE_SUBSCRIPTION_PRICE_ID", "price_subscription");
@@ -33,7 +43,9 @@ describe("health route", () => {
     vi.stubEnv("NEXT_PUBLIC_GA_MEASUREMENT_ID", "G-READY");
     vi.stubEnv("GA4_API_SECRET", "ga4_secret");
 
-    const response = await GET();
+    const response = await GET(new Request("https://trimproof.com/api/health", {
+      headers: { Authorization: "Bearer health-secret" }
+    }));
     const payload = await response.json();
 
     expect(payload.checks).toMatchObject({
@@ -56,12 +68,15 @@ describe("health route", () => {
   });
 
   it("does not treat the Stripe portal as configured without a portal configuration", async () => {
+    vi.stubEnv("TRIMPROOF_HEALTH_TOKEN", "health-secret");
     vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_ready");
     vi.stubEnv("STRIPE_EXPORT_PRICE_ID", "price_export");
     vi.stubEnv("STRIPE_SUBSCRIPTION_PRICE_ID", "price_subscription");
     vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec_ready");
 
-    const response = await GET();
+    const response = await GET(new Request("https://trimproof.com/api/health", {
+      headers: { Authorization: "Bearer health-secret" }
+    }));
     const payload = await response.json();
 
     expect(payload.checks).toMatchObject({

@@ -21,6 +21,7 @@ export interface ProofResult {
 
 export interface GenerateProofOptions {
   watermarkDemoArt?: boolean;
+  allowModelAssets?: boolean;
 }
 
 export async function generateProof(
@@ -30,7 +31,8 @@ export async function generateProof(
 ): Promise<ProofResult> {
   const spec = layoutSpecSchema.parse(input);
   const assets = await resolveLayoutAssets(spec, outputDir, {
-    watermarkDemoArt: options.watermarkDemoArt
+    watermarkDemoArt: options.watermarkDemoArt,
+    allowModelAssets: options.allowModelAssets
   });
   const exportResult = await exportLayoutPdf(spec, {
     outputDir,
@@ -39,7 +41,7 @@ export async function generateProof(
   });
   const report = await runPreflight(exportResult.sourcePdfPath, spec, outputDir, assets);
   const reportPath = path.join(outputDir, "preflight-report.json");
-  await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
+  await fs.writeFile(reportPath, JSON.stringify(publicPreflightReport(report), null, 2));
 
   return {
     outputDir,
@@ -48,5 +50,23 @@ export async function generateProof(
     reportPath,
     report,
     assets
+  };
+}
+
+export function publicPreflightReport(report: PreflightReport): PreflightReport {
+  const cleanEvidence = (evidence: string) => evidence
+    .replaceAll(report.pdfPath, path.basename(report.pdfPath))
+    .replaceAll(report.pdfxPath ?? "\u0000", report.pdfxPath ? path.basename(report.pdfxPath) : "");
+
+  return {
+    ...report,
+    pdfPath: path.basename(report.pdfPath),
+    pdfxPath: report.pdfxPath ? path.basename(report.pdfxPath) : undefined,
+    checks: report.checks.map((check) => ({ ...check, evidence: cleanEvidence(check.evidence) })),
+    ghostscript: {
+      available: report.ghostscript.available,
+      outputPdfPath: report.ghostscript.outputPdfPath ? path.basename(report.ghostscript.outputPdfPath) : undefined,
+      error: report.ghostscript.error ? "PDF/X conversion did not complete." : undefined
+    }
   };
 }
