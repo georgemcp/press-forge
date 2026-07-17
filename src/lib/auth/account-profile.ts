@@ -15,7 +15,7 @@ export const accountProfileSchema = z.object({
   monthlyPrintJobs: z.enum(monthlyPrintJobs),
   primaryUseCase: z.enum(primaryUseCases),
   planInterest: z.enum(planInterests).default("demo"),
-  marketingConsent: z.boolean().default(true)
+  marketingConsent: z.boolean().default(false)
 });
 
 export type AccountProfileInput = z.infer<typeof accountProfileSchema>;
