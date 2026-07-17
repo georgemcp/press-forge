@@ -1,8 +1,8 @@
-import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 export const ADMIN_SESSION_COOKIE = "trimproof_admin";
 
-const sessionVersion = "v3";
+const sessionVersion = "v4";
 const sessionTtlSeconds = 60 * 60 * 8;
 
 function firstValue(...values: Array<string | undefined>) {
@@ -17,20 +17,31 @@ export function getAdminEmail() {
   return firstValue(process.env.TRIMPROOF_ADMIN_EMAIL, process.env.ADMIN_DASHBOARD_EMAIL);
 }
 
-function getAdminPassword() {
-  return firstValue(process.env.TRIMPROOF_ADMIN_PASSWORD, process.env.ADMIN_DASHBOARD_PASSWORD);
-}
-
 function getAdminPasswordHash() {
   return firstValue(process.env.TRIMPROOF_ADMIN_PASSWORD_HASH, process.env.ADMIN_DASHBOARD_PASSWORD_HASH);
 }
 
-function getAdminCredential() {
-  const passwordHash = getAdminPasswordHash();
-  if (passwordHash) {
-    return passwordHash;
+function parseAdminPasswordHash(encoded: string) {
+  const [algorithm, saltValue, digestValue, extra] = encoded.split("$");
+  if (algorithm !== "scrypt" || !saltValue || !digestValue || extra) {
+    return undefined;
   }
-  return process.env.NODE_ENV === "production" ? undefined : getAdminPassword();
+  const salt = Buffer.from(saltValue, "base64url");
+  const digest = Buffer.from(digestValue, "base64url");
+  if (
+    salt.length !== 16 ||
+    digest.length !== 64 ||
+    salt.toString("base64url") !== saltValue ||
+    digest.toString("base64url") !== digestValue
+  ) {
+    return undefined;
+  }
+  return { salt, digest };
+}
+
+function getValidAdminPasswordHash() {
+  const passwordHash = getAdminPasswordHash();
+  return passwordHash && parseAdminPasswordHash(passwordHash) ? passwordHash : undefined;
 }
 
 function getAdminSessionSecret() {
@@ -46,13 +57,13 @@ function sign(payload: string) {
 }
 
 function safeEqual(left: string, right: string) {
-  const leftHash = createHmac("sha256", "trimproof-admin-compare").update(left).digest();
-  const rightHash = createHmac("sha256", "trimproof-admin-compare").update(right).digest();
-  return timingSafeEqual(leftHash, rightHash);
+  const leftBuffer = Buffer.from(left, "utf8");
+  const rightBuffer = Buffer.from(right, "utf8");
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
 }
 
 export function isAdminAuthConfigured() {
-  return Boolean(getAdminEmail() && getAdminCredential() && getAdminSessionSecret());
+  return Boolean(getAdminEmail() && getValidAdminPasswordHash() && getAdminSessionSecret());
 }
 
 export function createAdminPasswordHash(password: string, salt = randomBytes(16)) {
@@ -64,14 +75,13 @@ export function createAdminPasswordHash(password: string, salt = randomBytes(16)
 }
 
 function validateHashedPassword(candidate: string, encoded: string) {
-  const [algorithm, saltValue, digestValue, extra] = encoded.split("$");
-  if (algorithm !== "scrypt" || !saltValue || !digestValue || extra) {
+  const parsed = parseAdminPasswordHash(encoded);
+  if (!parsed) {
     return false;
   }
   try {
-    const expected = Buffer.from(digestValue, "base64url");
-    const actual = scryptSync(candidate, Buffer.from(saltValue, "base64url"), expected.length);
-    return expected.length > 0 && expected.length === actual.length && timingSafeEqual(expected, actual);
+    const actual = scryptSync(candidate, parsed.salt, parsed.digest.length);
+    return timingSafeEqual(parsed.digest, actual);
   } catch {
     return false;
   }
@@ -79,11 +89,7 @@ function validateHashedPassword(candidate: string, encoded: string) {
 
 function validateAdminPassword(candidate: string) {
   const passwordHash = getAdminPasswordHash();
-  if (passwordHash) {
-    return validateHashedPassword(candidate, passwordHash);
-  }
-  const plaintext = process.env.NODE_ENV === "production" ? undefined : getAdminPassword();
-  return plaintext ? safeEqual(candidate, plaintext) : false;
+  return passwordHash ? validateHashedPassword(candidate, passwordHash) : false;
 }
 
 export function validateAdminCredentials(email: string, password: string) {
@@ -99,8 +105,12 @@ function encodeEmailSegment(email: string) {
 }
 
 function credentialFingerprint() {
-  const credential = getAdminCredential();
-  return credential ? createHash("sha256").update(credential).digest("base64url").slice(0, 24) : undefined;
+  const passwordHash = getValidAdminPasswordHash();
+  const sessionSecret = getAdminSessionSecret();
+  if (!passwordHash || !sessionSecret) {
+    return undefined;
+  }
+  return createHmac("sha256", sessionSecret).update(passwordHash).digest("base64url").slice(0, 24);
 }
 
 export function createAdminSessionValue(now = Date.now()) {

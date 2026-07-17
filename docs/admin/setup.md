@@ -12,7 +12,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 NEXT_PUBLIC_SUPABASE_URL=...
 ```
 
-Use a strong unique password, store only its application-generated scrypt hash in production, and keep a separate long random `TRIMPROOF_ADMIN_SESSION_SECRET`. Production rejects plaintext `TRIMPROOF_ADMIN_PASSWORD`. Changing the email, password hash, or session secret invalidates existing admin sessions.
+Use a strong unique password, store only its application-generated scrypt hash in every environment, and keep a separate long random `TRIMPROOF_ADMIN_SESSION_SECRET`. Plaintext password environment variables are unsupported. Changing the email, password hash, or session secret invalidates existing admin sessions.
 
 Generate the hash without putting the password in shell history:
 
