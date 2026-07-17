@@ -6,6 +6,8 @@ services:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trimproof.com}
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
         NEXT_PUBLIC_GTM_CONTAINER_ID: ${NEXT_PUBLIC_GTM_CONTAINER_ID:-}
+        OCI_REVISION: ${TRIMPROOF_IMAGE_REVISION:-unknown}
+        OCI_SOURCE: ${TRIMPROOF_IMAGE_SOURCE:-https://github.com/georgemcp/press-forge}
     restart: unless-stopped
     init: true
     security_opt:
@@ -26,8 +28,23 @@ services:
       TRIMPROOF_GENERATED_DIR: /app/.trimproof-generated
     volumes:
       - trimproof-generated:/app/.trimproof-generated
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - --input-type=module
+        - -e
+        - >-
+          try { const response = await fetch('http://127.0.0.1:3000/api/health',
+          { signal: AbortSignal.timeout(3000) }); const body = await response.json();
+          if (!response.ok || body.ok !== true) process.exit(1); } catch { process.exit(1); }
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
   worker:
     build:
@@ -36,6 +53,8 @@ services:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trimproof.com}
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
         NEXT_PUBLIC_GTM_CONTAINER_ID: ${NEXT_PUBLIC_GTM_CONTAINER_ID:-}
+        OCI_REVISION: ${TRIMPROOF_IMAGE_REVISION:-unknown}
+        OCI_SOURCE: ${TRIMPROOF_IMAGE_SOURCE:-https://github.com/georgemcp/press-forge}
     restart: unless-stopped
     init: true
     security_opt:
@@ -55,8 +74,24 @@ services:
       TRIMPROOF_GENERATED_DIR: /app/.trimproof-generated
     volumes:
       - trimproof-generated:/app/.trimproof-generated
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - --input-type=module
+        - -e
+        - >-
+          import Redis from 'ioredis'; const redis = new Redis(process.env.REDIS_URL,
+          { lazyConnect: true, maxRetriesPerRequest: 0, connectTimeout: 2000 });
+          try { await redis.connect(); if (await redis.ping() !== 'PONG') process.exitCode = 1; }
+          catch { process.exitCode = 1; } finally { redis.disconnect(); }
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
   redis:
     image: redis:7-alpine
@@ -75,6 +110,12 @@ services:
       - /tmp:rw,noexec,nosuid,size=16m
     volumes:
       - trimproof-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
 volumes:
   trimproof-redis:

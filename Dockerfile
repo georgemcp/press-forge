@@ -19,6 +19,10 @@ RUN npm run build
 
 FROM node:26-bookworm-slim AS runner
 WORKDIR /app
+ARG OCI_REVISION=unknown
+ARG OCI_SOURCE=https://github.com/georgemcp/press-forge
+LABEL org.opencontainers.image.revision="${OCI_REVISION}" \
+  org.opencontainers.image.source="${OCI_SOURCE}"
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN apt-get update \

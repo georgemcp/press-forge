@@ -16,7 +16,14 @@ Production target:
 - TLS: Let's Encrypt certificate at `/etc/letsencrypt/live/trimproof.com/`, expiring `2026-09-02` with scheduled auto-renewal
 
 The app is deployed with Docker Compose. Nginx terminates public HTTP/HTTPS and proxies to the app container on `127.0.0.1:3047`.
-Public `NEXT_PUBLIC_*` variables are passed as Docker build args so statically rendered marketing pages include analytics tags after rebuilds. Use `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build` for production rebuilds.
+Public `NEXT_PUBLIC_*` variables are passed as Docker build args so statically rendered marketing pages include analytics tags after rebuilds. Set the release revision before each production rebuild so the image carries auditable OCI source metadata, then wait for all native health checks:
+
+```sh
+export TRIMPROOF_IMAGE_REVISION="$(git rev-parse HEAD)"
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build --wait
+```
+
+`TRIMPROOF_IMAGE_SOURCE` defaults to `https://github.com/georgemcp/press-forge`. Override it only when building from a different canonical source repository. If `TRIMPROOF_IMAGE_REVISION` is omitted, the image label is deliberately `unknown` rather than claiming an unverified commit.
 
 The production Compose file applies non-root execution, drops Linux capabilities, blocks privilege escalation, and sets adjustable CPU, memory, and process limits. Override `TRIMPROOF_WEB_CPUS`, `TRIMPROOF_WEB_MEMORY_LIMIT`, `TRIMPROOF_WORKER_CPUS`, `TRIMPROOF_WORKER_MEMORY_LIMIT`, `TRIMPROOF_REDIS_CPUS`, or `TRIMPROOF_REDIS_MEMORY_LIMIT` in the deployment shell only when the VPS capacity requires different budgets.
 
@@ -64,6 +71,8 @@ Production Google DNS and files:
 Verification:
 
 - `docker compose -f docker-compose.prod.yml ps`
+- Confirm `web`, `worker`, and `redis` report `healthy`; web checks the public liveness route, worker verifies Redis connectivity through its configured URL, and Redis uses `redis-cli ping`.
+- `docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }} {{ index .Config.Labels "org.opencontainers.image.source" }}' "$(docker compose --env-file .env.production -f docker-compose.prod.yml images -q web)"` should report the deployed Git commit and canonical repository.
 - `curl http://127.0.0.1:3047/api/health`
 - Confirm `/api/health` reports `stripeCheckoutConfigured`, `stripeWebhookConfigured`, and `stripePortalConfigured` as `true` before treating paid exports and subscription management as live.
 - Visit `/app` in a fresh browser context and confirm it redirects to `/signup?next=...`; create an account before demo use.
