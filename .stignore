@@ -1,0 +1,16 @@
+(?d)node_modules
+(?d).next
+(?d)dist
+(?d)build
+(?d)DerivedData
+(?d).turbo
+(?d).cache
+*.log
+.DS_Store
+Thumbs.db
+(?d)__pycache__
+(?d).venv
+(?d)Pods
+(?d)xcuserdata
+*.xcuserstate
+(?d).git
