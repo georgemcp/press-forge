@@ -39,7 +39,7 @@
     "eslint": "9.39.4",
     "eslint-config-next": "15.5.19",
     "playwright": "^1.60.0",
-    "postcss": "8.5.15",
+    "postcss": "8.5.18",
     "tailwindcss": "4.3.0",
     "tsx": "4.22.4",
     "typescript": "6.0.3",
@@ -47,7 +47,7 @@
   },
   "overrides": {
     "esbuild": "0.28.1",
-    "postcss": "8.5.15",
+    "postcss": "8.5.18",
     "protobufjs": "7.6.3"
   }
 }
