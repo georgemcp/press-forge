@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { ProofPreview as PrintPreview } from "./proof-preview";
 import { useEffect, useState, useTransition } from "react";
 import {
   BadgeCheck,
@@ -13,7 +13,6 @@ import {
   LockKeyhole,
   Mail,
   Play,
-  Ruler,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -43,6 +42,7 @@ interface ProofApiResponse {
   sourceUrl?: string;
   svgUrl?: string;
   reportUrl?: string;
+  previewUrl?: string;
   assetUrls?: Array<{
     slotId: string;
     provider: "openai" | "gemini" | "recraft" | "deterministic";
@@ -58,7 +58,6 @@ interface ProofApiResponse {
   };
 }
 
-type ProofAssetUrl = NonNullable<ProofApiResponse["assetUrls"]>[number];
 
 interface LayoutSpecApiResponse {
   spec: LayoutSpec;
@@ -86,101 +85,6 @@ function StatusPill({ status }: { status: PreflightStatus }) {
     <span className={`inline-flex items-center rounded-[6px] px-2.5 py-1 text-xs font-semibold capitalize ${statusTone[status]}`}>
       {label}
     </span>
-  );
-}
-
-function GuideLabel({ children, tone }: { children: React.ReactNode; tone: "bleed" | "trim" | "safe" }) {
-  const colors = {
-    bleed: "border-accent text-accent",
-    trim: "border-surface-ink text-surface-ink",
-    safe: "border-success text-success"
-  };
-  return <span className={`rounded-[4px] border px-2 py-1 text-[11px] font-semibold uppercase tracking-normal ${colors[tone]}`}>{children}</span>;
-}
-
-function PrintPreview({
-  spec,
-  assetUrl,
-  assetProvider,
-  demoArtWatermarked
-}: {
-  spec: LayoutSpec;
-  assetUrl?: string;
-  assetProvider?: ProofAssetUrl["provider"];
-  demoArtWatermarked?: boolean;
-}) {
-  const productProfile = PRODUCT_PROFILES[spec.productType];
-  const aspect = productProfile.trimWidthIn / productProfile.trimHeightIn;
-  const brand = spec.textBlocks.find((block) => block.id === "brand")?.content ?? "TRIM PROOF";
-  const tagline = spec.textBlocks.find((block) => block.id === "tagline")?.content ?? "AI creative, deterministic prepress.";
-  const name = spec.textBlocks.find((block) => block.id === "name")?.content ?? "Mara Vale";
-  const contact = spec.textBlocks.find((block) => block.id === "contact")?.content ?? "trimproof.com";
-
-  return (
-    <section className="flex min-h-0 flex-1 flex-col border-y border-border bg-surface xl:border-x xl:border-y-0">
-      <div className="flex min-h-12 shrink-0 flex-col gap-2 border-b border-border px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Ruler aria-hidden className="h-4 w-4 text-accent" />
-          <div>
-            <h2 className="font-display text-sm font-semibold text-surface-ink">{productProfile.label} proof</h2>
-            <p className="text-xs text-muted">
-              {productProfile.trimWidthIn} in x {productProfile.trimHeightIn} in trim, {productProfile.bleedIn} in bleed, {spec.pdfxLevel} target
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {demoArtWatermarked ? (
-            <span className="rounded-[4px] border border-brand/40 bg-brand-soft px-2 py-1 text-[11px] font-semibold uppercase text-brand">Watermarked demo</span>
-          ) : null}
-          {assetProvider ? <span className="rounded-[4px] border border-brand/40 bg-brand-soft px-2 py-1 text-[11px] font-semibold uppercase text-brand">{assetProvider}</span> : null}
-          <GuideLabel tone="bleed">Bleed</GuideLabel>
-          <GuideLabel tone="trim">Trim</GuideLabel>
-          <GuideLabel tone="safe">Safe</GuideLabel>
-        </div>
-      </div>
-
-      <div className="print-grid flex min-h-0 flex-1 items-center justify-center p-3">
-        <div
-          className="relative max-h-full max-w-[860px] border border-accent/80 bg-background p-[4.8%] shadow-[0_18px_56px_oklch(0.18_0.02_252_/_0.15)]"
-          data-proof-card
-          style={{
-            aspectRatio: `${productProfile.trimWidthIn} / ${productProfile.trimHeightIn}`,
-            width: `min(96%, ${Math.round(700 * aspect)}px)`
-          }}
-        >
-          <div className="absolute inset-[4.8%] border border-dashed border-accent" />
-          <div className="absolute inset-[9.6%] border border-surface-ink" />
-          <div className="absolute inset-[15.2%] border border-dashed border-success" />
-          <div
-            className="relative h-full overflow-hidden border border-transparent bg-[oklch(0.98_0.008_84)] p-5 sm:p-8"
-            data-proof-asset={assetUrl ? "ready" : "pending"}
-          >
-            {assetUrl ? (
-              <Image
-                alt=""
-                className="absolute inset-0 object-cover opacity-100 saturate-[1.08] contrast-[1.04]"
-                fill
-                sizes="(min-width: 1280px) 52vw, 94vw"
-                src={assetUrl}
-                unoptimized
-              />
-            ) : null}
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,oklch(0.98_0.008_84_/_0.9)_0%,oklch(0.98_0.008_84_/_0.66)_26%,oklch(0.98_0.008_84_/_0.12)_46%,transparent_58%)]" />
-            <div className="absolute bottom-5 right-5 top-5 z-10 w-2 bg-accent sm:bottom-7 sm:right-8 sm:top-7 sm:w-3" />
-            <div className="relative z-10 flex h-full flex-col justify-between">
-              <div>
-                <div className="relative font-display text-2xl font-bold tracking-normal text-surface-ink sm:text-3xl">{brand}</div>
-                <div className="relative mt-2 max-w-[360px] text-sm font-semibold text-muted">{tagline}</div>
-              </div>
-              <div>
-                <div className="relative font-display text-lg font-bold text-surface-ink sm:text-xl">{name}</div>
-                <div className="relative mt-1 text-xs font-medium text-muted sm:text-sm">{contact}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -825,8 +729,7 @@ export function TrimProofWorkspace({ accountEmail, checkoutSessionId, checkoutSt
             spec={spec}
           />
           <PrintPreview
-            assetProvider={proof?.assetUrls?.[0]?.provider}
-            assetUrl={proof?.assetUrls?.[0]?.previewUrl ?? proof?.assetUrls?.[0]?.url}
+            previewUrl={proof?.previewUrl}
             demoArtWatermarked={proof?.demoArtWatermarked}
             spec={spec}
           />

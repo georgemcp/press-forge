@@ -76,6 +76,7 @@ function buildEnhancementPrompt(options: BriefEnhanceOptions): string {
     "- productTypeHint: One of 'business_card', 'postcard', 'flyer', 'poster', 'brochure', 'letterhead' based on what fits the brief best.",
     "",
     "Make creative, specific choices. Do not use generic filler. Every suggestion should be actionable for print production.",
+    "Preserve supplied names, event details, contact information, legal notices and any copy the user requests verbatim. Do not replace supplied copy with longer promotional paragraphs. Do not invent factual claims, offers, addresses or dates.",
     "Return ONLY valid JSON. No markdown, no explanation."
   );
 

@@ -23,6 +23,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - run: npm audit --audit-level=moderate
       - run: npm run lint
       - run: npm run typecheck
