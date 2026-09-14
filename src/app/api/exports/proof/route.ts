@@ -153,6 +153,7 @@ export async function POST(request: Request) {
       productionDownloadLocked: !manifest.canDownloadProductionFiles,
       report: publicPreflightReport(proof.report),
       demoArtWatermarked: mode === "dummy",
+      previewUrl: `${fileBase}/${path.basename(proof.previewPath)}`,
       ...productionUrls,
       reportUrl: `${fileBase}/${path.basename(proof.reportPath)}`,
       assetUrls: proof.assets.map((asset) => ({

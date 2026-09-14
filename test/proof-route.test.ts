@@ -71,7 +71,7 @@ describe("proof export delivery and allowance", () => {
       const reportPath = path.join(directory, "preflight-report.json");
       const report = { status: reportStatus, pdfPath, printProfile: "us_web_coated_swop", pdfxLevel: "PDF/X-1a", checks: [] };
       await Promise.all([sourcePdfPath, pdfPath, reportPath, ...(missingArtifact ? [] : [svgMasterPath])].map((filePath) => fs.writeFile(filePath, "test artifact")));
-      return { outputDir: directory, sourcePdfPath, svgMasterPath, reportPath, report, assets: [] };
+      return { outputDir: directory, sourcePdfPath, svgMasterPath, reportPath, previewPath: path.join(directory, "proof-preview.png"), report, assets: [] };
     });
   });
 

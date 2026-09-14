@@ -6,6 +6,7 @@ import sharp from "sharp";
 import { getPageGeometry, inchesToPoints } from "./constants";
 import type { CmykColor, LayoutSpec, TextBlock } from "./layout-spec";
 import type { ResolvedAsset } from "./assets";
+import { layoutText, type LaidOutText } from "./text-layout";
 
 export interface PdfExportResult {
   sourcePdfPath: string;
@@ -39,28 +40,23 @@ export function escapeSvgText(value: string) {
     .replaceAll("'", "&apos;");
 }
 
-function lineBreak(content: string, maxChars: number) {
-  const words = content.split(/\s+/);
-  const lines: string[] = [];
-  let current = "";
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
-    if (candidate.length > maxChars && current) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = candidate;
-    }
-  }
-  if (current) {
-    lines.push(current);
-  }
-  return lines;
-}
-
 async function loadFontBytes(weight: TextBlock["weight"]) {
   const fileName = weight === "regular" ? "InstrumentSans.ttf" : "BricolageGrotesque.ttf";
   return fs.readFile(path.join(process.cwd(), "assets", "fonts", fileName));
+}
+
+async function embedLayoutFonts(pdfDoc: PDFDocument, spec: LayoutSpec) {
+  const fonts = new Map<TextBlock["weight"], Awaited<ReturnType<typeof pdfDoc.embedFont>>>();
+  for (const block of spec.textBlocks) {
+    if (!fonts.has(block.weight)) fonts.set(block.weight, await pdfDoc.embedFont(await loadFontBytes(block.weight), { subset: false }));
+  }
+  return fonts;
+}
+
+export async function validatePrintableText(spec: LayoutSpec) {
+  const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
+  layoutText(spec, await embedLayoutFonts(doc, spec));
 }
 
 async function embedAssetImage(pdfDoc: PDFDocument, asset: ResolvedAsset) {
@@ -104,7 +100,7 @@ function drawCropMarks(page: PDFPage, spec: LayoutSpec) {
   }
 }
 
-function createSvgMaster(spec: LayoutSpec, assets: ResolvedAsset[] = []) {
+function createSvgMaster(spec: LayoutSpec, textLayout: LaidOutText[], assets: ResolvedAsset[] = []) {
   const geometry = getPageGeometry(spec.productType);
   const width = geometry.mediaBox.width;
   const height = geometry.mediaBox.height;
@@ -115,11 +111,12 @@ function createSvgMaster(spec: LayoutSpec, assets: ResolvedAsset[] = []) {
       return `<image href="${path.basename(asset.filePath)}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${inchesToPoints(asset.slot.width).toFixed(2)}" height="${inchesToPoints(asset.slot.height).toFixed(2)}" preserveAspectRatio="xMidYMid slice"/>`;
     })
     .join("\n");
-  const text = spec.textBlocks
-    .map((block) => {
+  const text = textLayout
+    .map(({ block, lines, lineHeight }) => {
       const x = geometry.trim.x + inchesToPoints(block.x);
       const y = height - geometry.trim.y - inchesToPoints(block.y);
-      return `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" font-family="Bricolage Grotesque" font-size="${block.fontSize}" fill="${svgColor(block.color)}">${escapeSvgText(block.content)}</text>`;
+      const family = block.weight === "regular" ? "Instrument Sans" : "Bricolage Grotesque";
+      return `<text font-family="${family}" font-size="${block.fontSize}" fill="${svgColor(block.color)}">${lines.map((line, index) => `<tspan x="${x.toFixed(2)}" y="${(y + index * lineHeight).toFixed(2)}">${escapeSvgText(line)}</tspan>`).join("")}</text>`;
     })
     .join("\n");
 
@@ -176,27 +173,21 @@ export async function exportLayoutPdf(spec: LayoutSpec, options: PdfExportOption
     color: toPdfCmyk(spec.palette.accent)
   });
 
-  const fontCache = new Map<TextBlock["weight"], Awaited<ReturnType<typeof pdfDoc.embedFont>>>();
-  for (const block of spec.textBlocks) {
-    const fontBytes = await loadFontBytes(block.weight);
-    const font = await pdfDoc.embedFont(fontBytes, { subset: false });
-    fontCache.set(block.weight, font);
-  }
-
-  for (const block of spec.textBlocks) {
+  const fontCache = await embedLayoutFonts(pdfDoc, spec);
+  const textLayout = layoutText(spec, fontCache);
+  for (const { block, lines, lineHeight } of textLayout) {
     const font = fontCache.get(block.weight);
     if (!font) {
       throw new Error(`Missing embedded font for ${block.weight}`);
     }
-    const lines = lineBreak(block.content, Math.max(12, Math.floor(block.width * 18)));
     lines.forEach((line, index) => {
       page.drawText(line, {
         x: geometry.trim.x + inchesToPoints(block.x),
-        y: geometry.trim.y + inchesToPoints(block.y) - index * block.fontSize * 1.22,
+        y: geometry.trim.y + inchesToPoints(block.y) - index * lineHeight,
         size: block.fontSize,
         font,
         color: toPdfCmyk(block.color),
-        lineHeight: block.fontSize * 1.22
+        lineHeight
       });
     });
   }
@@ -207,7 +198,7 @@ export async function exportLayoutPdf(spec: LayoutSpec, options: PdfExportOption
 
   const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
   await fs.writeFile(sourcePdfPath, pdfBytes);
-  await fs.writeFile(svgMasterPath, createSvgMaster(spec, options.assets));
+  await fs.writeFile(svgMasterPath, createSvgMaster(spec, textLayout, options.assets));
 
   return {
     sourcePdfPath,

@@ -6,7 +6,7 @@ import { canServeProofFile } from "@/lib/print/delivery-manifest";
 
 export const runtime = "nodejs";
 
-const allowedFilePattern = /^(?:pressforge-(?:business-card|postcard|flyer|poster|brochure|letterhead)\.(?:source\.pdf|pdfx\.pdf|master\.svg)|asset-[a-z0-9-]+(?:-preview)?\.png|preflight-report\.json)$/;
+const allowedFilePattern = /^(?:pressforge-(?:business-card|postcard|flyer|poster|brochure|letterhead)\.(?:source\.pdf|pdfx\.pdf|master\.svg)|asset-[a-z0-9-]+(?:-preview)?\.png|proof-preview\.png|preflight-report\.json)$/;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function getContentType(fileName: string) {

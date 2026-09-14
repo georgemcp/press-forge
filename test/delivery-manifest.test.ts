@@ -54,6 +54,8 @@ describe("proof delivery manifest", () => {
     await expect(canServeProofFile(outputDir, "preflight-report.json", ownerUserId)).resolves.toBe(true);
     await expect(canServeProofFile(outputDir, "asset-background-art.png", ownerUserId)).resolves.toBe(true);
     await expect(canServeProofFile(outputDir, "asset-background-art-preview.png", ownerUserId)).resolves.toBe(true);
+    await expect(canServeProofFile(outputDir, "proof-preview.png", ownerUserId)).resolves.toBe(true);
+    await expect(canServeProofFile(outputDir, "proof-preview.png", "another-user")).resolves.toBe(false);
     await expect(canServeProofFile(outputDir, "asset-background-art.png", "another-user")).resolves.toBe(false);
   });
 

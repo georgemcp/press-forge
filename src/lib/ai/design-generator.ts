@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
-import type { LayoutSpec } from "@/lib/print/layout-spec";
+import { layoutSpecSchema, type LayoutSpec } from "@/lib/print/layout-spec";
+import { validatePrintableText } from "@/lib/print/pdf-export";
 import type { ProductType, PrintProfileId } from "@/lib/print/constants";
 import type { BriefEnhancementResult } from "./brief-enhancer";
 
@@ -12,6 +13,8 @@ export interface DesignGenerationInput {
   cropMarks?: boolean;
   referenceImageUrls?: string[];
   designIteration?: number;
+  layoutFeedback?: string;
+  previousLayout?: LayoutSpec;
 }
 
 export interface DesignGenerationResult {
@@ -50,6 +53,7 @@ function buildDesignSpecPrompt(input: DesignGenerationInput): string {
     "",
     "=== SPECS ===",
     `Product Type: ${input.productType}`,
+    `Print Profile: ${input.printProfile || "USWebCoatedSWOP"}`,
     `PDF/X Level: ${input.pdfxLevel || "PDF/X-1a:2001"}`,
     `Crop Marks: ${input.cropMarks !== false ? "Yes" : "No"}`,
     `Iteration: ${input.designIteration || 1}`,
@@ -61,6 +65,12 @@ function buildDesignSpecPrompt(input: DesignGenerationInput): string {
       "The following reference images were uploaded. Incorporate their visual style, colors, and motifs:"
     );
     parts.push(...input.referenceImageUrls.map((url, i) => `Reference ${i + 1}: ${url}`));
+  }
+
+  if (input.layoutFeedback) {
+    parts.push("", "=== REQUIRED LAYOUT CORRECTION ===", input.layoutFeedback,
+      "Correct the issue below without changing the supplied copy. Use fewer decorative assets if necessary. Reduce headline size or reposition blocks to leave room for wrapped lines.",
+      `Previous layout: ${JSON.stringify(input.previousLayout)}`);
   }
 
   parts.push(
@@ -97,7 +107,11 @@ function buildDesignSpecPrompt(input: DesignGenerationInput): string {
     "- Text blocks MUST use these role values: brand, headline, subhead, body, contact, legal.",
     "- Font sizes should be proportional to the product size. Business cards use smaller text (6-16pt), posters use larger (14-54pt).",
     "- Asset slots positioned first as backgrounds, then logos/icons overlaid.",
-    "- Create 2-4 asset slots for visual richness.",
+    "- Use only assets needed by the brief. A text-led design can have zero asset slots. Do not generate a wordmark image that duplicates a vector brand text block.",
+    "- Preserve all supplied copy and legal notices. Keep legal text visibly contrasting with its background; never hide it by matching the paper color.",
+    "- Keep text at least 0.25 inches inside every trim edge. Text y is the FIRST LINE BASELINE, not the top edge. Reserve room above it for the font ascent and below it for every wrapped line.",
+    "- Text wraps to its width at the actual font size. Reserve at least fontSize * 1.22 points per line. Do not overlap text blocks or place logos over text.",
+    "- The renderer supports two font families: Instrument Sans for regular weight and Bricolage Grotesque for medium/bold. Do not promise serif typography or unsupported font choices.",
     "- CMYK values must be between 0 and 1.",
     "",
     "Return ONLY valid JSON. No markdown wrapping, no explanation outside the JSON."
@@ -190,6 +204,31 @@ export async function generateDesignSpecWithGemini(
 export async function generateDesignSpec(
   input: DesignGenerationInput
 ): Promise<DesignGenerationResult> {
+  let request = input;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = await generateWithAvailableProvider(request);
+    try {
+      result.layoutSpec = layoutSpecSchema.parse(result.layoutSpec);
+      if (result.layoutSpec.productType !== input.productType) throw new Error("The layout must use the requested product dimensions.");
+      result.layoutSpec.printProfile = input.printProfile ?? "USWebCoatedSWOP";
+      result.layoutSpec.pdfxLevel = input.pdfxLevel ?? "PDF/X-1a:2001";
+      result.layoutSpec.cropMarks = input.cropMarks !== false;
+      // A text-only brief must not acquire paid decorative images downstream.
+      if (input.enhancedBrief.assetSuggestions.length === 0) {
+        result.layoutSpec.assetSlots = [];
+        result.assetPrompts = [];
+      }
+      await validatePrintableText(result.layoutSpec);
+      return result;
+    } catch (error) {
+      if (attempt === 1) throw error;
+      request = { ...input, previousLayout: result.layoutSpec, layoutFeedback: error instanceof Error ? error.message : "The layout failed print geometry validation." };
+    }
+  }
+  throw new Error("The layout could not be made printable.");
+}
+
+async function generateWithAvailableProvider(input: DesignGenerationInput): Promise<DesignGenerationResult> {
   if (process.env.OPENAI_API_KEY) {
     try {
       return await generateDesignSpecWithOpenAI(input);
