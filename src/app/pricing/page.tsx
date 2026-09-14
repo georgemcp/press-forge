@@ -4,9 +4,9 @@ import { ArrowRight, CheckCircle2, CreditCard, FileCheck2, ShieldCheck } from "l
 import { getSiteOrigin } from "@/lib/seo/site-url";
 
 export const metadata: Metadata = {
-  title: "Trim Proof Pricing",
+  title: "Pricing",
   description:
-    "Trim Proof pricing: create a free watermarked demo proof, buy a $12 export credit for one clean production PDF/X export, or use Trim Proof Pro for $49/month with 15 advanced exports.",
+    "Try a free watermarked demo with a Trim Proof account. Clean PDF/X exports cost $12 each, or $49/month for 15 exports with Pro.",
   alternates: {
     canonical: "/pricing"
   },
@@ -29,41 +29,41 @@ export const metadata: Metadata = {
 const plans = [
   {
     id: "demo",
-    name: "Dummy proof",
+    name: "Free demo",
     price: "$0",
-    cadence: "account demo",
-    body: "Create a free account to see a watermarked sample proof, bleed guides, crop marks, and a preflight report before buying a clean export.",
-    cta: "Create demo account",
+    cadence: "with a free account",
+    body: "See how a sample proof looks and review its file checks before you buy an export.",
+    cta: "Try the free demo",
     href: "/signup?intent=demo&next=/app",
-    features: ["Account required", "Watermarked sample art", "Visible trim, bleed, and safe-area guides", "Preflight report"]
+    features: ["Watermarked sample artwork", "File-check report included", "Visible trim, bleed, and safe-area guides", "No clean production download"]
   },
   {
     id: "export",
     name: "Export credit",
     price: "$12",
     cadence: "per export",
-    body: "Buy one advanced PDF/X-1a production export when a specific flyer, poster, brochure, card, postcard, or letterhead job is ready.",
-    cta: "Buy one export credit",
+    body: "For a single print job. Buy one credit to generate and download one clean PDF/X proof.",
+    cta: "Choose one export",
     href: "/signup?intent=single_export&next=/app%3Fmode%3Dadvanced",
-    features: ["One production PDF/X-1a export", "CMYK-oriented output path", "Crop marks when requested", "Credit consumed on generated proof"]
+    features: ["One clean PDF/X-1a export", "File checks and CMYK conversion", "Credit used only after checks pass", "No subscription"]
   },
   {
     id: "pro",
     name: "Trim Proof Pro",
     price: "$49",
     cadence: "per month",
-    body: "Use Pro when recurring print work needs checked exports without buying one credit at a time.",
-    cta: "Start Pro",
+    body: "For recurring print work. Get 15 clean PDF/X exports each billing month.",
+    cta: "Choose Pro",
     href: "/signup?intent=pro&next=/app%3Fmode%3Dadvanced",
-    features: ["15 advanced exports per month", "Subscription checkout", "Built for recurring flyer, poster, brochure, card, postcard, and letterhead jobs", "Stripe subscription management"]
+    features: ["15 exports per billing month", "Same file checks as single exports", "Monthly subscription", "Manage your subscription online"]
   }
 ];
 
 const facts = [
   ["Supported products", "Flyers, posters, brochures, business cards, postcards, and letterhead."],
-  ["Current verified export", "PDF/X-1a-oriented production export with preflight checks."],
-  ["Prepress checks", "Bleed, crop marks, trim boxes, embedded vector text, color workflow, image DPI, and PDF/X status."],
-  ["Product boundary", "Trim Proof does not guarantee acceptance by every printer and is not a universal PDF repair tool or proof approval suite."]
+  ["Export format", "Clean PDF/X-1a files after the preflight checks pass."],
+  ["File checks", "Page size, bleed, embedded fonts, image resolution, and PDF/X format."],
+  ["Before printing", "Trim Proof does not guarantee acceptance by every printer. Compare the proof with your printer's specifications before ordering."]
 ];
 
 const faq = [
@@ -75,12 +75,12 @@ const faq = [
   {
     question: "What does the $12 export credit include?",
     answer:
-      "One export credit unlocks one advanced production PDF/X-1a export when a specific supported print job is ready. The credit is consumed when the generated proof is exported."
+      "One credit pays for one clean PDF/X-1a export. The credit is used when the proof passes its checks and is generated. If generation fails or the checks need attention, your credit stays available."
   },
   {
     question: "What does Trim Proof Pro include?",
     answer:
-      "Trim Proof Pro is $49 per month and includes 15 advanced exports per billing month for recurring flyer, poster, brochure, business-card, postcard, and letterhead work."
+      "Pro costs $49 per month and includes 15 clean PDF/X exports per billing month for flyers, posters, brochures, business cards, postcards, and letterhead. Failed checks do not use an export from your allowance."
   },
   {
     question: "Does paying guarantee printer acceptance?",
@@ -116,7 +116,7 @@ function PricingJsonLd() {
         applicationCategory: "DesignApplication",
         operatingSystem: "Web",
         description:
-          "Trim Proof creates print-ready PDF/X proofs with deterministic prepress checks for supported starter products.",
+          "Trim Proof helps create print designs and checks size, bleed, embedded fonts, image resolution, and PDF/X format before paid export.",
         offers: {
           "@type": "AggregateOffer",
           priceCurrency: "USD",
@@ -124,7 +124,7 @@ function PricingJsonLd() {
           highPrice: "49",
           offerCount: plans.length,
           offers: [
-            { "@type": "Offer", name: "Dummy proof", price: "0", priceCurrency: "USD", url: `${origin}/signup?intent=demo&next=/app` },
+            { "@type": "Offer", name: "Free demo", price: "0", priceCurrency: "USD", url: `${origin}/signup?intent=demo&next=/app` },
             { "@type": "Offer", name: "Export credit", price: "12", priceCurrency: "USD", url: `${origin}/signup?intent=single_export&next=/app%3Fmode%3Dadvanced` },
             { "@type": "Offer", name: "Trim Proof Pro", price: "49", priceCurrency: "USD", url: `${origin}/signup?intent=pro&next=/app%3Fmode%3Dadvanced` }
           ]
@@ -161,7 +161,7 @@ export default function PricingPage() {
               Tools
             </Link>
             <Link className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-surface-ink px-4 text-white" href="/signup?intent=demo&next=/app">
-              Create account
+              Try free demo
               <ArrowRight aria-hidden className="h-4 w-4" />
             </Link>
           </div>
@@ -173,13 +173,14 @@ export default function PricingPage() {
           <CreditCard aria-hidden className="h-7 w-7 text-brand" />
           <p className="mt-5 text-sm font-bold uppercase text-brand">Trim Proof pricing</p>
           <h1 className="mt-3 font-display text-5xl font-bold leading-[1.04] text-surface-ink">
-            Start with a free watermarked proof. Pay when a clean production PDF/X export is ready.
+            Try the demo. Choose how you export.
           </h1>
         </div>
         <div className="border-y border-border bg-surface p-5">
-          <p className="text-xs font-bold uppercase text-brand">Short answer</p>
+          <p className="text-xs font-bold uppercase text-brand">Your export options</p>
           <p className="mt-3 text-lg leading-8 text-surface-ink">
-            Trim Proof offers a free watermarked demo account, a $12 one-export credit, and Trim Proof Pro at $49/month with 15 advanced exports. Paid paths unlock clean production-oriented PDF/X-1a exports for supported flyers, posters, brochures, business cards, postcards, and letterhead.
+            Start with a free account and a watermarked sample. Choose a $12 credit for one clean PDF/X export,
+            or $49 per month for 15 exports with Pro. Clean downloads unlock after the file checks pass.
           </p>
         </div>
       </section>
@@ -217,9 +218,10 @@ export default function PricingPage() {
       <section className="mx-auto grid max-w-6xl gap-6 px-4 py-14 lg:grid-cols-[0.72fr_1.28fr]">
         <div>
           <FileCheck2 aria-hidden className="h-6 w-6 text-success" />
-          <h2 className="mt-4 font-display text-4xl font-bold text-surface-ink">What paid export is for</h2>
+          <h2 className="mt-4 font-display text-4xl font-bold text-surface-ink">What your export includes</h2>
           <p className="mt-4 text-base leading-7 text-muted">
-            Use paid export when the proof is for a real print job and the file needs a production-oriented PDF/X download rather than only a demo preview.
+            Paid exports include a clean PDF/X file and a report of its print checks.
+            Review the design and match the settings to your printer before placing an order.
           </p>
         </div>
         <div className="divide-y divide-border border-y border-border">
@@ -236,9 +238,10 @@ export default function PricingPage() {
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-12 lg:grid-cols-[0.78fr_1.22fr]">
           <div>
             <ShieldCheck aria-hidden className="h-6 w-6 text-success" />
-            <h2 className="mt-4 font-display text-4xl font-bold text-surface-ink">Pricing boundaries</h2>
+            <h2 className="mt-4 font-display text-4xl font-bold text-surface-ink">Before you choose</h2>
             <p className="mt-4 text-base leading-7 text-muted">
-              The checkout paths unlock the generated-proof workflow in Trim Proof. They do not turn the product into a universal PDF repair tool, a proof approval suite, or a guarantee that every printer will accept every file.
+              Start with the sample to see the workspace and file-check report.
+              Then choose the number of exports that fits your print work.
             </p>
           </div>
           <div className="grid gap-4">

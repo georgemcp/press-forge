@@ -5,12 +5,10 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   ArrowRight,
-  BadgeCheck,
   CheckCircle2,
   FileCheck2,
   Layers3,
   Mail,
-  MoveRight,
   Ruler,
   SearchCheck,
   ShieldCheck,
@@ -25,26 +23,26 @@ const answerBlocks = [
   {
     question: "What does Trim Proof do?",
     answer:
-      "Trim Proof turns plain-English briefs for flyers, posters, brochures, business cards, postcards, and letterhead into print-ready PDF/X proofs with bleed, crop marks, embedded vector text, CMYK-oriented output, and preflight checks."
+      "Trim Proof helps you design flyers, posters, brochures, business cards, postcards, and letterhead. Describe what you need, review the design, and check its size, fonts, image resolution, and PDF/X format before downloading a paid export."
   },
   {
-    question: "What is a print-ready PDF?",
+    question: "What can I try for free?",
     answer:
-      "A print-ready PDF has the correct final size, bleed, crop marks, embedded fonts, high-resolution images, and a printer-safe color workflow. Trim Proof creates and checks those properties before a file is delivered."
+      "Create a free account to generate a sample proof with watermarked artwork and a file-check report. No payment is needed for the demo. A clean production download requires a $12 export credit or Trim Proof Pro."
   },
   {
-    question: "Can AI make a PDF/X file by itself?",
+    question: "What does Trim Proof Pro include?",
     answer:
-      "Image models can create useful creative assets, but they do not reliably create vector text, CMYK output, trim boxes, bleed boxes, ICC profiles, or PDF/X conformance. Trim Proof keeps AI in the creative stage and uses deterministic prepress tooling for the final file."
+      "Pro costs $49 per month and includes 15 clean PDF/X exports per billing month. A single export credit costs $12 with no subscription. Both paid options include the same file checks."
   },
   {
-    question: "What is dummy proof mode?",
+    question: "Will my printer accept the file?",
     answer:
-      "Dummy proof mode gives visitors a fast sample proof with watermarked art so they can see the bleed, trim, safe area, crop marks, and preflight report before paying for a clean production download."
+      "Trim Proof checks common print-file requirements and shows the results in a preflight report. Your printer may have specific size, color, or finishing requirements, so compare the proof with their specifications and review the design before ordering a print run."
   }
 ];
 
-const keywordTargets = [
+const printGuides = [
   { label: "AI flyer generator", href: "/tools/ai-flyer-generator" },
   { label: "AI flyer maker", href: "/tools/ai-flyer-generator" },
   { label: "Flyer maker", href: "/tools/ai-flyer-generator" },
@@ -91,51 +89,51 @@ const keywordTargets = [
 ];
 
 const proofMetrics = [
-  ["Trim", "starter profiles"],
+  ["Print sizes", "6 formats"],
   ["Bleed", "0.125 in"],
-  ["Images", "300 DPI gate"],
-  ["Text", "Vector embedded"],
+  ["Images", "300 DPI check"],
+  ["Text", "Embedded fonts"],
   ["Color", "CMYK / ICC"],
   ["Output", "PDF/X-1a"]
 ];
 
 const workflowCards: Array<[string, string, LucideIcon]> = [
-  ["01 Brief", "Plain-English job intake for cards, flyers, posters, brochures, postcards, and letterhead.", Sparkles],
-  ["02 Creative", "Image models create decorative art while final text stays deterministic.", Layers3],
-  ["03 Geometry", "Trim, bleed, safe area, crop marks, ICC profile, and boxes are built exactly.", Ruler],
-  ["04 Gate", "PDF/X, fonts, color, and DPI checks decide whether the file is safe to export.", ShieldCheck]
+  ["01 Describe", "Choose a print format and describe your business, message, and style.", Sparkles],
+  ["02 Design", "Review the artwork and text, then adjust the design in your workspace.", Layers3],
+  ["03 Check", "Review the preflight report for print size, bleed, fonts, image resolution, and PDF/X format.", Ruler],
+  ["04 Export", "Use a paid credit or Pro export to download a clean PDF/X file after its checks pass.", ShieldCheck]
 ];
 
 const pricingPlans = [
   {
     id: "dummy",
-    name: "Dummy proof",
+    name: "Free demo",
     price: "$0",
-    cadence: "account demo",
-    body: "Create a free account, then see bleed, trim, safe-area guides, crop marks, and a preflight report.",
-    cta: "Create demo account",
+    cadence: "with a free account",
+    body: "See how a sample proof looks and review its file checks before you buy an export.",
+    cta: "Try the free demo",
     href: "/signup?intent=demo&next=/app",
-    features: ["Account required", "Sample business-card proof", "Preflight report"]
+    features: ["Watermarked sample artwork", "File-check report included", "No clean production download"]
   },
   {
     id: "export",
     name: "Export credit",
     price: "$12",
     cadence: "per export",
-    body: "Unlock one advanced PDF/X export when a specific job needs a printer-ready file.",
-    cta: "Buy export credit",
+    body: "For a single print job. Buy one credit to generate and download one clean PDF/X proof.",
+    cta: "Choose one export",
     href: "/signup?intent=single_export&next=/app%3Fmode%3Dadvanced",
-    features: ["PDF/X-1a export", "CMYK conversion", "Credit consumed on generated proof"]
+    features: ["One clean PDF/X-1a export", "File checks and CMYK conversion", "No subscription"]
   },
   {
     id: "pro",
     name: "Trim Proof Pro",
     price: "$49",
     cadence: "per month",
-    body: "Use advanced mode for recurring print work without buying one credit at a time.",
-    cta: "Start Pro",
+    body: "For recurring print work. Get 15 clean PDF/X exports each billing month.",
+    cta: "Choose Pro",
     href: "/signup?intent=pro&next=/app%3Fmode%3Dadvanced",
-    features: ["15 advanced exports per month", "Subscription checkout", "Built for frequent jobs"]
+    features: ["15 exports per billing month", "Same file checks as single exports", "Monthly subscription"]
   }
 ];
 
@@ -157,7 +155,7 @@ function JsonLd() {
         applicationCategory: "DesignApplication",
         operatingSystem: "Web",
         description:
-          "Trim Proof turns design briefs into print-ready PDF/X files with deterministic CMYK conversion, bleed, crop marks, embedded vector fonts, and preflight checks.",
+          "Trim Proof helps create print designs and checks size, bleed, embedded fonts, image resolution, and PDF/X format before paid export.",
         offers: {
           "@type": "AggregateOffer",
           priceCurrency: "USD",
@@ -165,7 +163,7 @@ function JsonLd() {
           highPrice: "49",
           offerCount: 3,
           offers: [
-            { "@type": "Offer", name: "Dummy proof", price: "0", priceCurrency: "USD" },
+            { "@type": "Offer", name: "Free demo", price: "0", priceCurrency: "USD" },
             { "@type": "Offer", name: "Export credit", price: "12", priceCurrency: "USD" },
             { "@type": "Offer", name: "Trim Proof Pro", price: "49", priceCurrency: "USD" }
           ]
@@ -187,9 +185,9 @@ function JsonLd() {
         name: "How to create a print-ready PDF with Trim Proof",
         step: [
           { "@type": "HowToStep", name: "Write a brief", text: "Describe the business card, flyer, poster, brochure, postcard, or letterhead you need." },
-          { "@type": "HowToStep", name: "Choose a proof mode", text: "Use dummy proof mode for a fast watermarked sample or advanced mode for full PDF/X export controls." },
-          { "@type": "HowToStep", name: "Run preflight", text: "Trim Proof checks trim, bleed, fonts, color workflow, image DPI, and PDF/X status." },
-          { "@type": "HowToStep", name: "Download the file", text: "Use paid advanced export to download the clean production PDF/X file after the preflight gate passes or is flagged for review." }
+          { "@type": "HowToStep", name: "Review the design", text: "Create a free account to try a watermarked sample, or prepare your design for a paid export." },
+          { "@type": "HowToStep", name: "Run preflight", text: "Review the report for print size, bleed, fonts, image resolution, and PDF/X format." },
+          { "@type": "HowToStep", name: "Download the file", text: "Use an export credit or a Pro export to download a clean PDF/X file after its checks pass. Compare it with your printer's specifications before ordering." }
         ]
       }
     ]
@@ -239,7 +237,7 @@ function EmailCapture() {
         type="submit"
       >
         <Mail aria-hidden className="h-4 w-4" />
-        Get launch updates
+        Get product updates
       </button>
       <span className="sr-only" aria-live="polite">
         {status === "sent" ? "Signup received" : status === "error" ? "Signup failed" : ""}
@@ -260,13 +258,13 @@ export function MarketingSite() {
             </span>
             <span>
               <span className="block font-display text-lg font-bold leading-none">Trim Proof</span>
-              <span className="hidden text-[11px] font-semibold uppercase text-muted sm:block">PDF/X proof engine</span>
+              <span className="hidden text-[11px] font-semibold uppercase text-muted sm:block">Design. Check. Print.</span>
             </span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-semibold text-muted md:flex">
             <a href="#how-it-works">How it works</a>
             <Link href="/pricing">Pricing</Link>
-            <a href="#seo-pages">Tools</a>
+            <a href="#print-guides">Print guides</a>
             <Link href="/about">About</Link>
             <a href="#faq">FAQ</a>
           </nav>
@@ -275,7 +273,7 @@ export function MarketingSite() {
             href="/signup?intent=demo&next=/app"
             onClick={() => trackEvent("dummy_proof_started", { source: "nav" })}
           >
-            Create account
+            Try free demo
             <ArrowRight aria-hidden className="h-4 w-4" />
           </Link>
         </div>
@@ -283,27 +281,27 @@ export function MarketingSite() {
 
       <section className="relative min-h-[calc(88svh-4rem)] overflow-hidden border-b border-border">
         <Image
-          alt="Trim Proof SaaS workspace showing brief intake, business card proof, PDF/X preflight, and billing controls."
+          alt="Trim Proof workspace illustration with a design brief, business card preview, and file checks."
           className="object-cover"
           fill
           priority
           sizes="100vw"
           src="/trim-proof-workspace-concept.png"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,oklch(0.14_0.018_252_/_0.92),oklch(0.18_0.025_252_/_0.74)_42%,oklch(0.21_0.02_252_/_0.22)_76%)]" />
+        <div className="absolute inset-0 bg-black/70 lg:bg-[linear-gradient(90deg,oklch(0.14_0.018_252_/_0.92),oklch(0.18_0.025_252_/_0.74)_42%,oklch(0.21_0.02_252_/_0.22)_76%)]" />
         <div className="absolute inset-x-0 bottom-0 h-28 bg-[linear-gradient(0deg,oklch(0.14_0.018_252_/_0.68),transparent)]" />
         <div className="relative mx-auto grid min-h-[calc(88svh-4rem)] max-w-7xl content-end px-4 py-8 md:py-10">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.72fr)] lg:items-end">
             <div className="max-w-4xl">
               <p className="mb-4 inline-flex items-center gap-2 border-y border-white/24 py-2 text-[11px] font-bold uppercase text-white/82 sm:text-xs">
-                AI upstream <MoveRight aria-hidden className="h-3.5 w-3.5" /> deterministic prepress downstream
+                AI-assisted design · Built for print
               </p>
               <h1 className="max-w-4xl font-display text-[clamp(2.65rem,7.4vw,6.4rem)] font-bold leading-[0.92] text-white">
-                AI print-ready PDF generator for flyers, posters, brochures, and business cards.
-            </h1>
+                Design your print piece. Check the PDF.
+              </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-white/86 md:mt-6 md:text-lg md:leading-8">
-                Trim Proof turns a plain-English print brief into a checked PDF/X proof with CMYK output, crop marks,
-                embedded vector fonts, correct boxes, and a preflight gate before download.
+                Create flyers, business cards, posters, and more. Trim Proof helps you design the piece,
+                check the file, and download a clean PDF/X proof for your printer.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
@@ -311,25 +309,27 @@ export function MarketingSite() {
                   href="/signup?intent=demo&next=/app"
                   onClick={() => trackEvent("dummy_proof_started", { source: "hero" })}
                 >
-                  Create demo account
+                  Try the free demo
                   <ArrowRight aria-hidden className="h-4 w-4" />
                 </Link>
                 <Link
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-[8px] border border-white/28 bg-white/12 px-5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/18"
-                  href="/signup?intent=pro&next=/app%3Fmode%3Dadvanced"
-                  onClick={() => trackEvent("advanced_mode_selected", { source: "hero" })}
+                  href="#pricing"
                 >
-                  Start advanced mode
+                  See export options
                 </Link>
               </div>
+              <p className="mt-4 text-sm leading-6 text-white/75">
+                Free account · Watermarked demo · Clean exports from $12
+              </p>
             </div>
 
-            <div className="hidden border-y border-white/22 py-4 text-white sm:block">
-              <p className="text-xs font-bold uppercase text-white/70">Proof manifest</p>
+            <div className="hidden rounded-[8px] border border-white/22 bg-black/70 p-5 text-white sm:block">
+              <p className="text-xs font-bold uppercase text-white/70">Inside your print file</p>
               <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4">
                 {proofMetrics.map(([label, value]) => (
                   <div key={label} className="border-t border-white/18 pt-3">
-                    <p className="text-[11px] font-bold uppercase text-white/58">{label}</p>
+                    <p className="text-[11px] font-bold uppercase text-white/80">{label}</p>
                     <p className="mt-1 font-display text-lg font-bold">{value}</p>
                   </div>
                 ))}
@@ -355,18 +355,18 @@ export function MarketingSite() {
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
             <FileCheck2 aria-hidden className="h-6 w-6 text-brand" />
-            <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">A production path, not another image generator.</h2>
+            <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">The details behind a clean print.</h2>
             <p className="mt-4 text-base leading-7 text-muted">
-              Most AI design tools stop at a raster preview. Trim Proof keeps the fun part upstream, then builds the boring
-              press rules every printer asks for.
+              A print file needs more than a good preview. Trim Proof checks its dimensions, image resolution, fonts,
+              and PDF/X format so you can see what needs attention before sending it to your printer.
             </p>
           </div>
           <div className="divide-y divide-border border-y border-border">
             {[
-              ["Creative output", "AI-generated imagery and decorative art"],
-              ["Layout contract", "Typed text blocks, trim size, safe area, bleed, crop marks"],
-              ["Preflight evidence", "PDF/X status, color profile, fonts, DPI, and box checks"],
-              ["Paid delivery", "Stripe-backed export credits or Pro with 15 monthly exports"]
+              ["Artwork", "AI-assisted images with separately rendered text"],
+              ["Print layout", "Page size, bleed, safe areas, and optional crop marks"],
+              ["File checks", "A report on dimensions, fonts, resolution, and PDF/X format"],
+              ["Clean download", "One export credit or 15 exports each month with Pro"]
             ].map(([label, value]) => (
               <div key={label} className="grid gap-2 py-4 sm:grid-cols-[180px_1fr]">
                 <p className="text-xs font-bold uppercase text-muted">{label}</p>
@@ -385,8 +385,8 @@ export function MarketingSite() {
               <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Pay once for one file, or subscribe for repeat print work.</h2>
             </div>
             <p className="mt-4 text-base leading-7 text-muted">
-              Trim Proof is usable before checkout, then paid advanced export is handled by Stripe. Small teams can buy
-              one export credit for a single job or use the monthly plan when print-ready files are part of the weekly workflow.
+              Start with a free account and a watermarked demo. Choose a $12 export credit for one clean file,
+              or $49 per month for 15 exports. A credit is used when a file passes its checks and is generated.
             </p>
           </div>
           <div className="mt-8 grid gap-0 overflow-hidden rounded-[8px] border border-border bg-background lg:grid-cols-3">
@@ -426,31 +426,47 @@ export function MarketingSite() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16" id="seo-pages">
+      <section className="mx-auto max-w-7xl px-4 py-16" id="print-guides">
         <div className="grid gap-8 lg:grid-cols-[0.75fr_1fr]">
           <div>
             <SearchCheck aria-hidden className="h-6 w-6 text-brand" />
-            <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Built around the searches print buyers actually make.</h2>
+            <h2 className="mt-4 font-display text-4xl font-bold leading-tight text-surface-ink">Plan your next print job.</h2>
             <p className="mt-4 text-base leading-7 text-muted">
-              DataForSEO research refreshed on June 6 and June 7, 2026 showed demand around AI flyer generation, AI
-              flyer makers, flyer size, poster maker, free poster maker, poster size, poster templates, AI poster
-              generator, AI business cards, CMYK PDF conversion, PDF/X-1a, print-ready PDFs, Canva print quality and
-              CMYK questions, prepress checklists, proofing software, prepress software, brochures, postcards, letterhead format,
-              and business cards with bleed. The product and content architecture target those jobs
-              directly.
+              Find a format, check the dimensions, and learn how to prepare your artwork.
+              Free demo tools use watermarked sample art; clean production downloads require a paid export.
             </p>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {keywordTargets.map((keyword) => (
-              <Link
-                key={keyword.label}
-                className="group flex min-h-14 items-center justify-between border-b border-border bg-surface/70 px-4 font-semibold text-surface-ink transition hover:bg-brand-soft/55"
-                href={keyword.href}
-              >
-                <span>{keyword.label}</span>
-                <ArrowRight aria-hidden className="h-4 w-4 text-muted transition group-hover:translate-x-1 group-hover:text-brand" />
-              </Link>
-            ))}
+          <div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {[
+                ["Business cards", "/tools/ai-business-card-generator"],
+                ["Flyers", "/tools/ai-flyer-generator"],
+                ["Posters", "/tools/poster-maker"],
+                ["Brochures", "/tools/brochure-maker"],
+                ["Postcards", "/tools/postcard-maker"],
+                ["Letterhead", "/tools/letterhead-maker"]
+              ].map(([label, href]) => (
+                <Link key={href} className="flex min-h-14 items-center justify-between border-b border-border px-4 font-semibold text-surface-ink hover:bg-brand-soft/55" href={href}>
+                  {label}
+                  <ArrowRight aria-hidden className="h-4 w-4 text-muted" />
+                </Link>
+              ))}
+            </div>
+            <details className="mt-6 border-t border-border pt-4">
+              <summary className="cursor-pointer text-sm font-semibold text-surface-ink">Browse all print tools and guides</summary>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {printGuides.map((guide) => (
+                  <Link
+                    key={guide.label}
+                    className="group flex min-h-14 items-center justify-between border-b border-border bg-surface/70 px-4 font-semibold text-surface-ink transition hover:bg-brand-soft/55"
+                    href={guide.href}
+                  >
+                    <span>{guide.label}</span>
+                    <ArrowRight aria-hidden className="h-4 w-4 text-muted transition group-hover:translate-x-1 group-hover:text-brand" />
+                  </Link>
+                ))}
+              </div>
+            </details>
           </div>
         </div>
       </section>
@@ -470,10 +486,10 @@ export function MarketingSite() {
       </section>
 
       <section className="mx-auto max-w-4xl px-4 py-16 text-center">
-        <BadgeCheck aria-hidden className="mx-auto h-7 w-7 text-success" />
-        <h2 className="mt-4 font-display text-4xl font-bold text-surface-ink">Get the launch notes and prepress checklist.</h2>
+        <Mail aria-hidden className="mx-auto h-7 w-7 text-brand" />
+        <h2 className="mt-4 font-display text-4xl font-bold text-surface-ink">Keep up with Trim Proof.</h2>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted">
-          Join the early list for product updates, SEO pages, print-profile notes, and the first production export tests.
+          Get product updates and tips for preparing your next print job.
         </p>
         <div className="mx-auto mt-6 max-w-xl">
           <EmailCapture />
@@ -482,7 +498,7 @@ export function MarketingSite() {
 
       <footer className="border-t border-border bg-surface">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm font-semibold text-muted sm:flex-row sm:items-center sm:justify-between">
-          <span>Trim Proof. AI creative upstream, deterministic prepress downstream.</span>
+          <span>Trim Proof. Design your piece. Check your file.</span>
           <div className="flex gap-4">
             <Link className="transition hover:text-surface-ink" href="/about">
               About

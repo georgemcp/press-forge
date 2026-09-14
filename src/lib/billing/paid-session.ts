@@ -153,7 +153,7 @@ export async function verifyPaidCheckoutSession(
       return { ...paidSession, consumed };
     }
 
-    await supabase.from("export_orders").upsert(
+    const { error: insertError } = await supabase.from("export_orders").upsert(
       {
         stripe_session_id: session.id,
         stripe_customer_id: customerId ?? null,
@@ -167,9 +167,14 @@ export async function verifyPaidCheckoutSession(
         status: consumed ? "consumed" : "paid"
       },
       {
-        onConflict: "stripe_session_id"
+        onConflict: "stripe_session_id",
+        // Verification may race an export or webhook; never reset an existing order's status.
+        ignoreDuplicates: true
       }
     );
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
   }
 
   return { ...paidSession, consumed };
@@ -225,19 +230,23 @@ export async function finalizeSubscriptionExport(proofJobId: string) {
   }
 }
 
-export async function releaseSubscriptionExport(proofJobId: string) {
+export async function releaseSubscriptionExport(proofJobId: string, finalizationAttempted = false) {
   const supabase = createServiceSupabaseClient();
   if (!supabase) {
-    return;
+    throw new Error("Supabase service client is required to release subscription exports.");
   }
 
-  await supabase
+  const { error } = await supabase
     .from("subscription_export_usage")
     .update({
       status: "failed"
     })
     .eq("proof_job_id", proofJobId)
-    .eq("status", "processing");
+    .in("status", finalizationAttempted ? ["processing", "completed"] : ["processing"]);
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 export async function claimExportCredit(sessionId: string, proofJobId: string) {
@@ -294,13 +303,13 @@ export async function finalizeExportCredit(sessionId: string, proofJobId: string
   }
 }
 
-export async function releaseExportCredit(sessionId: string, proofJobId: string) {
+export async function releaseExportCredit(sessionId: string, proofJobId: string, finalizationAttempted = false) {
   const supabase = createServiceSupabaseClient();
   if (!supabase) {
-    return;
+    throw new Error("Supabase service client is required to release export credits.");
   }
 
-  await supabase
+  const { error } = await supabase
     .from("export_orders")
     .update({
       status: "paid",
@@ -309,6 +318,11 @@ export async function releaseExportCredit(sessionId: string, proofJobId: string)
     })
     .eq("stripe_session_id", sessionId)
     .eq("entitlement", "export_credit")
-    .eq("status", "processing")
+    // The finalize write may have committed even when its response failed.
+    .in("status", finalizationAttempted ? ["processing", "consumed"] : ["processing"])
     .eq("proof_job_id", proofJobId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }

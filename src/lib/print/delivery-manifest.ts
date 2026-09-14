@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import type { PreflightStatus } from "@/lib/print/preflight";
 
 export const deliveryManifestFileName = "delivery-manifest.json";
 
@@ -7,6 +8,7 @@ export interface ProofDeliveryManifest {
   version: 2;
   ownerUserId: string;
   mode: "dummy" | "advanced";
+  preflightStatus: PreflightStatus;
   canDownloadProductionFiles: boolean;
   createdAt: string;
 }
@@ -19,18 +21,19 @@ export function isProductionArtifact(fileName: string) {
   return productionArtifactPattern.test(fileName);
 }
 
-export function createProofDeliveryManifest(mode: "dummy" | "advanced", ownerUserId: string): ProofDeliveryManifest {
+export function createProofDeliveryManifest(mode: "dummy" | "advanced", ownerUserId: string, preflightStatus: PreflightStatus): ProofDeliveryManifest {
   return {
     version: 2,
     ownerUserId,
     mode,
-    canDownloadProductionFiles: mode === "advanced",
+    preflightStatus,
+    canDownloadProductionFiles: mode === "advanced" && preflightStatus === "passed",
     createdAt: new Date().toISOString()
   };
 }
 
-export async function writeProofDeliveryManifest(outputDir: string, mode: "dummy" | "advanced", ownerUserId: string) {
-  const manifest = createProofDeliveryManifest(mode, ownerUserId);
+export async function writeProofDeliveryManifest(outputDir: string, mode: "dummy" | "advanced", ownerUserId: string, preflightStatus: PreflightStatus) {
+  const manifest = createProofDeliveryManifest(mode, ownerUserId, preflightStatus);
   await fs.writeFile(path.join(outputDir, deliveryManifestFileName), JSON.stringify(manifest, null, 2));
   return manifest;
 }
@@ -42,7 +45,11 @@ export async function canServeProofFile(outputDir: string, fileName: string, own
     if (manifest.version !== 2 || manifest.ownerUserId !== ownerUserId) {
       return false;
     }
-    return !isProductionArtifact(fileName) || manifest.canDownloadProductionFiles === true;
+    return !isProductionArtifact(fileName) || (
+      manifest.mode === "advanced" &&
+      manifest.preflightStatus === "passed" &&
+      manifest.canDownloadProductionFiles === true
+    );
   } catch {
     return false;
   }

@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { generateProof, publicPreflightReport } from "@/lib/print/proof";
-import { cleanupStaleProofJobs, writeProofDeliveryManifest } from "@/lib/print/delivery-manifest";
+import { cleanupStaleProofJobs, deliveryManifestFileName, writeProofDeliveryManifest } from "@/lib/print/delivery-manifest";
 import { layoutSpecSchema } from "@/lib/print/layout-spec";
 import { sampleBusinessCardLayout } from "@/lib/print/sample-layout";
 import {
@@ -87,6 +88,7 @@ export async function POST(request: Request) {
   const jobId = randomUUID();
   let claimedExportCredit = false;
   let claimedSubscriptionExport = false;
+  let finalizationAttempted = false;
   if (paidSession?.entitlement === "export_credit") {
     try {
       await claimExportCredit(paidSession.id, jobId);
@@ -113,21 +115,31 @@ export async function POST(request: Request) {
     }
   }
 
+  const generatedRoot = process.env.TRIMPROOF_GENERATED_DIR ?? path.join(process.cwd(), ".trimproof-generated");
+  const outputDir = path.join(generatedRoot, jobId);
+  async function releaseClaimedEntitlement() {
+    if (claimedExportCredit && paidSession?.entitlement === "export_credit") {
+      await releaseExportCredit(paidSession.id, jobId, finalizationAttempted);
+      claimedExportCredit = false;
+    }
+    if (claimedSubscriptionExport && paidSession?.entitlement === "subscription") {
+      await releaseSubscriptionExport(jobId, finalizationAttempted);
+      claimedSubscriptionExport = false;
+    }
+  }
+
   try {
-    const generatedRoot = process.env.TRIMPROOF_GENERATED_DIR ?? path.join(process.cwd(), ".trimproof-generated");
     await cleanupStaleProofJobs(generatedRoot);
-    const outputDir = path.join(generatedRoot, jobId);
     const proof = await generateProof(spec, outputDir, {
       watermarkDemoArt: mode === "dummy",
       allowModelAssets: mode === "advanced"
     });
-    const manifest = await writeProofDeliveryManifest(outputDir, mode, account.userId);
-    const fileBase = `/api/exports/proof/files/${jobId}`;
-    if (paidSession?.entitlement === "export_credit") {
-      await finalizeExportCredit(paidSession.id, jobId);
-    } else if (paidSession?.entitlement === "subscription") {
-      await finalizeSubscriptionExport(jobId);
+    if (mode === "advanced" && proof.report.status === "passed") {
+      // Do not spend an allowance unless each promised production artifact is readable.
+      await Promise.all([proof.report.pdfPath, proof.sourcePdfPath, proof.svgMasterPath].map((filePath) => fs.access(filePath, fs.constants.R_OK)));
     }
+    const manifest = await writeProofDeliveryManifest(outputDir, mode, account.userId, proof.report.status);
+    const fileBase = `/api/exports/proof/files/${jobId}`;
     const productionUrls = manifest.canDownloadProductionFiles
       ? {
           downloadUrl: `${fileBase}/${path.basename(proof.report.pdfPath)}`,
@@ -135,36 +147,11 @@ export async function POST(request: Request) {
           svgUrl: `${fileBase}/${path.basename(proof.svgMasterPath)}`
         }
       : {};
-    const analytics = await sendServerAnalyticsEvent({
-      name: "proof_export_completed",
-      clientId: payload.analytics?.gaClientId,
-      params: {
-        mode,
-        product_type: spec.productType,
-        report_status: proof.report.status,
-        print_profile: proof.report.printProfile,
-        pdfx_level: proof.report.pdfxLevel,
-        asset_provider: proof.assets[0]?.provider,
-        production_download_locked: !manifest.canDownloadProductionFiles,
-        entitlement: paidSession?.entitlement ?? "dummy",
-        page_path: payload.analytics?.pagePath,
-        session_id: numericSessionId(payload.analytics?.gaSessionId)
-      }
-    });
-    if (analytics.status === "failed") {
-      console.error("Press Forge server analytics event failed", {
-        event: "proof_export_completed",
-        provider: analytics.provider,
-        reason: analytics.reason
-      });
-    }
-
-    return NextResponse.json({
+    const result = {
       jobId,
       mode,
       productionDownloadLocked: !manifest.canDownloadProductionFiles,
       report: publicPreflightReport(proof.report),
-      analytics,
       demoArtWatermarked: mode === "dummy",
       ...productionUrls,
       reportUrl: `${fileBase}/${path.basename(proof.reportPath)}`,
@@ -175,13 +162,72 @@ export async function POST(request: Request) {
         previewUrl: `${fileBase}/${path.basename(asset.previewPath)}`,
         effectiveDpi: asset.effectiveDpi
       }))
-    });
-  } catch (error) {
-    if (claimedExportCredit && paidSession?.entitlement === "export_credit") {
-      await releaseExportCredit(paidSession.id, jobId);
+    };
+    if (mode === "advanced" && proof.report.status !== "passed") {
+      await releaseClaimedEntitlement();
+      return NextResponse.json({
+        ...result,
+        error: "Print checks did not pass. Production downloads are locked and your export allowance has been restored. Review the preflight checks before trying again."
+      }, { status: 422 });
     }
-    if (claimedSubscriptionExport && paidSession?.entitlement === "subscription") {
-      await releaseSubscriptionExport(jobId);
+
+    // Prepare delivery before spending the allowance, and emit completion only after finalization.
+    const response = NextResponse.json(result);
+    if (paidSession?.entitlement === "export_credit") {
+      finalizationAttempted = true;
+      await finalizeExportCredit(paidSession.id, jobId);
+    } else if (paidSession?.entitlement === "subscription") {
+      finalizationAttempted = true;
+      await finalizeSubscriptionExport(jobId);
+    }
+
+    try {
+      const analytics = await sendServerAnalyticsEvent({
+        name: "proof_export_completed",
+        clientId: payload.analytics?.gaClientId,
+        params: {
+          mode,
+          product_type: spec.productType,
+          report_status: proof.report.status,
+          print_profile: proof.report.printProfile,
+          pdfx_level: proof.report.pdfxLevel,
+          asset_provider: proof.assets[0]?.provider,
+          production_download_locked: !manifest.canDownloadProductionFiles,
+          entitlement: paidSession?.entitlement ?? "dummy",
+          page_path: payload.analytics?.pagePath,
+          session_id: numericSessionId(payload.analytics?.gaSessionId)
+        }
+      }).catch(() => ({
+        status: "failed" as const,
+        configured: true,
+        provider: "ga4_measurement_protocol" as const,
+        reason: "Server analytics request failed."
+      }));
+      if (analytics.status === "failed") {
+        console.error("Press Forge server analytics event failed", {
+          event: "proof_export_completed",
+          provider: analytics.provider,
+          reason: analytics.reason
+        });
+      }
+      return NextResponse.json({ ...result, analytics });
+    } catch {
+      // Tracking and its diagnostics cannot turn a finalized export into a failed delivery.
+      return response;
+    }
+  } catch (error) {
+    // A failed delivery must not leave an unlocked manifest behind.
+    await fs.rm(path.join(outputDir, deliveryManifestFileName), { force: true }).catch((cleanupError) => {
+      console.error("Proof delivery manifest cleanup failed", { jobId, error: cleanupError });
+    });
+    try {
+      await releaseClaimedEntitlement();
+    } catch (releaseError) {
+      console.error("Proof export allowance release failed", { jobId, error: releaseError });
+      return NextResponse.json({
+        error: "Proof generation failed and the export allowance could not be restored. Contact support before retrying.",
+        jobId
+      }, { status: 500 });
     }
     return NextResponse.json(
       {

@@ -86,25 +86,35 @@ export async function sendServerAnalyticsEvent(event: ServerAnalyticsEvent, fetc
   endpoint.searchParams.set("measurement_id", config.measurementId);
   endpoint.searchParams.set("api_secret", config.apiSecret);
 
-  const response = await fetchFn(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      client_id: clientId,
-      user_id: event.userId?.trim() || undefined,
-      events: [
-        {
-          name: event.name.slice(0, 40),
-          params: sanitizeParams({
-            engagement_time_msec: 1,
-            ...event.params
-          })
-        }
-      ]
-    })
-  });
+  const abortController = new AbortController();
+  const timeout = setTimeout(() => {
+    abortController.abort(new DOMException("Server analytics request timed out.", "TimeoutError"));
+  }, 5000);
+  let response: Response;
+  try {
+    response = await fetchFn(endpoint, {
+      method: "POST",
+      signal: abortController.signal,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        user_id: event.userId?.trim() || undefined,
+        events: [
+          {
+            name: event.name.slice(0, 40),
+            params: sanitizeParams({
+              engagement_time_msec: 1,
+              ...event.params
+            })
+          }
+        ]
+      })
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     return {

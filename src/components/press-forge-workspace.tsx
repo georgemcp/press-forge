@@ -643,6 +643,7 @@ export function PressForgeWorkspace({
 
   async function handleGenerateProof(specOverride?: LayoutSpec, variationId?: string) {
     const spec = specOverride || state.spec;
+    const targetVariationId = variationId ?? state.activeVariationId;
     if (state.mode === "advanced" && !state.paidSession) {
       dispatch({ type: "SET_ERROR", error: "Advanced export requires a Stripe export credit or subscription first." });
       return;
@@ -666,14 +667,21 @@ export function PressForgeWorkspace({
       });
 
       if (!response.ok) {
-        const payload = await response.json().catch(() => undefined) as { error?: string } | undefined;
+        const payload = await response.json().catch(() => undefined) as (ProofApiResponse & { error?: string }) | undefined;
+        if (response.status === 422 && payload?.report && payload.productionDownloadLocked === true) {
+          if (targetVariationId) {
+            dispatch({ type: "UPDATE_VARIATION_PROOF", variationId: targetVariationId, proof: payload });
+          } else {
+            dispatch({ type: "SET_PROOF", proof: payload });
+          }
+        }
         throw new Error(payload?.error ?? "Proof generation failed.");
       }
 
       const payload = await response.json() as ProofApiResponse;
 
-      if (variationId) {
-        dispatch({ type: "UPDATE_VARIATION_PROOF", variationId, proof: payload });
+      if (targetVariationId) {
+        dispatch({ type: "UPDATE_VARIATION_PROOF", variationId: targetVariationId, proof: payload });
       } else {
         dispatch({ type: "SET_PROOF", proof: payload });
       }
@@ -890,7 +898,7 @@ export function PressForgeWorkspace({
               <Box aria-hidden className="h-4 w-4" />
             </div>
             <div>
-              <h1 className="font-display text-lg font-bold text-surface-ink">Press Forge</h1>
+              <h1 className="font-display text-lg font-bold text-surface-ink">Trim Proof</h1>
               <p className="text-xs font-medium text-muted">AI-powered print design studio</p>
             </div>
           </div>
@@ -1344,8 +1352,34 @@ export function PressForgeWorkspace({
 
               {currentProof?.productionDownloadLocked ? (
                 <div className="rounded-[8px] border border-brand/30 bg-brand-soft px-3 py-2 text-xs font-semibold leading-5 text-brand">
-                  Demo art is watermarked. Buy an export credit or start Pro to download a clean PDF/X proof.
+                  {currentProof.mode === "advanced"
+                    ? "Production downloads are locked until all print checks pass. Your export allowance has been retained."
+                    : "Demo art is watermarked. Buy an export credit or start Pro to download a clean PDF/X proof."}
                 </div>
+              ) : null}
+
+              {currentProof?.report ? (
+                <details className="rounded-[8px] border border-border bg-surface text-xs">
+                  <summary className="cursor-pointer px-3 py-2 font-semibold text-surface-ink">
+                    Preflight checks · <span className="capitalize">{currentProof.report.status.replaceAll("_", " ")}</span>
+                  </summary>
+                  <ul className="max-h-48 space-y-2 overflow-y-auto border-t border-border px-3 py-2">
+                    {currentProof.report.checks.map((check) => (
+                      <li key={check.id}>
+                        <div className="flex items-start justify-between gap-2 font-semibold text-surface-ink">
+                          <span>{check.label}</span>
+                          <span className="shrink-0 capitalize">{check.status.replaceAll("_", " ")}</span>
+                        </div>
+                        <p className="mt-1 whitespace-pre-wrap break-words leading-5 text-muted">{check.evidence}</p>
+                      </li>
+                    ))}
+                  </ul>
+                  {currentProof.reportUrl ? (
+                    <a className="block border-t border-border px-3 py-2 font-semibold text-brand underline" href={currentProof.reportUrl} download>
+                      Download preflight report
+                    </a>
+                  ) : null}
+                </details>
               ) : null}
 
               {/* Save Design */}

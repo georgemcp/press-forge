@@ -12,6 +12,7 @@ function clearAnalyticsEnv() {
 describe("server analytics events", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.useRealTimers();
   });
 
   it("skips events when GA4 Measurement Protocol is not configured", async () => {
@@ -136,5 +137,41 @@ describe("server analytics events", () => {
       configured: true,
       reason: "GA4 Measurement Protocol returned HTTP 500."
     });
+  });
+
+  it("aborts a stalled analytics request after five seconds", async () => {
+    clearAnalyticsEnv();
+    vi.stubEnv("NEXT_PUBLIC_GA_MEASUREMENT_ID", "G-TEST123");
+    vi.stubEnv("GA4_API_SECRET", "test-secret");
+    vi.useFakeTimers();
+    const fetchFn = vi.fn<typeof fetch>((_url, init) => new Promise<Response>((_resolve, reject) => {
+      const signal = init?.signal;
+      signal?.addEventListener("abort", () => reject(signal.reason), { once: true });
+    }));
+
+    const request = sendServerAnalyticsEvent({ name: "proof_export_completed", clientId: "123.456" }, fetchFn);
+    const rejection = expect(request).rejects.toMatchObject({ name: "TimeoutError" });
+    const signal = fetchFn.mock.calls[0][1]?.signal;
+
+    await vi.advanceTimersByTimeAsync(4999);
+    expect(signal?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(signal?.aborted).toBe(true);
+    await rejection;
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("clears the timeout when analytics finishes promptly", async () => {
+    clearAnalyticsEnv();
+    vi.stubEnv("NEXT_PUBLIC_GA_MEASUREMENT_ID", "G-TEST123");
+    vi.stubEnv("GA4_API_SECRET", "test-secret");
+    vi.useFakeTimers();
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(null, { status: 204 }));
+
+    await expect(sendServerAnalyticsEvent({ name: "proof_export_completed", clientId: "123.456" }, fetchFn)).resolves.toMatchObject({ status: "sent" });
+
+    expect(vi.getTimerCount()).toBe(0);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(fetchFn.mock.calls[0][1]?.signal?.aborted).toBe(false);
   });
 });

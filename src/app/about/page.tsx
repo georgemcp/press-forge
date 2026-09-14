@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     description:
       "AI creative upstream. Deterministic PDF/X, CMYK, bleed, crop marks, vector text, and preflight downstream.",
     url: "/about",
-    siteName: "Press Forge",
+    siteName: "Trim Proof",
     type: "website",
     images: [
       {
