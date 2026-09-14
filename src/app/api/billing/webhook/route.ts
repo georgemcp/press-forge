@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     const entitlement = session.metadata?.entitlement;
     const userId = session.client_reference_id;
     if (entitlement === "export_credit" || entitlement === "subscription") {
-      await supabase.from("export_orders").upsert(
+      const { error: insertError } = await supabase.from("export_orders").upsert(
         {
           stripe_session_id: session.id,
           stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
@@ -79,9 +79,14 @@ export async function POST(request: Request) {
           status: "paid"
         },
         {
-          onConflict: "stripe_session_id"
+          onConflict: "stripe_session_id",
+          // Stripe retries must not revive a processing, consumed, or refunded credit.
+          ignoreDuplicates: true
         }
       );
+      if (insertError) {
+        return NextResponse.json({ error: "Checkout order could not be recorded." }, { status: 500 });
+      }
       const analytics = await sendServerAnalyticsEvent({
         name: "purchase",
         clientId: session.metadata?.ga_client_id,

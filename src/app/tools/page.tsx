@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     description:
       "A crawlable hub for Trim Proof's print-ready PDF tools, Canva guides, prepress checks, templates, and AI print-proof workflows.",
     url: "/tools",
-    siteName: "Press Forge",
+    siteName: "Trim Proof",
     type: "website"
   },
   twitter: {

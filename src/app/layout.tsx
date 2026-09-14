@@ -19,35 +19,35 @@ const body = Instrument_Sans({
 export const metadata: Metadata = {
   metadataBase: getSiteUrl(),
   title: {
-    default: "Press Forge | AI Print Design Studio",
-    template: "%s | Press Forge"
+    default: "Trim Proof | Create and Check PDFs for Print",
+    template: "%s | Trim Proof"
   },
   description:
-    "Create print-ready designs with AI. Upload references, describe your vision, and get production-ready PDF/X files with CMYK, bleed, crop marks, and embedded fonts.",
+    "Create flyers, business cards and more with AI-assisted design and PDF/X preflight checks. Try a free watermarked demo; clean exports start at $12.",
   alternates: {
     canonical: "/"
   },
   openGraph: {
-    title: "Press Forge | AI Print Design Studio",
+    title: "Trim Proof | Create and Check PDFs for Print",
     description:
-      "Describe your vision, upload references, and let AI generate print-ready designs with deterministic PDF/X export.",
+      "Design your print piece, review its file checks, and export a clean PDF/X proof. Free watermarked demo, $12 single export, or $49/month for 15 exports.",
     url: "/",
-    siteName: "Press Forge",
+    siteName: "Trim Proof",
     images: [
       {
         url: "/trim-proof-workspace-concept.png",
         width: 1440,
         height: 1000,
-        alt: "Press Forge workspace with AI brief enhancement, design preview, chat panel, and export controls."
+        alt: "Trim Proof workspace illustration showing a design brief, preview, and export controls."
       }
     ],
     type: "website"
   },
   twitter: {
     card: "summary_large_image",
-    title: "Press Forge | AI Print Design Studio",
+    title: "Trim Proof | Create and Check PDFs for Print",
     description:
-      "AI-powered print design from brief to PDF/X. Upload references, chat with AI to iterate, export production-ready files."
+      "AI-assisted design with PDF/X file checks. Try a free watermarked demo; clean exports are $12 each or $49/month for 15 exports."
   }
 };
 

@@ -81,10 +81,13 @@ export function SignupForm({ nextPath, planInterest }: SignupFormProps) {
         <Field icon={Building2} label="Company" name="companyName" placeholder="Acme Print Studio" required />
         <Field label="Role" name="role" placeholder="Owner, designer, production lead" required />
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Company website" name="companyWebsite" placeholder="company.com" />
-        <Field icon={Phone} label="Phone" name="phone" placeholder="Optional" type="tel" />
-      </div>
+      <details className="rounded-[8px] border border-border px-3 py-3">
+        <summary className="cursor-pointer text-sm font-semibold text-surface-ink">Add contact details (optional)</summary>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Field label="Company website" name="companyWebsite" placeholder="company.com" />
+          <Field icon={Phone} label="Phone" name="phone" placeholder="Optional" type="tel" />
+        </div>
+      </details>
       <div className="grid gap-3 sm:grid-cols-2">
         <SelectField label="Monthly print jobs" name="monthlyPrintJobs">
           <option value="1-3">1-3 jobs</option>
@@ -105,9 +108,10 @@ export function SignupForm({ nextPath, planInterest }: SignupFormProps) {
       <Field icon={LockKeyhole} label="Password" minLength={12} name="password" placeholder="At least 12 characters" required type="password" />
 
       <label className="flex gap-3 text-sm leading-6 text-muted">
-        <input className="mt-1 h-4 w-4 rounded border-border accent-surface-ink" defaultChecked name="marketingConsent" type="checkbox" />
-        <span>Send product updates, launch notes, and account help for Trim Proof.</span>
+        <input className="mt-1 h-4 w-4 rounded border-border accent-surface-ink" name="marketingConsent" type="checkbox" />
+        <span>Email me Trim Proof product updates and print tips (optional).</span>
       </label>
+      <p className="text-sm leading-6 text-muted">Account verification and essential account emails are sent separately from product updates.</p>
 
       {error ? <p className="rounded-[8px] border border-danger/30 bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">{error}</p> : null}
       {notice ? <p className="rounded-[8px] border border-success/30 bg-success/10 px-3 py-2 text-sm font-semibold text-success">{notice}</p> : null}

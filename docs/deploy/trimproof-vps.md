@@ -10,9 +10,9 @@ Production target:
 - Supabase project: `justcsfgntvtbxprcnoh`
 - Stripe prices: export credit `price_1TfLrqRy14ye40TRZGwCYsyi`; monthly subscription `price_1TfLrqRy14ye40TRwqtdoH7W`
 - Stripe Customer Portal configuration: `bpc_1TelBzRy14ye40TRGJb4wixa`
-- GA4 property: `properties/499598107` in the Bare Getaways LLC Google account; web stream `15016978016`; measurement ID `G-20N2FZHDHV`
+- GA4 property: `properties/540469930` (Trim Proof), verified against the live measurement ID on `2026-09-14`; web stream `15016978016`; measurement ID `G-20N2FZHDHV`. The formerly documented property `499598107` belongs to a different site and must not be used for Trim Proof reporting.
 - Google Search Console: domain property `trimproof.com` verified under the Bare Getaways Google account on `2026-06-06` by DNS provider verification; sitemap `/sitemap.xml` reads as `Success`, last read `2026-06-06`, with 23 discovered pages.
-- Transactional email: SendGrid from `launch@trimproof.com`; replies to `support@trimproof.com`; admin notifications and admin login use `george.mcpherson@baregetaways.com`
+- Transactional email: SendGrid from `launch@trimproof.com`; replies to `support@trimproof.com`; admin notifications and admin login use the private `TRIMPROOF_ADMIN_EMAIL` deployment setting. Admin credentials were configured and browser-verified on `2026-09-14`; never put a plaintext password in deployment files or logs.
 - TLS: Let's Encrypt certificate at `/etc/letsencrypt/live/trimproof.com/`, expiring `2026-09-02` with scheduled auto-renewal
 
 The app is deployed with Docker Compose. Nginx terminates public HTTP/HTTPS and proxies to the app container on `127.0.0.1:3047`.

@@ -374,6 +374,7 @@ function IntakePanel({
 
 function PreflightPanel({
   mode,
+  proofMode,
   paidSession,
   report,
   isPending,
@@ -390,6 +391,7 @@ function PreflightPanel({
   productionDownloadLocked
 }: {
   mode: WorkspaceMode;
+  proofMode?: WorkspaceMode;
   paidSession?: PaidSession;
   report?: PreflightReport;
   isPending: boolean;
@@ -442,7 +444,9 @@ function PreflightPanel({
         ) : null}
         {productionDownloadLocked ? (
           <div className="mt-2 rounded-[8px] border border-brand/30 bg-brand-soft px-3 py-2 text-xs font-semibold leading-5 text-brand">
-            Demo art is watermarked and production files are locked. Buy an export credit or start Pro to download a clean PDF/X proof.
+            {proofMode === "advanced"
+              ? "Production downloads are locked until all print checks pass. Your export allowance has been retained."
+              : "Demo art is watermarked and production files are locked. Buy an export credit or start Pro to download a clean PDF/X proof."}
           </div>
         ) : null}
       </div>
@@ -513,7 +517,7 @@ function PreflightPanel({
           {paidSession
             ? paidSession.entitlement === "subscription"
               ? "Subscription verified. Advanced exports are unlocked for this session."
-              : "Paid export credit verified. This credit is consumed when the PDF/X proof is generated."
+              : "Paid export credit verified. This credit is used after the PDF/X proof passes its checks and is generated."
             : "Checkout, access links, and demo activity are tied to this signed-in account."}
         </p>
         {accessMessage ? <p className="mt-2 text-xs font-semibold text-brand">{accessMessage}</p> : null}
@@ -671,7 +675,10 @@ export function TrimProofWorkspace({ accountEmail, checkoutSessionId, checkoutSt
             body: JSON.stringify({ brief, spec: refreshedSpec, mode, checkoutSessionId: paidSession?.id, analytics: getAnalyticsAttribution() })
           });
           if (!response.ok) {
-            const payload = (await response.json().catch(() => undefined)) as { error?: string } | undefined;
+            const payload = (await response.json().catch(() => undefined)) as (ProofApiResponse & { error?: string }) | undefined;
+            if (response.status === 422 && payload?.report && payload.productionDownloadLocked === true) {
+              setProof(payload);
+            }
             setError(payload?.error ?? "Proof generation failed.");
             return;
           }
@@ -838,6 +845,7 @@ export function TrimProofWorkspace({ accountEmail, checkoutSessionId, checkoutSt
             paidSession={paidSession}
             portalPending={portalPending}
             productionDownloadLocked={proof?.productionDownloadLocked}
+            proofMode={proof?.mode}
             report={proof?.report}
           />
         </div>

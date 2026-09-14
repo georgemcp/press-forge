@@ -25,13 +25,10 @@ interface SignupPageProps {
 }
 
 function planInterest(value?: string, nextPath?: string): "demo" | "single_export" | "pro" {
-  if (value === "pro" || nextPath?.includes("mode=advanced")) {
-    return "pro";
+  if (value === "demo" || value === "single_export" || value === "pro") {
+    return value;
   }
-  if (value === "single_export") {
-    return "single_export";
-  }
-  return "demo";
+  return value === undefined && nextPath?.includes("mode=advanced") ? "pro" : "demo";
 }
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
@@ -52,16 +49,16 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             </span>
             <span>
               <span className="block font-display text-2xl font-bold text-surface-ink">Trim Proof</span>
-              <span className="text-sm font-semibold text-muted">Account required before demo use</span>
+              <span className="text-sm font-semibold text-muted">Design. Check. Print.</span>
             </span>
           </Link>
-          <h1 className="font-display text-5xl font-bold leading-tight text-surface-ink">Start with a real workspace.</h1>
+          <h1 className="font-display text-5xl font-bold leading-tight text-surface-ink">Try your first print proof.</h1>
           <p className="mt-4 text-base leading-7 text-muted">
-            Create an account before the demo so Trim Proof can save your lead context, connect future exports to the right
-            Stripe customer, and keep access links tied to your company email.
+            Create a free account to try a watermarked sample and see its file-check report.
+            When you need a clean download, choose a single export or the monthly plan from your workspace.
           </p>
           <div className="mt-8 grid gap-3 text-sm font-semibold text-surface-ink">
-            {["Watermarked demo proof only unlocks after account creation", "Company and use-case details are saved in Supabase", "Paid export and Pro checkout use the same account email"].map((item) => (
+            {["Free watermarked sample and file-check report", "$12 for one clean PDF/X export", "$49 per month for 15 exports with Pro"].map((item) => (
               <div key={item} className="flex items-center gap-2">
                 <CheckCircle2 aria-hidden className="h-4 w-4 text-success" />
                 <span>{item}</span>
@@ -73,7 +70,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         <section className="rounded-[8px] border border-border bg-surface p-5 shadow-[0_18px_60px_oklch(0.18_0.02_252_/_0.12)] sm:p-6">
           <div className="mb-5">
             <h2 className="font-display text-2xl font-bold text-surface-ink">Create your account</h2>
-            <p className="mt-1 text-sm leading-6 text-muted">A short SaaS intake replaces anonymous demo use.</p>
+            <p className="mt-1 text-sm leading-6 text-muted">No payment is required to create an account or try the demo.</p>
           </div>
           <SignupForm nextPath={nextPath} planInterest={planInterest(params.intent, nextPath)} />
         </section>

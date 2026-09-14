@@ -724,7 +724,7 @@ describe("SEO tool pages", () => {
     expect(pricingPageSource).toContain("Trim Proof Pricing");
     expect(pricingPageSource).toContain("$12");
     expect(pricingPageSource).toContain("$49");
-    expect(pricingPageSource).toContain("15 advanced exports per month");
+    expect(pricingPageSource).toContain("15 exports per billing month");
     expect(pricingPageSource).toContain("does not guarantee acceptance");
     expect(pricingPageSource).toContain("AggregateOffer");
     expect(pricingPageSource).toContain("FAQPage");
