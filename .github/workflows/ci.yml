@@ -24,7 +24,7 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils
-      - run: npm audit --audit-level=moderate
+      - run: npm audit --omit=dev --audit-level=moderate # dev-only braces advisory GHSA-vfj7-8cjw-p6xm has no upstream patch (2026-10-17); revisit when braces ships a fix
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
