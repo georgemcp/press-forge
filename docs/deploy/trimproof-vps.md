@@ -35,8 +35,14 @@ The production image uses Node 24 LTS on Bookworm Slim, and both Node and Redis 
 Install `deploy/nginx.trimproof.conf` as a site file included from nginx's `http` context (the rate-limit zones and WebSocket map must remain outside the `server` block), then validate before reloading:
 
 ```sh
-sudo install -m 0644 deploy/nginx.trimproof.conf /etc/nginx/sites-available/trimproof.com
-sudo ln -sfn /etc/nginx/sites-available/trimproof.com /etc/nginx/sites-enabled/trimproof.com
+NGINX_SITE=/etc/nginx/sites-available/trimproof.com
+NGINX_BACKUP_SUFFIX=$(date -u +%Y%m%d%H%M%S)
+if sudo test -e "$NGINX_SITE"; then
+  sudo cp -p "$NGINX_SITE" "$NGINX_SITE.bak-$NGINX_BACKUP_SUFFIX"
+fi
+echo "nginx backup suffix: $NGINX_BACKUP_SUFFIX"   # record this; rollback uses it
+sudo install -m 0644 deploy/nginx.trimproof.conf "$NGINX_SITE"
+sudo ln -sfn "$NGINX_SITE" /etc/nginx/sites-enabled/trimproof.com
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -135,13 +141,17 @@ tr -d '\r\n' < .release-commit | grep -Eq '^[0-9a-f]{40}$' && echo MARKER_OK
 
 ### Migrations
 
-Forward-only SQL lives in `supabase/migrations/`. The repository documents no apply command (no `supabase db push` or equivalent) and CI does not run migrations. Before building, compare the deployed and target commits:
+Forward-only SQL lives in `supabase/migrations/`. The repository documents no apply command (no `supabase db push` or equivalent) and CI does not run migrations. Before building, compare the deployed and target commits. This check requires `/opt/trimproof` to be a git checkout, so guard it:
 
 ```sh
-git -C /opt/trimproof diff --name-only <PREVIOUS_SHA> <TARGET_SHA> -- supabase/migrations
+if test -d /opt/trimproof/.git; then
+  git -C /opt/trimproof diff --name-only <PREVIOUS_SHA> <TARGET_SHA> -- supabase/migrations
+else
+  echo "CHECK CANNOT RUN: /opt/trimproof is not a git checkout; confirm migrations another way on the target commit." >&2
+fi
 ```
 
-- Empty output: this release has no schema dependency.
+- Empty output from the guarded command: this release has no schema dependency.
 - Any file listed: **STOP.** Applying it is a production database write on project `justcsfgntvtbxprcnoh` and needs its own named GO from claude-fleet after a dry run. It is not covered by the deploy GO.
 - If the running image label is `unknown` or `<no value>`, `<PREVIOUS_SHA>` is unusable; operator to confirm the previously deployed sha before claiming the diff is empty.
 
@@ -156,7 +166,7 @@ cd /opt/trimproof
 C="docker compose -p trimproof --env-file .env.production -f docker-compose.prod.yml"
 
 cat .release-commit                 # must equal <TARGET_SHA>
-$C ps                               # generated-volume-init Exited (0); web, worker, redis healthy
+$C ps -a                            # -a so the exited one-shot shows: generated-volume-init Exited (0); web, worker, redis healthy
 docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }} {{ index .Config.Labels "org.opencontainers.image.source" }}' "$($C images -q web)"
 #   expect: <TARGET_SHA> https://github.com/georgemcp/press-forge
 docker image inspect --format '{{.Id}}' "$($C images -q web)"; docker inspect --format '{{.Image}}' "$($C ps -q web)"
@@ -165,7 +175,7 @@ docker image inspect --format '{{.Id}}' "$($C images -q worker)"; docker inspect
 curl -fsS http://127.0.0.1:3047/api/health
 ```
 
-Then run the public and functional checks in **Verification** above. Public `/api/health` carries no commit sha, so the OCI label plus the container/image id match is the only proof of which commit is live; operator to confirm the deployed identity in the token-authenticated readiness response as well.
+Then run the public and functional checks in **Verification** above. Neither the public nor the token-authenticated `/api/health` response carries a commit sha or revision field, so the OCI `org.opencontainers.image.revision` label plus the container/image id match is the only proof of which commit is live. The authenticated readiness response only reports configuration flags (`stripeCheckoutConfigured`, `stripeWebhookConfigured`, `stripePortalConfigured`, email and creative-provider status); do not describe it as confirmation of the deployed sha.
 
 ### Rollback
 
@@ -184,14 +194,20 @@ echo "rollback tag: $RB"
 
 If `$C images -q web` returns nothing, there is no previous image to roll back to; record that instead.
 
-**Option A — restore the captured images.** `web` and `worker` have no `image:` key in `docker-compose.prod.yml`, so Compose builds and names them `<project>-<service>`, assumed here to be `trimproof-web` and `trimproof-worker`. Operator to confirm those names with `$C images` before running:
+**Option A — restore the captured images.** First set `RB` to the suffix recorded when the images were captured (the `echo "rollback tag: $RB"` output above). `web` and `worker` have no `image:` key in `docker-compose.prod.yml`, so Compose builds and names them `<project>-<service>`, assumed here to be `trimproof-web` and `trimproof-worker`. Operator to confirm those names with `$C images` before running:
 
 ```sh
+RB=<recorded suffix>
 docker tag "trimproof-rollback-web:$RB" trimproof-web:latest
 docker tag "trimproof-rollback-worker:$RB" trimproof-worker:latest
 $C up -d --no-build --wait
 ```
 
-**Option B — rebuild the previous sha.** Restore the previous source tree and write `<PREVIOUS_SHA>` to `.release-commit`, then rerun the documented build block above. Base images are digest-pinned, so the rebuild is reproducible.
+**Option B — rebuild the previous sha.** Restore the previous source tree and write `<PREVIOUS_SHA>` to `.release-commit`, then rerun the documented build block above. Base images are digest-pinned; the npm and apt layers may still resolve differently than the original build, so the rebuild is not guaranteed byte-identical.
 
-After either rollback, rewrite `.release-commit` to the restored sha and repeat **Read-back**, expecting the previous sha. For nginx, restore the pre-change site-file copy if one was taken, then `sudo nginx -t && sudo systemctl reload nginx`.
+After either rollback, rewrite `.release-commit` to the restored sha and repeat **Read-back**, expecting the previous sha. For nginx, restore the pre-change site-file copy taken before the install (the recorded `$NGINX_BACKUP_SUFFIX` from the nginx install block); if the install block's `sudo test -e` found no prior file, there is no backup to restore — remove the new site file and symlink instead:
+
+```sh
+sudo cp -p "/etc/nginx/sites-available/trimproof.com.bak-<recorded suffix>" /etc/nginx/sites-available/trimproof.com
+sudo nginx -t && sudo systemctl reload nginx
+```
