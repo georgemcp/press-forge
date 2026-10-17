@@ -98,3 +98,100 @@ Verification:
 - Confirm `/privacy` remains published before sending GA4 Measurement Protocol events.
 - Visit `/admin/login`, authenticate with the production admin password, and confirm `/admin` loads account, subscription, order, usage, margin, and readiness sections.
 - Submit the launch-list form and confirm `/api/email-signup` returns an `email.confirmation.status`; `sent` means provider delivery was accepted, `skipped` means the signup was saved but no provider was configured.
+
+## Release, read-back and rollback
+
+This section fills the gaps the 2026-10-17 deploy packet listed as undocumented. It adds no new scripts: every command reuses the Docker Compose, image-inspect and nginx invocations already in this guide. `<TARGET_SHA>` means the full 40-hex commit on `origin/main` at release time; `<PREVIOUS_SHA>` means the sha currently labelled on the running image.
+
+### Source delivery
+
+Nothing in this repository moves a release tree into `/opt/trimproof`: there is no `git pull`, `rsync` or tarball step, and CI builds and tests but never deploys. The operator performs the delivery and records how. Operator to confirm whether `/opt/trimproof` is a git checkout:
+
+```sh
+test -d /opt/trimproof/.git && echo "git checkout" || echo "not a git checkout"
+```
+
+If it is a checkout, deliver the exact release commit there and prove the tree:
+
+```sh
+git -C /opt/trimproof fetch origin
+git -C /opt/trimproof checkout --detach <TARGET_SHA>
+git -C /opt/trimproof rev-parse HEAD      # must equal <TARGET_SHA>
+git -C /opt/trimproof status --porcelain  # only .release-commit may appear; see next section
+```
+
+If it is not a checkout, operator to confirm and record exactly how the tree arrived (for example an extracted `git archive` of `<TARGET_SHA>`) and show that its contents match the target commit before building. Do not guess.
+
+### `.release-commit` marker
+
+The build block above reads `.release-commit`, but no repository command writes it. Write exactly the target 40-hex sha, nothing else:
+
+```sh
+cd /opt/trimproof && printf '%s\n' <TARGET_SHA> > .release-commit
+tr -d '\r\n' < .release-commit | grep -Eq '^[0-9a-f]{40}$' && echo MARKER_OK
+```
+
+`.release-commit` is not in `.gitignore`; it is expected to show as untracked and must not be committed. A missing or invalid marker aborts the build; a stale but valid marker silently labels the image with an **old** sha, so always compare the image label during read-back rather than trusting build success.
+
+### Migrations
+
+Forward-only SQL lives in `supabase/migrations/`. The repository documents no apply command (no `supabase db push` or equivalent) and CI does not run migrations. Before building, compare the deployed and target commits:
+
+```sh
+git -C /opt/trimproof diff --name-only <PREVIOUS_SHA> <TARGET_SHA> -- supabase/migrations
+```
+
+- Empty output: this release has no schema dependency.
+- Any file listed: **STOP.** Applying it is a production database write on project `justcsfgntvtbxprcnoh` and needs its own named GO from claude-fleet after a dry run. It is not covered by the deploy GO.
+- If the running image label is `unknown` or `<no value>`, `<PREVIOUS_SHA>` is unusable; operator to confirm the previously deployed sha before claiming the diff is empty.
+
+Migrations are forward-only. Do not attempt a database rollback without a separate GO.
+
+### Read-back
+
+Run these on the VPS after `up -d --build --wait` and before calling the release live:
+
+```sh
+cd /opt/trimproof
+C="docker compose -p trimproof --env-file .env.production -f docker-compose.prod.yml"
+
+cat .release-commit                 # must equal <TARGET_SHA>
+$C ps                               # generated-volume-init Exited (0); web, worker, redis healthy
+docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }} {{ index .Config.Labels "org.opencontainers.image.source" }}' "$($C images -q web)"
+#   expect: <TARGET_SHA> https://github.com/georgemcp/press-forge
+docker image inspect --format '{{.Id}}' "$($C images -q web)"; docker inspect --format '{{.Image}}' "$($C ps -q web)"
+docker image inspect --format '{{.Id}}' "$($C images -q worker)"; docker inspect --format '{{.Image}}' "$($C ps -q worker)"
+#   the two ids must match for each service
+curl -fsS http://127.0.0.1:3047/api/health
+```
+
+Then run the public and functional checks in **Verification** above. Public `/api/health` carries no commit sha, so the OCI label plus the container/image id match is the only proof of which commit is live; operator to confirm the deployed identity in the token-authenticated readiness response as well.
+
+### Rollback
+
+Rollback was undocumented before this section. Both options are derived from Compose behaviour and have not been executed; operator to confirm the Compose image names on the VPS before relying on Option A.
+
+Capture the running images before every deploy, under a recorded suffix:
+
+```sh
+cd /opt/trimproof
+C="docker compose -p trimproof --env-file .env.production -f docker-compose.prod.yml"
+RB=$(date -u +%Y%m%d%H%M%S)
+docker tag "$($C images -q web)" "trimproof-rollback-web:$RB"
+docker tag "$($C images -q worker)" "trimproof-rollback-worker:$RB"
+echo "rollback tag: $RB"
+```
+
+If `$C images -q web` returns nothing, there is no previous image to roll back to; record that instead.
+
+**Option A — restore the captured images.** `web` and `worker` have no `image:` key in `docker-compose.prod.yml`, so Compose builds and names them `<project>-<service>`, assumed here to be `trimproof-web` and `trimproof-worker`. Operator to confirm those names with `$C images` before running:
+
+```sh
+docker tag "trimproof-rollback-web:$RB" trimproof-web:latest
+docker tag "trimproof-rollback-worker:$RB" trimproof-worker:latest
+$C up -d --no-build --wait
+```
+
+**Option B — rebuild the previous sha.** Restore the previous source tree and write `<PREVIOUS_SHA>` to `.release-commit`, then rerun the documented build block above. Base images are digest-pinned, so the rebuild is reproducible.
+
+After either rollback, rewrite `.release-commit` to the restored sha and repeat **Read-back**, expecting the previous sha. For nginx, restore the pre-change site-file copy if one was taken, then `sudo nginx -t && sudo systemctl reload nginx`.
