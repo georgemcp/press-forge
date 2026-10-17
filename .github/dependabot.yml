@@ -10,6 +10,50 @@ updates:
         dependency-type: production
       development-dependencies:
         dependency-type: development
+    # Ignore major-version bumps for these packages: they need a coordinated
+    # migration, not a bundled bump. Patch and minor updates stay grouped above.
+    # Note: SECURITY updates are NOT affected by version-update ignore rules —
+    # Dependabot still opens them even when the matching major is ignored here.
+    ignore:
+      - dependency-name: "next"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "eslint-config-next"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "bullmq"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "ioredis"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "openai"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "stripe"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "react"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "react-dom"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "zod"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "typescript"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "vitest"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "tailwindcss"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@tailwindcss/postcss"
+        update-types:
+          - version-update:semver-major
   - package-ecosystem: github-actions
     directory: /
     schedule:
