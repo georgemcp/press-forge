@@ -87,10 +87,7 @@ export async function POST(request: Request) {
     console.error("Design generation failed:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Design generation failed. Check AI provider configuration.",
+        error: "Design generation failed. Check AI provider configuration.",
       },
       { status: 500 }
     );

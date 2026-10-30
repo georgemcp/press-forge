@@ -54,10 +54,7 @@ export async function POST(request: Request) {
     console.error("Brief enhancement failed:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "AI brief enhancement failed. Check that at least one AI provider is configured.",
+        error: "AI brief enhancement failed. Check that at least one AI provider is configured.",
       },
       { status: 500 }
     );

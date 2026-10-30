@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { checkRateLimit, clearRateLimitState, getForwardedIp, isSameOriginMutation } from "@/lib/security/request";
+import { checkRateLimit, clearRateLimitState, getForwardedIp, getTrustedAppOrigin, isSameOriginMutation } from "@/lib/security/request";
 import { safeInternalPath } from "@/lib/security/navigation";
 
 describe("security request helpers", () => {
@@ -27,6 +27,59 @@ describe("security request helpers", () => {
 
     expect(isSameOriginMutation(crossSite)).toBe(false);
     expect(isSameOriginMutation(sameSite)).toBe(true);
+  });
+
+  it("uses the configured origin and ignores a forged Host header in production", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://trimproof.com");
+    vi.stubEnv("APP_URL", "");
+
+    const forgedHost = new Request("https://attacker.example/api/auth/signup", {
+      method: "POST",
+      headers: {
+        Origin: "https://trimproof.com",
+        "Sec-Fetch-Site": "same-origin"
+      }
+    });
+
+    expect(getTrustedAppOrigin(forgedHost)).toBe("https://trimproof.com");
+    expect(isSameOriginMutation(forgedHost)).toBe(true);
+    expect(isSameOriginMutation(new Request("https://attacker.example/api/auth/signup", {
+      method: "POST",
+      headers: { Origin: "https://attacker.example" }
+    }))).toBe(false);
+  });
+
+  it("fails closed in production when no configured origin is usable", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "not a url");
+    vi.stubEnv("APP_URL", "");
+
+    const request = new Request("https://trimproof.com/api/auth/signup", {
+      method: "POST",
+      headers: { Origin: "https://trimproof.com", "Sec-Fetch-Site": "same-origin" }
+    });
+
+    expect(getTrustedAppOrigin(request)).toBeUndefined();
+    expect(isSameOriginMutation(request)).toBe(false);
+  });
+
+  it("keeps the request-origin fallback in development", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+    vi.stubEnv("APP_URL", "");
+
+    const request = new Request("http://localhost:3000/api/auth/signup");
+
+    expect(getTrustedAppOrigin(request)).toBe("http://localhost:3000");
+  });
+
+  it("rejects configured origins that are not http or https", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "javascript:alert(1)");
+    vi.stubEnv("APP_URL", "");
+
+    expect(getTrustedAppOrigin(new Request("https://trimproof.com/"))).toBeUndefined();
   });
 
   it("enforces a fixed-window request limit", () => {

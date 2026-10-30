@@ -46,6 +46,32 @@ function signupRequest(payload: Record<string, unknown> = validPayload) {
   });
 }
 
+function forgedHostSignupRequest(payload: Record<string, unknown> = validPayload) {
+  return new Request("https://attacker.example/api/auth/signup", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Origin: "https://trimproof.com",
+      "Sec-Fetch-Site": "same-origin"
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+function formSignupRequest(payload: Record<string, unknown> = validPayload) {
+  return new Request("https://attacker.example/api/auth/signup", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Origin: "https://trimproof.com",
+      "Sec-Fetch-Site": "same-origin"
+    },
+    body: new URLSearchParams(
+      Object.fromEntries(Object.entries(payload).map(([key, value]) => [key, String(value)]))
+    )
+  });
+}
+
 describe("account signup security", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -112,6 +138,42 @@ describe("account signup security", () => {
       { email: validPayload.email, source: "account_demo" },
       { onConflict: "email" }
     );
+  });
+
+  it("builds the verification redirect from the configured origin, not the Host header", async () => {
+    const response = await POST(forgedHostSignupRequest());
+
+    expect(response.status).toBe(202);
+    expect(mocks.signUp).toHaveBeenCalledWith(expect.objectContaining({
+      options: expect.objectContaining({
+        emailRedirectTo: "https://trimproof.com/login?verified=1"
+      })
+    }));
+    expect(JSON.stringify(mocks.signUp.mock.calls)).not.toContain("attacker.example");
+  });
+
+  it("redirects form signups to a configured-origin path", async () => {
+    const response = await POST(formSignupRequest());
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("https://trimproof.com/login?check_email=1");
+  });
+
+  it("fails closed in production when the configured origin is missing", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+    vi.stubEnv("APP_URL", "");
+
+    const response = await POST(forgedHostSignupRequest());
+
+    expect(response.status).toBe(503);
+    expect(mocks.signUp).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      error: "Account signup is temporarily unavailable. Try again in a moment."
+    });
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 
   it("returns the byte-for-byte accepted response for an obfuscated existing user", async () => {

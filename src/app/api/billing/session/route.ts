@@ -22,10 +22,13 @@ export async function GET(request: Request) {
       session
     });
   } catch (error) {
+    console.error("Trim Proof checkout session verification failed", {
+      error: error instanceof Error ? error.message : String(error)
+    });
     return NextResponse.json(
       {
         paid: false,
-        error: error instanceof Error ? error.message : "Checkout session verification failed."
+        error: "Checkout session could not be verified. Try again later."
       },
       { status: 402 }
     );
