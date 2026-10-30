@@ -23,17 +23,39 @@ export interface RateLimitResult {
 
 const rateLimitBuckets = new Map<string, RateLimitBucket>();
 
-function normalizeOrigin(value: string) {
+function normalizeOrigin(value: string | undefined) {
+  if (!value) {
+    return undefined;
+  }
   try {
-    return new URL(value).origin;
+    const url = new URL(value.trim());
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return undefined;
+    }
+    return url.origin;
   } catch {
     return undefined;
   }
 }
 
+export function getConfiguredAppOrigin() {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.APP_URL?.trim();
+  return normalizeOrigin(configured);
+}
+
 export function getTrustedAppOrigin(request: Request) {
-  const configured = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL;
-  return normalizeOrigin(configured ?? request.url);
+  const configured = getConfiguredAppOrigin();
+  if (configured) {
+    return configured;
+  }
+
+  // A request-derived origin comes from the Host header, which a misrouted
+  // reverse-proxy request can forge. Refuse to trust it in production and let
+  // callers fail closed instead.
+  if (process.env.NODE_ENV === "production") {
+    return undefined;
+  }
+  return normalizeOrigin(request.url);
 }
 
 export function isSameOriginMutation(request: Request) {
@@ -47,7 +69,8 @@ export function isSameOriginMutation(request: Request) {
     return fetchSite !== "cross-site";
   }
 
-  return normalizeOrigin(origin) === getTrustedAppOrigin(request);
+  const trustedOrigin = getTrustedAppOrigin(request);
+  return Boolean(trustedOrigin) && normalizeOrigin(origin) === trustedOrigin;
 }
 
 export function getForwardedIp(headers: Headers) {

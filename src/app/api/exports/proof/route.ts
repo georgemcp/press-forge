@@ -23,6 +23,10 @@ import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/
 
 export const runtime = "nodejs";
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
 const proofRequestSchema = z.object({
   spec: layoutSpecSchema.optional(),
   brief: z.string().max(6000).optional(),
@@ -69,9 +73,12 @@ export async function POST(request: Request) {
   try {
     paidSession = mode === "advanced" ? await verifyPaidCheckoutSession(payload.checkoutSessionId, account) : undefined;
   } catch (error) {
+    console.error("Proof export checkout verification failed", {
+      error: getErrorMessage(error)
+    });
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Checkout session verification failed."
+        error: "Checkout session could not be verified. Try again later."
       },
       { status: 402 }
     );
@@ -94,9 +101,13 @@ export async function POST(request: Request) {
       await claimExportCredit(paidSession.id, jobId);
       claimedExportCredit = true;
     } catch (error) {
+      console.error("Proof export credit claim failed", {
+        jobId,
+        error: getErrorMessage(error)
+      });
       return NextResponse.json(
         {
-          error: error instanceof Error ? error.message : "This export credit could not be claimed."
+          error: "This export credit could not be claimed. Try again later."
         },
         { status: 402 }
       );
@@ -106,9 +117,13 @@ export async function POST(request: Request) {
       await claimSubscriptionExport(paidSession, account.userId, jobId);
       claimedSubscriptionExport = true;
     } catch (error) {
+      console.error("Proof export subscription claim failed", {
+        jobId,
+        error: getErrorMessage(error)
+      });
       return NextResponse.json(
         {
-          error: error instanceof Error ? error.message : "This subscription export could not be claimed."
+          error: "This subscription export could not be claimed. Try again later."
         },
         { status: 402 }
       );
@@ -230,9 +245,13 @@ export async function POST(request: Request) {
         jobId
       }, { status: 500 });
     }
+    console.error("Proof export generation failed", {
+      jobId,
+      error: getErrorMessage(error)
+    });
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Proof generation failed."
+        error: "Proof generation failed. Try again later."
       },
       { status: 500 }
     );

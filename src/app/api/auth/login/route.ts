@@ -16,6 +16,18 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
+function relativeRedirect(location: string) {
+  // A relative Location never derives from the request Host header, so a
+  // forged Host cannot turn a successful login into an open redirect.
+  return new NextResponse(null, {
+    status: 303,
+    headers: {
+      Location: location,
+      "Cache-Control": "no-store"
+    }
+  });
+}
+
 async function readLoginPayload(request: Request) {
   const contentType = request.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
@@ -82,7 +94,7 @@ export async function POST(request: Request) {
   }
 
   const response = formPost
-    ? NextResponse.redirect(new URL(safeInternalPath((payload as { nextPath?: string }).nextPath), request.url), { status: 303 })
+    ? relativeRedirect(safeInternalPath((payload as { nextPath?: string }).nextPath))
     : NextResponse.json({
         ok: true,
         account: {

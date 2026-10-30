@@ -15,7 +15,7 @@ function getPortalErrorMessage(error: unknown) {
   if (error instanceof Error && error.message.toLowerCase().includes("configuration")) {
     return "Stripe Customer Portal is not configured yet. Add a portal configuration in Stripe, then try again.";
   }
-  return error instanceof Error ? error.message : "Stripe Customer Portal could not start.";
+  return "Stripe Customer Portal could not start. Try again later.";
 }
 
 function getPortalErrorStatus(error: unknown) {
@@ -80,6 +80,9 @@ export async function POST(request: Request) {
       url: portalSession.url
     });
   } catch (error) {
+    console.error("Trim Proof billing portal session failed", {
+      error: error instanceof Error ? error.message : String(error)
+    });
     return NextResponse.json(
       {
         error: getPortalErrorMessage(error)

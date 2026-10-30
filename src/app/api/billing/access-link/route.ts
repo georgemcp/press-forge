@@ -41,7 +41,8 @@ async function findReusableOrder(account: { userId: string; email: string }) {
     .limit(10);
 
   if (error) {
-    return { order: undefined, error: error.message };
+    console.error("Trim Proof access link order lookup failed", { error: error.message });
+    return { order: undefined, error: "Access link lookup is temporarily unavailable. Try again later." };
   }
 
   for (const order of (data ?? []) as AccessOrder[]) {

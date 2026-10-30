@@ -115,11 +115,36 @@ describe("proof export delivery and allowance", () => {
 
       it("restores the allowance when generation throws", async () => {
         const billing = useEntitlement(entitlement);
+        vi.spyOn(console, "error").mockImplementation(() => {});
         mocks.generateProof.mockRejectedValue(new Error("Render failed"));
         const response = await POST(request());
+        const body = await response.text();
         expect(response.status).toBe(500);
+        expect(JSON.parse(body)).toEqual({ error: "Proof generation failed. Try again later." });
+        expect(body).not.toContain("Render failed");
         expect(billing.finalize).not.toHaveBeenCalled();
         expect(billing.release).toHaveBeenCalledOnce();
+      });
+
+      it("does not expose raw checkout verification details", async () => {
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        mocks.verifyPaidCheckoutSession.mockRejectedValue(new Error("Stripe internal session detail"));
+        const response = await POST(request());
+        const body = await response.text();
+        expect(response.status).toBe(402);
+        expect(JSON.parse(body)).toEqual({ error: "Checkout session could not be verified. Try again later." });
+        expect(body).not.toContain("Stripe internal session detail");
+      });
+
+      it("does not expose raw allowance claim details", async () => {
+        const billing = useEntitlement(entitlement);
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        billing.claim.mockRejectedValue(new Error("postgres export_orders relation detail"));
+        const response = await POST(request());
+        const body = await response.text();
+        expect(response.status).toBe(402);
+        expect(body).not.toContain("postgres export_orders relation detail");
+        expect(billing.finalize).not.toHaveBeenCalled();
       });
 
       it("does not consume an allowance when a promised output is missing", async () => {

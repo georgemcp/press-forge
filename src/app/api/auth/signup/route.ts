@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { accountProfileSchema, profileToUserUpdate } from "@/lib/auth/account-profile";
 import { isAccountAuthConfigured } from "@/lib/auth/account-session";
 import { createAnonSupabaseClient, createServiceSupabaseClient } from "@/lib/db/supabase";
-import { checkRateLimit, getRequestIp, isSameOriginMutation, rateLimitResponse } from "@/lib/security/request";
+import { checkRateLimit, getRequestIp, getTrustedAppOrigin, isSameOriginMutation, rateLimitResponse } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
@@ -10,9 +10,9 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
-function acceptedSignupResponse(formPost: boolean, request: Request) {
+function acceptedSignupResponse(formPost: boolean, appOrigin: string) {
   return formPost
-    ? NextResponse.redirect(new URL("/login?check_email=1", request.url), { status: 303 })
+    ? NextResponse.redirect(new URL("/login?check_email=1", appOrigin), { status: 303 })
     : NextResponse.json({
         ok: true,
         requiresEmailConfirmation: true,
@@ -77,6 +77,17 @@ async function readSignupPayload(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Signup redirects land in the verification email, so a forged Host must
+  // never define them. Without a configured origin, production fails closed.
+  const appOrigin = getTrustedAppOrigin(request);
+  if (!appOrigin) {
+    console.error("Trim Proof signup is unavailable: NEXT_PUBLIC_APP_URL or APP_URL is not a valid absolute origin");
+    return NextResponse.json(
+      { error: "Account signup is temporarily unavailable. Try again in a moment." },
+      { status: 503 }
+    );
+  }
+
   if (!isSameOriginMutation(request)) {
     return NextResponse.json({ error: "Cross-site signup requests are not allowed." }, { status: 403 });
   }
@@ -108,7 +119,6 @@ export async function POST(request: Request) {
   const profile = profileToUserUpdate(parsed.data);
   let authResult;
   try {
-    const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
     const emailRedirectTo = new URL("/login?verified=1", appOrigin).toString();
     authResult = await authClient.auth.signUp({
       email: profile.email,
@@ -136,7 +146,7 @@ export async function POST(request: Request) {
   }
 
   if (isExistingAccountResponse(authResult.data.user, authResult.error)) {
-    return acceptedSignupResponse(formPost, request);
+    return acceptedSignupResponse(formPost, appOrigin);
   }
 
   if (authResult.error || !authResult.data.user) {
@@ -147,5 +157,5 @@ export async function POST(request: Request) {
     await persistMarketingConsent(profile.email, `account_${profile.plan_interest}`);
   }
 
-  return acceptedSignupResponse(formPost, request);
+  return acceptedSignupResponse(formPost, appOrigin);
 }
