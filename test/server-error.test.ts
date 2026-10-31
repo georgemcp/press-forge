@@ -1,5 +1,6 @@
+import { performance } from "node:perf_hooks";
 import { describe, expect, it } from "vitest";
-import { describeServerError } from "@/lib/security/server-error";
+import { describeServerError, redactSensitiveDetail } from "@/lib/security/server-error";
 
 describe("describeServerError", () => {
   it("keeps the message of a real Error", () => {
@@ -64,7 +65,23 @@ describe("describeServerError", () => {
     ["a camelCase JSON key", '{"clientSecret":"camel_secret_123"}', "camel_secret_123"],
     ["a JSON authorization value", '{"authorization":"Basic dXNlcjpwYXNz"}', "dXNlcjpwYXNz"],
     ["a double-quoted assignment value", 'password="double_quoted_123"', "double_quoted_123"],
-    ["a single-quoted assignment value", "password='single_quoted_123'", "single_quoted_123"]
+    ["a single-quoted assignment value", "password='single_quoted_123'", "single_quoted_123"],
+    // Compound keys that end in (not start with) a credential word.
+    ["a snake_case secret_key", "secret_key=compound_value_1", "compound_value_1"],
+    ["an uppercase SECRET_KEY", "SECRET_KEY=compound_value_2", "compound_value_2"],
+    ["a camelCase userPassword", "userPassword=compound_value_3", "compound_value_3"],
+    ["a camelCase githubToken", "githubToken=compound_value_4", "compound_value_4"],
+    ["a camelCase myApiKey", "myApiKey=compound_value_5", "compound_value_5"],
+    ["a camelCase authToken", "authToken=compound_value_6", "compound_value_6"],
+    ["a kebab-case x-auth-token", "x-auth-token: compound_value_7", "compound_value_7"],
+    [
+      "a secret_key URL query parameter",
+      "https://app.example/cb?secret_key=compound_value_8&state=xyz",
+      "compound_value_8"
+    ],
+    // Numeric JSON values have no quote for the quoted-JSON rule to consume.
+    ["a numeric JSON password", '"password":123456', "123456"],
+    ["a numeric JSON api key", '{"api_key": 987654}', "987654"]
   ];
 
   it.each(credentialKeyCases)("redacts %s", (_name, detail, secret) => {
@@ -74,15 +91,49 @@ describe("describeServerError", () => {
     expect(redacted).toContain("[redacted");
   });
 
+  // A quoted value can contain spaces and punctuation, so the unquoted value
+  // class only ever saw (at best) its first word. The whole quoted value must
+  // be consumed before redaction.
+  it.each([
+    ["a spaced double-quoted value", 'password = "alpha bravo charlie"', "alpha bravo charlie", "alpha"],
+    ["a spaced single-quoted value", "api_key = 'delta echo foxtrot'", "delta echo foxtrot", "delta"],
+    ["a quoted value containing separators", 'client_secret="one, two; three"', "one, two; three", "one,"]
+  ])("redacts the whole of %s", (_name, detail, secret, firstToken) => {
+    const redacted = describeServerError(new Error(detail));
+
+    expect(redacted).not.toContain(secret);
+    expect(redacted).not.toContain(firstToken);
+    expect(redacted).toContain("[redacted");
+  });
+
   it.each([
     "the token was not found in the response",
     "the secret to good design is contrast",
     "passwordless sign-in is supported",
     "the secretary scheduled a meeting",
-    "tokenizer settings are invalid"
+    "tokenizer settings are invalid",
+    "the authorization flow is documented"
   ])("does not mangle credential-free prose: %s", (detail) => {
     expect(() => describeServerError(new Error(detail))).not.toThrow();
     expect(describeServerError(new Error(detail))).toBe(detail);
+  });
+
+  it("caps redaction input at 4 KB and marks the truncation", () => {
+    const huge = "prose ".repeat(30_000);
+    const redacted = redactSensitiveDetail(huge);
+
+    expect(redacted.endsWith("…[truncated]")).toBe(true);
+    expect(redacted.length).toBeLessThan(4_200);
+  });
+
+  it("redacts a 100 KB detail in under 200 ms", () => {
+    const huge = "A".repeat(100_000);
+    const started = performance.now();
+    const detail = describeServerError(new Error(huge));
+    const elapsed = performance.now() - started;
+
+    expect(elapsed).toBeLessThan(200);
+    expect(detail).not.toContain("A".repeat(1_000));
   });
 
   it("does not throw or leak a non-string message", () => {

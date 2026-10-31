@@ -1,24 +1,29 @@
 const maxDetailLength = 300;
+// The redaction rules only ever see this many characters. The cap matters for
+// the email rule, whose local-part class scans to the end of a candidate run
+// at every start position (quadratic on a long run) — bounding the input
+// bounds that worst case.
+const maxRedactionInputLength = 4096;
+const truncationMarker = "…[truncated]";
 const fallbackDetail = "Unknown error";
 
 /**
- * Credential key names, including snake_case, camelCase and kebab-case
- * variants. The longer names come first so that, for example, `client_secret`
- * is recognised as a whole instead of leaving a recognisable `secret` tail.
+ * Credential words. Any run of key characters containing one of these is a
+ * credential key, which covers snake_case, camelCase, kebab-case and
+ * header-style compounds such as `secret_key`, `userPassword`, `githubToken`,
+ * `myApiKey` and `x-auth-token` without listing every spelling.
  */
 const credentialKeySource = [
-  "client[_-]?secret",
-  "access[_-]?token",
-  "refresh[_-]?token",
-  "id[_-]?token",
-  "api[_-]?key",
-  "apikey",
-  "authorization",
+  "secret",
   "password",
   "passwd",
-  "secret",
-  "token"
+  "token",
+  "api[_-]?key",
+  "apikey",
+  "authorization"
 ].join("|");
+
+const compoundCredentialKeySource = String.raw`[A-Za-z0-9_-]*(?:${credentialKeySource})[A-Za-z0-9_-]*`;
 
 /**
  * Redaction rules applied to server-side error detail before it is logged.
@@ -27,9 +32,11 @@ const credentialKeySource = [
  *
  * `\b` cannot be used before the key names: it does not match between `_` and
  * a word character, so `client_secret=` and `access_token:` slipped through.
- * A negative lookbehind for alphanumerics is used instead, which keeps the
- * match anchored to the start of the key while still accepting the `_`, `-`,
- * quote or query-string `?` that commonly precede it.
+ * A negative lookbehind for key characters is used instead, which anchors the
+ * match to the start of the whole compound key while still accepting the
+ * quote, query-string `?`, space or punctuation that commonly precede it. The
+ * lookbehind also means only the first position of a long key-like run can
+ * start a match, keeping the alternation's backtracking linear.
  */
 const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
   { pattern: /\b(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]+/g, replacement: "[redacted-key]" },
@@ -37,24 +44,29 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
   { pattern: /\bsk-[A-Za-z0-9_-]{8,}/g, replacement: "[redacted-key]" },
   { pattern: /\bBearer\s+[A-Za-z0-9._~+/=-]+/gi, replacement: "Bearer [redacted]" },
   { pattern: /\bBasic\s+[A-Za-z0-9+/=]+/gi, replacement: "Basic [redacted]" },
-  // key=value, key: value, URL query (?key=...), env style (MY_KEY=...) and
-  // (optionally quoted) values, e.g. password="hunter2".
-  {
-    pattern: new RegExp(
-      String.raw`(?<![A-Za-z0-9])(${credentialKeySource})(\s*[:=]\s*)(["']?)([^\s"'&,;\\]+)\3`,
-      "gi"
-    ),
-    replacement: "$1$2$3[redacted]$3"
-  },
   // Quoted JSON-style keys and values: "password":"x", 'password': 'x'.
   // Escaped characters are tolerated and the opposite quote may appear inside
-  // the value.
+  // the value. This runs before the assignment rule so JSON values keep that
+  // escape tolerance.
   {
     pattern: new RegExp(
-      String.raw`(["'])(${credentialKeySource})\1(\s*:\s*)(["'])((?:(?!\4)[^\\]|\\.)*)\4`,
+      String.raw`(["'])(${compoundCredentialKeySource})\1(\s*:\s*)(["'])((?:(?!\4)[^\\]|\\.)*)\4`,
       "gi"
     ),
     replacement: "$1$2$1$3$4[redacted]$4"
+  },
+  // key=value, key: value, URL query (?key=...), env style (MY_KEY=...) and
+  // quoted or bare values, e.g. password="hunter2", password = "a b c",
+  // "password":123456. The quoted alternatives come first so the whole quoted
+  // value is consumed; the unquoted class cannot cross a quote and would
+  // otherwise leave the value untouched. The optional quote before the
+  // separator is the closing quote of a JSON-style key.
+  {
+    pattern: new RegExp(
+      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(["']?)(\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s"'&,;\\]+)`,
+      "gi"
+    ),
+    replacement: "$1$2$3[redacted]"
   },
   { pattern: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, replacement: "[redacted-email]" },
   { pattern: /\b[A-Za-z0-9+/=_-]{40,}\b/g, replacement: "[redacted-token]" }
@@ -119,16 +131,22 @@ function errorMessage(error: unknown): string {
 }
 
 /**
- * Applies the credential/PII rules to an arbitrary string. Unlike
- * `describeServerError` it neither extracts nor truncates, so callers can
- * sanitize structured payloads (such as validation issue messages) while
- * keeping their shape. Total: it never throws.
+ * Applies the credential/PII rules to an arbitrary string. The input is
+ * capped before any rule runs, so no rule pays an unbounded cost. Unlike
+ * `describeServerError` it does not extract a message or apply the
+ * 300-character log limit, so callers can sanitize structured payloads (such
+ * as validation issue messages) while keeping their shape. Total: it never
+ * throws.
  */
 export function redactSensitiveDetail(value: string) {
   try {
+    const bounded =
+      value.length > maxRedactionInputLength
+        ? `${value.slice(0, maxRedactionInputLength)}${truncationMarker}`
+        : value;
     return redactionRules.reduce(
       (text, rule) => text.replace(rule.pattern, rule.replacement),
-      value
+      bounded
     );
   } catch {
     return fallbackDetail;
