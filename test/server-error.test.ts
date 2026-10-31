@@ -1,5 +1,6 @@
+import { performance } from "node:perf_hooks";
 import { describe, expect, it } from "vitest";
-import { describeServerError } from "@/lib/security/server-error";
+import { describeServerError, redactSensitiveDetail } from "@/lib/security/server-error";
 
 describe("describeServerError", () => {
   it("keeps the message of a real Error", () => {
@@ -24,6 +25,155 @@ describe("describeServerError", () => {
     expect(detail).not.toContain("sk_live_abc123");
     expect(detail).not.toContain("hunter2");
     expect(detail).toContain("[redacted-email]");
+  });
+
+  // `\b` does not match between `_` and a word character, so these key forms
+  // used to pass through untouched.
+  const credentialKeyCases: Array<[string, string, string]> = [
+    ["a client_secret assignment", "client_secret=cs_abc123", "cs_abc123"],
+    ["an access_token colon form", "access_token: at_abc123", "at_abc123"],
+    ["a refresh_token assignment", "refresh_token=rt_abc123", "rt_abc123"],
+    ["an id_token assignment", "id_token=idt_abc123", "idt_abc123"],
+    ["an api_key assignment", "api_key=ak_abc123", "ak_abc123"],
+    ["an apikey assignment", "apikey=apk_abc123", "apk_abc123"],
+    ["a bare secret assignment", "secret=sec_abc123", "sec_abc123"],
+    ["a password assignment", "password=hunter2", "hunter2"],
+    ["a passwd assignment", "passwd=pass123", "pass123"],
+    ["an authorization assignment", "authorization=auth_abc123", "auth_abc123"],
+    ["a camelCase clientSecret", "clientSecret=cs_camel123", "cs_camel123"],
+    ["a camelCase accessToken", "accessToken: at_camel123", "at_camel123"],
+    ["a kebab-case refresh-token", "refresh-token=rt_kebab123", "rt_kebab123"],
+    ["a camelCase idToken", "idToken=idt_camel123", "idt_camel123"],
+    ["a camelCase apiKey", "apiKey=ak_camel123", "ak_camel123"],
+    ["a kebab-case api-key", "api-key=ak_kebab123", "ak_kebab123"],
+    ["a kebab-case client-secret", "client-secret=cs_kebab123", "cs_kebab123"],
+    ["an uppercase env-style key", "OPENAI_API_KEY=openai_value_123", "openai_value_123"],
+    ["a header-style api key", "x-api-key: header_value_123", "header_value_123"],
+    [
+      "an access_token URL query parameter",
+      "https://app.example/cb?access_token=url_token_123&state=xyz",
+      "url_token_123"
+    ],
+    [
+      "a client_secret URL query parameter",
+      "https://app.example/cb?client_secret=url_secret_123&state=xyz",
+      "url_secret_123"
+    ],
+    ["a double-quoted JSON value", '{"password":"json_hunter2"}', "json_hunter2"],
+    ["a single-quoted JSON value", "{'password': 'single_hunter2'}", "single_hunter2"],
+    ["a spaced JSON value", '{"api_key": "spaced_key_123"}', "spaced_key_123"],
+    ["a camelCase JSON key", '{"clientSecret":"camel_secret_123"}', "camel_secret_123"],
+    ["a JSON authorization value", '{"authorization":"Basic dXNlcjpwYXNz"}', "dXNlcjpwYXNz"],
+    ["a double-quoted assignment value", 'password="double_quoted_123"', "double_quoted_123"],
+    ["a single-quoted assignment value", "password='single_quoted_123'", "single_quoted_123"],
+    // Compound keys that end in (not start with) a credential word.
+    ["a snake_case secret_key", "secret_key=compound_value_1", "compound_value_1"],
+    ["an uppercase SECRET_KEY", "SECRET_KEY=compound_value_2", "compound_value_2"],
+    ["a camelCase userPassword", "userPassword=compound_value_3", "compound_value_3"],
+    ["a camelCase githubToken", "githubToken=compound_value_4", "compound_value_4"],
+    ["a camelCase myApiKey", "myApiKey=compound_value_5", "compound_value_5"],
+    ["a camelCase authToken", "authToken=compound_value_6", "compound_value_6"],
+    ["a kebab-case x-auth-token", "x-auth-token: compound_value_7", "compound_value_7"],
+    [
+      "a secret_key URL query parameter",
+      "https://app.example/cb?secret_key=compound_value_8&state=xyz",
+      "compound_value_8"
+    ],
+    // Numeric JSON values have no quote for the quoted-JSON rule to consume.
+    ["a numeric JSON password", '"password":123456', "123456"],
+    ["a numeric JSON api key", '{"api_key": 987654}', "987654"]
+  ];
+
+  it.each(credentialKeyCases)("redacts %s", (_name, detail, secret) => {
+    const redacted = describeServerError(new Error(detail));
+
+    expect(redacted).not.toContain(secret);
+    expect(redacted).toContain("[redacted");
+  });
+
+  // A quoted value can contain spaces and punctuation, so the unquoted value
+  // class only ever saw (at best) its first word. The whole quoted value must
+  // be consumed before redaction.
+  it.each([
+    ["a spaced double-quoted value", 'password = "alpha bravo charlie"', "alpha bravo charlie", "alpha"],
+    ["a spaced single-quoted value", "api_key = 'delta echo foxtrot'", "delta echo foxtrot", "delta"],
+    ["a quoted value containing separators", 'client_secret="one, two; three"', "one, two; three", "one,"]
+  ])("redacts the whole of %s", (_name, detail, secret, firstToken) => {
+    const redacted = describeServerError(new Error(detail));
+
+    expect(redacted).not.toContain(secret);
+    expect(redacted).not.toContain(firstToken);
+    expect(redacted).toContain("[redacted");
+  });
+
+  // An opening quote with no closing quote has no whole value for the quoted
+  // alternatives to consume, so its visible prefix used to reach the log.
+  it.each([
+    ["a JSON-style token value", '"token":"abc'],
+    ["a double-quoted assignment", 'password="abc'],
+    ["a single-quoted assignment", "password='abc"],
+    ["an apostrophe inside a double-quoted value", "password=\"abc'def"],
+    ["a double quote inside a single-quoted value", "api_key='abc\"def"],
+    ["a value ending in a backslash", 'password="abc\\']
+  ])("redacts an unterminated %s", (_name, detail) => {
+    const redacted = describeServerError(new Error(detail));
+
+    expect(redacted).not.toContain("abc");
+    expect(redacted).toContain("[redacted");
+  });
+
+  it("redacts a quoted credential value cut by the 4 KB truncation", () => {
+    // The closing quote is past the cap, so only the value's prefix is left in
+    // the bounded text and the whole-value alternatives cannot match it.
+    const secret = "SECRET".repeat(1_000);
+    const redacted = redactSensitiveDetail(`password="${secret}"`);
+
+    expect(redacted).not.toContain("SECRET");
+    expect(redacted).toContain("[redacted");
+    expect(redacted.endsWith("…[truncated]")).toBe(true);
+  });
+
+  it.each([
+    "the token was not found in the response",
+    "the secret to good design is contrast",
+    "passwordless sign-in is supported",
+    "the secretary scheduled a meeting",
+    "tokenizer settings are invalid",
+    "the authorization flow is documented"
+  ])("does not mangle credential-free prose: %s", (detail) => {
+    expect(() => describeServerError(new Error(detail))).not.toThrow();
+    expect(describeServerError(new Error(detail))).toBe(detail);
+  });
+
+  it("caps redaction input at 4 KB and marks the truncation", () => {
+    const huge = "prose ".repeat(30_000);
+    const redacted = redactSensitiveDetail(huge);
+
+    expect(redacted.endsWith("…[truncated]")).toBe(true);
+    expect(redacted.length).toBeLessThan(4_200);
+  });
+
+  it("redacts a 100 KB detail in under 200 ms", () => {
+    const huge = "A".repeat(100_000);
+    const started = performance.now();
+    const detail = describeServerError(new Error(huge));
+    const elapsed = performance.now() - started;
+
+    expect(elapsed).toBeLessThan(200);
+    expect(detail).not.toContain("A".repeat(1_000));
+  });
+
+  it("redacts a 100 KB detail of quote-heavy assignments in under 200 ms", () => {
+    // Hundreds of quoted assignments are paired before the cut, which leaves
+    // an unterminated value at the boundary for the fallback rule.
+    const huge = `${'password="secret" '.repeat(6_000)}token="UNCLOSED`;
+    const started = performance.now();
+    const detail = describeServerError(new Error(huge));
+    const elapsed = performance.now() - started;
+
+    expect(elapsed).toBeLessThan(200);
+    expect(detail).not.toContain("secret");
+    expect(detail).toContain("[redacted");
   });
 
   it("does not throw or leak a non-string message", () => {
