@@ -146,38 +146,72 @@ describe("describeServerError", () => {
     expect(redacted).toContain("[redacted");
   });
 
-  it("keeps text after a double-encoded credential value", () => {
+  it("redacts the rest of the line after a double-encoded credential value", () => {
     const redacted = describeServerError(
       new Error('{\\"password\\":\\"encoded_1\\"} and \\"state\\":\\"ok\\"')
     );
 
     expect(redacted).not.toContain("encoded_1");
-    expect(redacted).toContain('\\"state\\":\\"ok\\"');
+    expect(redacted).not.toContain("state");
+    expect(redacted).not.toContain("ok");
+    expect(redacted).toContain("[redacted");
+  });
+
+  it("leaves the line after a double-encoded credential value intact", () => {
+    const redacted = redactSensitiveDetail(
+      `${String.raw`{\"password\":\"encoded_1\"}`}\nnext=ok`
+    );
+
+    expect(redacted).not.toContain("encoded_1");
+    expect(redacted).toContain("[redacted");
+    expect(redacted).toContain("\nnext=ok");
+  });
+
+  it("redacts later keys on the same line as a double-encoded value", () => {
+    const redacted = redactSensitiveDetail(
+      String.raw`{\"password\":\"secret_1\",\"note\":\"hello\"}`
+    );
+
+    expect(redacted).not.toContain("secret_1");
+    expect(redacted).not.toContain("hello");
+    expect(redacted).toContain("[redacted");
   });
 
   // A double-encoded value can itself contain an escaped quote: the value
-  // `ab"cd` gets a third backslash when the body is stringified twice. The
-  // value must not end at that inner \" or the tail leaks
-  // (`{\"password\":\"ab\\\"cd\"}` used to redact only `ab\\` and log `cd`).
-  // The value runs to the next `}` or the end of the bounded input instead;
-  // redacting past the credential is acceptable, leaking is not.
+  // `ab"cd` gets a third backslash when the body is stringified twice. Finding
+  // the end of such a value precisely always had an edge; the most recent was
+  // an escaped quote followed by `}` (`{\"password\":\"ab\\\"}cd\"}`), which
+  // looked like the close and leaked `cd`. The fail-safe rule no longer looks
+  // for the end: it redacts from the start of the value to the next newline.
+  // Over-redacting the rest of the line is acceptable, leaking is not.
   it.each([
     ["an escaped quote", String.raw`{\"password\":\"ab\\\"cd\"}`, ["ab", "cd"]],
+    ["an escaped quote before a brace", String.raw`{\"password\":\"ab\\\"}cd\"}`, ["ab", "cd"]],
     ["two escaped quotes", String.raw`{\"password\":\"UU\\\"VV\\\"WW\"}`, ["UU", "VV", "WW"]],
     // The value's quote is escaped three times (seven backslashes).
     ["a triple-escaped quote", String.raw`{\"token\":\"XX\\\\\\\"YY\"}`, ["XX", "YY"]],
-    // Comma and bracket occur inside values, so they are not boundaries.
+    // Structural characters inside the value stay redacted with the whole line.
     ["a comma", String.raw`{\"api_key\":\"UU,VV\"}`, ["UU", "VV"]],
     ["a bracket", String.raw`{\"api_key\":\"UU]VV\"}`, ["UU", "VV"]],
+    ["a brace", String.raw`{\"password\":\"a}bcd\"}`, ["a}bcd", "bcd"]],
+    ["a bracket and comma", String.raw`{\"token\":\"x]y,z\"}`, ["x", "y", "z"]],
     // The DD's out-of-scope triple-encoded form falls out of the same rule.
     ["a triple-encoded body", String.raw`\\\"password\\\":\\\"secret\\\"}`, ["secret"]]
-  ])("redacts the whole double-encoded value with %s", (_name, detail, secrets) => {
+  ])("redacts the double-encoded line with %s", (_name, detail, secrets) => {
     const redacted = describeServerError(new Error(detail));
 
     for (const secret of secrets) {
       expect(redacted).not.toContain(secret);
     }
     expect(redacted).toContain("[redacted");
+  });
+
+  it("redacts an escaped quote followed by a brace instead of treating it as the close", () => {
+    // The DD NO-GO case: the escaped quote before `}` used to look like the
+    // value's close, leaving `b` in the log.
+    const redacted = describeServerError(new Error(String.raw`{\"password\":\"a\\\"}b\"}`));
+
+    expect(redacted).toBe(String.raw`{\"password\":[redacted]`);
   });
 
   it("does not stop a double-encoded value at a marker an earlier rule inserted", () => {
@@ -192,14 +226,17 @@ describe("describeServerError", () => {
     expect(redacted).toContain("[redacted");
   });
 
-  // The key=value rule's escaped-quote alternatives have the same defect and
-  // must also redact to the next `}` or the end of the input. These forms have
-  // no JSON key quotes, so the double-encoded rule cannot match them.
+  // The same fail-safe applies when the value's quotes are escaped but the key
+  // has no JSON quotes (password=\"x\"); these forms cannot match the rule
+  // that requires an escaped key quote. Redact to the end of the line.
   it.each([
     ["a double-quoted assignment", String.raw`password=\"ab\\\"cd\"`, ["ab", "cd"]],
+    ["an escaped quote before a brace", String.raw`password=\"ab\\\"}cd\"`, ["ab", "cd"]],
     ["a single-quoted assignment", String.raw`api_key=\'UU\\\'VV\'`, ["UU", "VV"]],
+    // Structural characters inside the value are not a boundary here either.
+    ["a brace inside the value", String.raw`password=\"a}bcd\"`, ["bcd"]],
     ["a triple-encoded assignment", String.raw`token=\\\"XX\\\\\\\"YY\\\"`, ["XX", "YY"]]
-  ])("redacts the whole escaped-quote %s without JSON key quotes", (_name, detail, secrets) => {
+  ])("redacts the escaped-quote line of %s without JSON key quotes", (_name, detail, secrets) => {
     const redacted = describeServerError(new Error(detail));
 
     for (const secret of secrets) {
@@ -309,6 +346,22 @@ describe("describeServerError", () => {
 
     expect(elapsed).toBeLessThan(200);
     expect(detail).not.toContain("cd");
+    expect(detail).toContain("[redacted");
+  });
+
+  it("redacts a 100 KB double-encoded mix full of structural characters in under 200 ms", () => {
+    // Values packed with `}`, `]` and `,` must not be cut at those bytes; only
+    // an escaped closing quote followed by a structural delimiter ends a
+    // value. The 4 KB cap and the one-character body keep the scan linear.
+    const chunk = String.raw`{\"password\":\"a}b]c,d\"} `;
+    const huge = chunk.repeat(Math.ceil(100_000 / chunk.length));
+    const started = performance.now();
+    const detail = describeServerError(new Error(huge));
+    const elapsed = performance.now() - started;
+
+    expect(elapsed).toBeLessThan(200);
+    expect(detail).not.toContain("b]c");
+    expect(detail).not.toContain("c,d");
     expect(detail).toContain("[redacted");
   });
 

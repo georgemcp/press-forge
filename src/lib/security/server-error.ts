@@ -55,34 +55,37 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
     ),
     replacement: "$1$2$1$3$4[redacted]$4"
   },
-  // Double-encoded JSON: an error that embeds a stringified body puts a
-  // backslash before the key's closing quote and the value's quotes, e.g.
-  // {\"password\":\"x\"}. The rule above requires bare delimiters, so it
-  // cannot see the escaped ones. Match the escaped key close and value quotes
-  // explicitly.
-  //
-  // The value is NOT terminated by finding its closing \": a value that
-  // itself contains an escaped quote carries \\\" at this encoding level, and
-  // stopping at the first \" exposed the rest of the value — for
-  // {\"password\":\"ab\\\"cd\"} the tail `cd` reached the log. Instead the
-  // value runs to the next object close (`}`) or the end of the bounded
-  // input, redacting everything before it. A `}` inside the value is
-  // indistinguishable from the object close without the fragile quote
-  // matching this rule avoids, but every byte up to the first `}` is
-  // redacted either way. A comma or a bracket is deliberately not a
-  // boundary: both occur inside values, and `]` also occurs in the markers
-  // earlier rules insert, so stopping on one could expose the value's tail.
-  // Over-redacting text after the credential (including a following key) is
-  // acceptable; leaking a value byte is not.
+  // Blunt fail-safe for double-encoded credential values. Once a key is seen
+  // with backslash-escaped quotes — \"password\" or \\"password\\" — there is
+  // no reliable end for its value. Every precise boundary rule tried here has
+  // leaked on some input: the latest was {\"password\":\"a\\\"}b\"}, where the
+  // escaped quote followed by `}` looked like the close and exposed `b`. So
+  // this rule does not look for the end of the value at all. It redacts from
+  // the start of the value to the next newline (or the end of the bounded
+  // input) and leaves the following line intact. Everything later on the same
+  // line is redacted too; over-redacting log text is acceptable, leaking a
+  // value byte is not.
   //
   // The escapes accept one to three backslashes so the triple-encoded form
-  // (\\\"password\\\":\\\"x\\\") is covered as well.
+  // (\\\"password\\\":\\\"x\\\") is covered as well. The body is one greedy
+  // class, so the scan is linear and cannot backtrack catastrophically.
   {
     pattern: new RegExp(
-      String.raw`(["'])(${compoundCredentialKeySource})(\\{1,3})\1(\s*:\s*)(\\{1,3})(["'])([^}]*)`,
+      String.raw`(?<![A-Za-z0-9_-])(\\{1,3})(["'])(${compoundCredentialKeySource})(\\{1,3})\2([^\S\n]*:[^\S\n]*)[^\n]*`,
       "gi"
     ),
-    replacement: "$1$2$3$1$4$5$6[redacted]$5$6"
+    replacement: "$1$2$3$4$2$5[redacted]"
+  },
+  // The same fail-safe for a double-encoded value under a plain key, e.g.
+  // password=\"x\": the key is not escaped, so the rule above cannot see it,
+  // but the escaped value quotes have the same end-of-value hazard. Redact to
+  // the next newline (or the end of the bounded input).
+  {
+    pattern: new RegExp(
+      String.raw`(?<![A-Za-z0-9_-])(["']?)(${compoundCredentialKeySource})(["']?)([^\S\n]*[:=][^\S\n]*)(\\{1,3}["'])[^\n]*`,
+      "gi"
+    ),
+    replacement: "$1$2$3$4[redacted]"
   },
   // key=value, key: value, URL query (?key=...), env style (MY_KEY=...) and
   // quoted or bare values, e.g. password="hunter2", password = "a b c",
@@ -90,24 +93,14 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
   // value is consumed; the unquoted class cannot cross a quote and would
   // otherwise leave the value untouched.
   //
-  // The plain quoted alternatives are escape-aware, so a backslash-escaped
-  // quote inside a value does not end it early: without that,
+  // The quoted alternatives are escape-aware, so a backslash-escaped quote
+  // inside a value does not end it early: without that,
   // password="ab\"cd" was redacted only through the escaped quote and `cd"`
-  // reached the log. The escaped-quote alternatives cover values that are
-  // themselves double-encoded (\"password\":\"x\"). They must not stop at the
-  // first \" either: a double-encoded value that contains an escaped quote
-  // carries \\\" inside it, and stopping there exposed the tail. Like the
-  // double-encoded rule above, they redact from the opening escaped quote to
-  // the next object close or the end of the bounded input instead of trying
-  // to match the value's closing quote; comma and bracket are not boundaries,
-  // because both occur inside values (and `]` in the markers earlier rules
-  // insert). Over-redaction is preferred to leaking a value byte. The key
-  // close accepts up to three backslashes so the same alternatives handle
-  // double- and triple-encoded keys, including numeric values that the
-  // quoted JSON rules cannot consume.
+  // reached the log. Double-encoded values are handled by the blunt rules
+  // above and never reach this rule.
   {
     pattern: new RegExp(
-      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(\\{0,3}["']?)(\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\\{1,3}"[^}]*|\\{1,3}'[^}]*|[^\s"'&,;\\]+)`,
+      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(["']?)(\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|[^\s"'&,;\\]+)`,
       "gi"
     ),
     replacement: "$1$2$3[redacted]"
@@ -117,8 +110,8 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
   // the whole-value alternatives above to consume, so its visible prefix used
   // to survive. Any opening quote still standing after those rules ran has no
   // matching closing quote: redact from it to the end of the input. The
-  // optional backslash on the key close and value quote also catches
-  // double-encoded values whose escaped closing quote is missing. The body is
+  // optional backslash on the key close and value quote also catches mixed
+  // escaped forms that the blunt rules above did not match. The body is
   // one greedy class, so the scan is linear and cannot backtrack catastrophically.
   {
     pattern: new RegExp(
