@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
+import { describeServerError } from "@/lib/security/server-error";
 
 const boundedText = z.string().min(1).max(4000);
 const hexColor = z.string().regex(/^#[0-9a-f]{6}$/i);
@@ -152,7 +153,7 @@ export async function enhanceBrief(
     try {
       return await enhanceBriefWithOpenAI(options);
     } catch (error) {
-      console.warn("OpenAI brief enhancement failed, trying Gemini:", error);
+      console.warn("OpenAI brief enhancement failed, trying Gemini", { error: describeServerError(error) });
     }
   }
 

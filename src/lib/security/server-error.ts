@@ -1,4 +1,5 @@
 const maxDetailLength = 300;
+const fallbackDetail = "Unknown error";
 
 /**
  * Redaction rules applied to server-side error detail before it is logged.
@@ -16,29 +17,79 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
   { pattern: /\b[A-Za-z0-9+/=_-]{40,}\b/g, replacement: "[redacted-token]" }
 ];
 
-function errorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
+function stringifySafely(value: unknown) {
+  try {
+    const text = String(value);
+    return text === "[object Object]" ? undefined : text;
+  } catch {
+    return undefined;
   }
-  if (error && typeof error === "object") {
+}
+
+/**
+ * Extracts a human-readable message from any thrown value. Every property
+ * access is guarded because the value can be a proxy, an object with throwing
+ * getters, or something with no usable string form.
+ */
+function errorMessage(error: unknown): string {
+  if (typeof error === "string") {
+    return error;
+  }
+  if (typeof error === "symbol" || typeof error === "bigint") {
+    return stringifySafely(error) ?? fallbackDetail;
+  }
+  if (error === null || error === undefined) {
+    return fallbackDetail;
+  }
+  if (typeof error !== "object" && typeof error !== "function") {
+    return fallbackDetail;
+  }
+
+  // `instanceof` can itself throw for exotic proxies, so it gets its own guard.
+  let isError = false;
+  try {
+    isError = error instanceof Error;
+  } catch {
+    isError = false;
+  }
+  if (isError) {
+    try {
+      const message = (error as Error).message;
+      if (typeof message === "string") {
+        return message;
+      }
+    } catch {
+      // A throwing `message` getter must not take the logger down.
+    }
+    return fallbackDetail;
+  }
+
+  try {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string") {
       return message;
     }
+  } catch {
+    // Throwing getters fall through to the generic detail.
   }
-  return typeof error === "string" ? error : "Unknown error";
+  return stringifySafely(error) ?? fallbackDetail;
 }
 
 /**
  * Turns any thrown value into one sanitized log line. Provider/platform detail
  * is preserved for debugging, but credentials, opaque tokens and email
- * addresses are replaced and the result is length-limited.
+ * addresses are replaced and the result is length-limited. This function is
+ * total: it never throws, whatever value is passed to it.
  */
 export function describeServerError(error: unknown) {
-  const message = errorMessage(error).replace(/\s+/g, " ").trim();
-  const redacted = redactionRules.reduce(
-    (value, rule) => value.replace(rule.pattern, rule.replacement),
-    message
-  );
-  return redacted.length > maxDetailLength ? `${redacted.slice(0, maxDetailLength)}...` : redacted;
+  try {
+    const message = errorMessage(error).replace(/\s+/g, " ").trim() || fallbackDetail;
+    const redacted = redactionRules.reduce(
+      (value, rule) => value.replace(rule.pattern, rule.replacement),
+      message
+    );
+    return redacted.length > maxDetailLength ? `${redacted.slice(0, maxDetailLength)}...` : redacted;
+  } catch {
+    return fallbackDetail;
+  }
 }

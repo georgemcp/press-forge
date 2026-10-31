@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
+import { describeServerError } from "@/lib/security/server-error";
 import type { Json } from "@/types/supabase";
 import { layoutSpecSchema, type LayoutSpec } from "@/lib/print/layout-spec";
 import { briefEnhancementSchema, type BriefEnhancementResult } from "@/lib/ai/brief-enhancer";
@@ -99,7 +100,7 @@ export async function GET(request: Request) {
     .limit(limit);
 
   if (error) {
-    console.error("Failed to list designs:", error);
+    console.error("Failed to list designs", { error: describeServerError(error) });
     return NextResponse.json({ error: "Failed to load designs." }, { status: 500 });
   }
 
@@ -147,7 +148,7 @@ export async function DELETE(request: Request) {
     .eq("user_id", account.userId);
 
   if (error) {
-    console.error("Failed to delete design:", error);
+    console.error("Failed to delete design", { error: describeServerError(error) });
     return NextResponse.json({ error: "Failed to delete design." }, { status: 500 });
   }
 
@@ -196,7 +197,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      console.error("Failed to update design:", error);
+      console.error("Failed to update design", { error: describeServerError(error) });
       return NextResponse.json({ error: "Failed to update design." }, { status: 500 });
     }
 
@@ -211,7 +212,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    console.error("Failed to save design:", error);
+    console.error("Failed to save design", { error: describeServerError(error) });
     return NextResponse.json({ error: "Failed to save design." }, { status: 500 });
   }
 
