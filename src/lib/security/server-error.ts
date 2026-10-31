@@ -68,6 +68,19 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
     ),
     replacement: "$1$2$3[redacted]"
   },
+  // Unterminated quoted values. A credential value cut off by the 4 KB cap (or
+  // an upstream message that never closed its quote) has no closing quote for
+  // the whole-value alternatives above to consume, so its visible prefix used
+  // to survive. Any opening quote still standing after those rules ran has no
+  // matching closing quote: redact from it to the end of the input. The body is
+  // one greedy class, so the scan is linear and cannot backtrack catastrophically.
+  {
+    pattern: new RegExp(
+      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(["']?)(\s*[:=]\s*)(["'])[\s\S]*$`,
+      "gi"
+    ),
+    replacement: "$1$2$3$4[redacted]"
+  },
   { pattern: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, replacement: "[redacted-email]" },
   { pattern: /\b[A-Za-z0-9+/=_-]{40,}\b/g, replacement: "[redacted-token]" }
 ];
@@ -140,14 +153,16 @@ function errorMessage(error: unknown): string {
  */
 export function redactSensitiveDetail(value: string) {
   try {
-    const bounded =
-      value.length > maxRedactionInputLength
-        ? `${value.slice(0, maxRedactionInputLength)}${truncationMarker}`
-        : value;
-    return redactionRules.reduce(
+    // Truncate first so no rule ever scans more than the cap; the marker is
+    // appended afterwards because a value straddling the cut is redacted to
+    // the end of the bounded text and would otherwise swallow it.
+    const truncated = value.length > maxRedactionInputLength;
+    const bounded = truncated ? value.slice(0, maxRedactionInputLength) : value;
+    const redacted = redactionRules.reduce(
       (text, rule) => text.replace(rule.pattern, rule.replacement),
       bounded
     );
+    return truncated ? `${redacted}${truncationMarker}` : redacted;
   } catch {
     return fallbackDetail;
   }

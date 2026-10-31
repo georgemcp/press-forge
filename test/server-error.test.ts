@@ -106,6 +106,33 @@ describe("describeServerError", () => {
     expect(redacted).toContain("[redacted");
   });
 
+  // An opening quote with no closing quote has no whole value for the quoted
+  // alternatives to consume, so its visible prefix used to reach the log.
+  it.each([
+    ["a JSON-style token value", '"token":"abc'],
+    ["a double-quoted assignment", 'password="abc'],
+    ["a single-quoted assignment", "password='abc"],
+    ["an apostrophe inside a double-quoted value", "password=\"abc'def"],
+    ["a double quote inside a single-quoted value", "api_key='abc\"def"],
+    ["a value ending in a backslash", 'password="abc\\']
+  ])("redacts an unterminated %s", (_name, detail) => {
+    const redacted = describeServerError(new Error(detail));
+
+    expect(redacted).not.toContain("abc");
+    expect(redacted).toContain("[redacted");
+  });
+
+  it("redacts a quoted credential value cut by the 4 KB truncation", () => {
+    // The closing quote is past the cap, so only the value's prefix is left in
+    // the bounded text and the whole-value alternatives cannot match it.
+    const secret = "SECRET".repeat(1_000);
+    const redacted = redactSensitiveDetail(`password="${secret}"`);
+
+    expect(redacted).not.toContain("SECRET");
+    expect(redacted).toContain("[redacted");
+    expect(redacted.endsWith("…[truncated]")).toBe(true);
+  });
+
   it.each([
     "the token was not found in the response",
     "the secret to good design is contrast",
@@ -134,6 +161,19 @@ describe("describeServerError", () => {
 
     expect(elapsed).toBeLessThan(200);
     expect(detail).not.toContain("A".repeat(1_000));
+  });
+
+  it("redacts a 100 KB detail of quote-heavy assignments in under 200 ms", () => {
+    // Hundreds of quoted assignments are paired before the cut, which leaves
+    // an unterminated value at the boundary for the fallback rule.
+    const huge = `${'password="secret" '.repeat(6_000)}token="UNCLOSED`;
+    const started = performance.now();
+    const detail = describeServerError(new Error(huge));
+    const elapsed = performance.now() - started;
+
+    expect(elapsed).toBeLessThan(200);
+    expect(detail).not.toContain("secret");
+    expect(detail).toContain("[redacted");
   });
 
   it("does not throw or leak a non-string message", () => {
