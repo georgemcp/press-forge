@@ -7,6 +7,7 @@ import { buildAccessLinkEmail } from "@/lib/billing/access-link-email";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { sendTransactionalEmail } from "@/lib/email/transactional";
 import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
 
@@ -41,7 +42,7 @@ async function findReusableOrder(account: { userId: string; email: string }) {
     .limit(10);
 
   if (error) {
-    console.error("Trim Proof access link order lookup failed", { error: error.message });
+    console.error("Trim Proof access link order lookup failed", { error: describeServerError(error) });
     return { order: undefined, error: "Access link lookup is temporarily unavailable. Try again later." };
   }
 
@@ -85,6 +86,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Access links can only be requested for the signed-in account email." }, { status: 403 });
   }
 
+  const appUrl = getAppUrl();
+  if (!appUrl) {
+    console.error("Trim Proof access link is unavailable: NEXT_PUBLIC_APP_URL or APP_URL is not a valid absolute origin");
+    return NextResponse.json({ error: "Access link delivery is temporarily unavailable. Try again later." }, { status: 503 });
+  }
+
   const email = account.email;
   const { order, error } = await findReusableOrder(account);
   if (error) {
@@ -102,7 +109,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const accessUrl = `${getAppUrl()}/app?mode=advanced&checkout=success&session_id=${encodeURIComponent(order.stripe_session_id)}`;
+  const accessUrl = `${appUrl}/app?mode=advanced&checkout=success&session_id=${encodeURIComponent(order.stripe_session_id)}`;
   const delivery = await sendTransactionalEmail(buildAccessLinkEmail(email, order, accessUrl));
   if (delivery.status === "failed") {
     console.error("Trim Proof access link email failed", {

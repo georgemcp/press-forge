@@ -13,8 +13,8 @@ vi.mock("@/lib/auth/account-server", () => ({
   getAccountSessionFromCookies: () => mocks.accountSession
 }));
 
-vi.mock("@/lib/billing/stripe", () => ({
-  getAppUrl: () => "https://trimproof.com",
+vi.mock("@/lib/billing/stripe", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/billing/stripe")>()),
   getStripeClient: () => ({
     checkout: {
       sessions: {
@@ -37,6 +37,8 @@ describe("checkout route", () => {
     };
     vi.stubEnv("STRIPE_EXPORT_PRICE_ID", "price_export");
     vi.stubEnv("STRIPE_SUBSCRIPTION_PRICE_ID", "price_subscription");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://trimproof.com");
+    vi.stubEnv("APP_URL", "");
     mocks.checkoutCreate.mockResolvedValue({ url: "https://checkout.stripe.com/c/test" });
   });
 
@@ -78,6 +80,43 @@ describe("checkout route", () => {
         })
       })
     );
+  });
+
+  it("builds success and cancel URLs from the configured origin, not the request Host", async () => {
+    const response = await POST(
+      new Request("https://attacker.example/api/billing/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Forwarded-Host": "attacker.example"
+        },
+        body: JSON.stringify({ mode: "payment", email: "buyer@example.com" })
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.checkoutCreate).toHaveBeenCalledWith(expect.objectContaining({
+      success_url: "https://trimproof.com/app?mode=advanced&checkout=success&session_id={CHECKOUT_SESSION_ID}",
+      cancel_url: "https://trimproof.com/app?mode=advanced&checkout=cancelled"
+    }));
+  });
+
+  it("fails closed in production when no origin is configured", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+    vi.stubEnv("APP_URL", "");
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await POST(
+      new Request("https://attacker.example/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "payment", email: "buyer@example.com" })
+      })
+    );
+
+    expect(response.status).toBe(503);
+    expect(mocks.checkoutCreate).not.toHaveBeenCalled();
   });
 
   it("requires a signed-in account before checkout", async () => {

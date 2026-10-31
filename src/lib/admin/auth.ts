@@ -1,9 +1,13 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { LEGACY_SESSION_KEYS_UNTIL } from "@/lib/security/legacy-session-keys";
 
 export const ADMIN_SESSION_COOKIE = "trimproof_admin";
 
 const sessionVersion = "v4";
 const sessionTtlSeconds = 60 * 60 * 8;
+// NEXTAUTH_SECRET is a shared secret. Derive a purpose-specific key from it so
+// an admin-session signature can never be replayed as another token type.
+const derivedKeyLabel = "press-forge:admin-session:v1";
 
 function firstValue(...values: Array<string | undefined>) {
   return values.find((value) => typeof value === "string" && value.trim().length > 0)?.trim();
@@ -44,16 +48,52 @@ function getValidAdminPasswordHash() {
   return passwordHash && parseAdminPasswordHash(passwordHash) ? passwordHash : undefined;
 }
 
-function getAdminSessionSecret() {
-  return firstValue(process.env.TRIMPROOF_ADMIN_SESSION_SECRET, process.env.ADMIN_DASHBOARD_SESSION_SECRET, process.env.NEXTAUTH_SECRET);
+/**
+ * Key used to sign new admin-session tokens. A dedicated
+ * TRIMPROOF_ADMIN_SESSION_SECRET (or ADMIN_DASHBOARD_SESSION_SECRET) wins;
+ * otherwise a purpose-specific key is derived from NEXTAUTH_SECRET so the
+ * shared secret is never used directly. Without either the caller fails
+ * closed: no signing and no verification.
+ */
+function getAdminSessionSigningKey(): string | Buffer | undefined {
+  const dedicated = firstValue(process.env.TRIMPROOF_ADMIN_SESSION_SECRET, process.env.ADMIN_DASHBOARD_SESSION_SECRET);
+  if (dedicated) {
+    return dedicated;
+  }
+  const nextAuthSecret = firstValue(process.env.NEXTAUTH_SECRET);
+  return nextAuthSecret ? createHmac("sha256", nextAuthSecret).update(derivedKeyLabel).digest() : undefined;
 }
 
-function sign(payload: string) {
-  const secret = getAdminSessionSecret();
-  if (!secret) {
-    return undefined;
+function getAdminSessionVerificationKeys(now: number): Array<string | Buffer> {
+  const signingKey = getAdminSessionSigningKey();
+  if (!signingKey) {
+    return [];
   }
-  return createHmac("sha256", secret).update(payload).digest("base64url");
+
+  const keys: Array<string | Buffer> = [signingKey];
+  // Tokens issued before the derived key shipped were signed (and their
+  // credential fingerprint computed) with the raw secrets below. Accept them
+  // for verification only, and only before the shared hard sunset (admin
+  // sessions live at most 8 hours, well inside it). After the cutoff the raw
+  // keys are not considered at all. New tokens are never signed with a legacy
+  // key.
+  if (now >= LEGACY_SESSION_KEYS_UNTIL) {
+    return keys;
+  }
+  for (const legacySecret of [
+    firstValue(process.env.TRIMPROOF_ADMIN_SESSION_SECRET),
+    firstValue(process.env.ADMIN_DASHBOARD_SESSION_SECRET),
+    firstValue(process.env.NEXTAUTH_SECRET)
+  ]) {
+    if (legacySecret && !keys.some((key) => typeof key === "string" && key === legacySecret)) {
+      keys.push(legacySecret);
+    }
+  }
+  return keys;
+}
+
+function sign(payload: string, key: string | Buffer) {
+  return createHmac("sha256", key).update(payload).digest("base64url");
 }
 
 function safeEqual(left: string, right: string) {
@@ -63,7 +103,7 @@ function safeEqual(left: string, right: string) {
 }
 
 export function isAdminAuthConfigured() {
-  return Boolean(getAdminEmail() && getValidAdminPasswordHash() && getAdminSessionSecret());
+  return Boolean(getAdminEmail() && getValidAdminPasswordHash() && getAdminSessionSigningKey());
 }
 
 export function createAdminPasswordHash(password: string, salt = randomBytes(16)) {
@@ -104,13 +144,8 @@ function encodeEmailSegment(email: string) {
   return Buffer.from(normalizeAdminLoginEmail(email), "utf8").toString("base64url");
 }
 
-function credentialFingerprint() {
-  const passwordHash = getValidAdminPasswordHash();
-  const sessionSecret = getAdminSessionSecret();
-  if (!passwordHash || !sessionSecret) {
-    return undefined;
-  }
-  return createHmac("sha256", sessionSecret).update(passwordHash).digest("base64url").slice(0, 24);
+function credentialFingerprint(key: string | Buffer, passwordHash: string) {
+  return createHmac("sha256", key).update(passwordHash).digest("base64url").slice(0, 24);
 }
 
 export function createAdminSessionValue(now = Date.now()) {
@@ -118,17 +153,18 @@ export function createAdminSessionValue(now = Date.now()) {
   if (!email) {
     throw new Error("Admin email is not configured.");
   }
-  const fingerprint = credentialFingerprint();
-  if (!fingerprint) {
+  const passwordHash = getValidAdminPasswordHash();
+  if (!passwordHash) {
     throw new Error("Admin password hash is not configured.");
   }
-  const expiresAt = now + sessionTtlSeconds * 1000;
-  const payload = `${sessionVersion}.${expiresAt}.${encodeEmailSegment(email)}.${fingerprint}`;
-  const signature = sign(payload);
-  if (!signature) {
+  const signingKey = getAdminSessionSigningKey();
+  if (!signingKey) {
     throw new Error("Admin session secret is not configured.");
   }
-  return `${payload}.${signature}`;
+  const fingerprint = credentialFingerprint(signingKey, passwordHash);
+  const expiresAt = now + sessionTtlSeconds * 1000;
+  const payload = `${sessionVersion}.${expiresAt}.${encodeEmailSegment(email)}.${fingerprint}`;
+  return `${payload}.${sign(payload, signingKey)}`;
 }
 
 export function verifyAdminSessionValue(value: string | undefined, now = Date.now()) {
@@ -144,15 +180,18 @@ export function verifyAdminSessionValue(value: string | undefined, now = Date.no
     return false;
   }
   const expectedEmail = getAdminEmail();
-  const expectedFingerprint = credentialFingerprint();
-  if (!expectedEmail || !expectedFingerprint || emailSegment !== encodeEmailSegment(expectedEmail) || !safeEqual(fingerprint, expectedFingerprint)) {
+  const passwordHash = getValidAdminPasswordHash();
+  if (!expectedEmail || !passwordHash || emailSegment !== encodeEmailSegment(expectedEmail)) {
     return false;
   }
-  const expected = sign(`${version}.${expiresAtValue}.${emailSegment}.${fingerprint}`);
-  if (!expected) {
+  const verificationKeys = getAdminSessionVerificationKeys(now);
+  if (verificationKeys.length === 0) {
     return false;
   }
-  return safeEqual(signature, expected);
+  const payload = `${version}.${expiresAtValue}.${emailSegment}.${fingerprint}`;
+  return verificationKeys.some((key) =>
+    safeEqual(fingerprint, credentialFingerprint(key, passwordHash)) && safeEqual(signature, sign(payload, key))
+  );
 }
 
 export function getAdminSessionCookieOptions() {

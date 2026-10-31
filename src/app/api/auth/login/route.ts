@@ -4,6 +4,7 @@ import { ACCOUNT_SESSION_COOKIE, createAccountSessionValue, getAccountSessionCoo
 import { createAnonSupabaseClient } from "@/lib/db/supabase";
 import { safeInternalPath } from "@/lib/security/navigation";
 import { checkRateLimit, getRequestIp, isSameOriginMutation, rateLimitResponse } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
 
@@ -11,10 +12,6 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1).max(120)
 });
-
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
 
 function relativeRedirect(location: string) {
   // A relative Location never derives from the request Host header, so a
@@ -84,7 +81,7 @@ export async function POST(request: Request) {
     error = loginResult.error;
   } catch (loginError) {
     console.error("Trim Proof account login request failed", {
-      error: getErrorMessage(loginError)
+      error: describeServerError(loginError)
     });
     return NextResponse.json({ error: "Account login is temporarily unavailable. Try again in a moment." }, { status: 503 });
   }

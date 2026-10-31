@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
 
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Trim Proof checkout session verification failed", {
-      error: error instanceof Error ? error.message : String(error)
+      error: describeServerError(error)
     });
     return NextResponse.json(
       {

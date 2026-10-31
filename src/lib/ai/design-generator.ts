@@ -4,6 +4,7 @@ import { layoutSpecSchema, type LayoutSpec } from "@/lib/print/layout-spec";
 import { validatePrintableText } from "@/lib/print/pdf-export";
 import type { ProductType, PrintProfileId } from "@/lib/print/constants";
 import type { BriefEnhancementResult } from "./brief-enhancer";
+import { describeServerError } from "@/lib/security/server-error";
 
 export interface DesignGenerationInput {
   enhancedBrief: BriefEnhancementResult;
@@ -233,7 +234,7 @@ async function generateWithAvailableProvider(input: DesignGenerationInput): Prom
     try {
       return await generateDesignSpecWithOpenAI(input);
     } catch (error) {
-      console.warn("OpenAI design spec generation failed, trying Gemini:", error);
+      console.warn("OpenAI design spec generation failed, trying Gemini", { error: describeServerError(error) });
     }
   }
 

@@ -3,12 +3,9 @@ import { accountProfileSchema, profileToUserUpdate } from "@/lib/auth/account-pr
 import { isAccountAuthConfigured } from "@/lib/auth/account-session";
 import { createAnonSupabaseClient, createServiceSupabaseClient } from "@/lib/db/supabase";
 import { checkRateLimit, getRequestIp, getTrustedAppOrigin, isSameOriginMutation, rateLimitResponse } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
-
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
 
 function acceptedSignupResponse(formPost: boolean, appOrigin: string) {
   return formPost
@@ -140,7 +137,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Trim Proof account signup auth request failed", {
-      error: getErrorMessage(error)
+      error: describeServerError(error)
     });
     return NextResponse.json({ error: "Account signup is temporarily unavailable. Try again in a moment." }, { status: 503 });
   }

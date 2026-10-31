@@ -4,6 +4,7 @@ import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { getAdminSignupRecipients, sendTransactionalEmail } from "@/lib/email/transactional";
 import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 
 const analyticsSchema = z
   .object({
@@ -176,7 +177,7 @@ export async function POST(request: Request) {
     console.error("Trim Proof server analytics event failed", {
       event: "generate_lead",
       provider: analytics.provider,
-      reason: analytics.reason
+      reason: describeServerError(analytics.reason)
     });
   }
 

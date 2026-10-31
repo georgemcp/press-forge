@@ -1,4 +1,5 @@
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
+import { describeServerError } from "@/lib/security/server-error";
 import type { Json, TablesInsert } from "@/types/supabase";
 
 type SupabaseClient = NonNullable<ReturnType<typeof createServiceSupabaseClient>>;
@@ -31,7 +32,7 @@ export async function recordAdminAuditEvent(input: AdminAuditInput) {
     console.error("Trim Proof admin audit event failed", {
       action: input.action,
       targetType: input.targetType,
-      reason: error.message
+      reason: describeServerError(error)
     });
   }
 }

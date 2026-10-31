@@ -4,6 +4,7 @@ import sharp from "sharp";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 import { canonicalUploadPath, isUploadUuid } from "@/lib/security/upload";
 
 export const runtime = "nodejs";
@@ -124,7 +125,7 @@ export async function POST(request: Request) {
       size: normalized.length
     });
   } catch (error) {
-    console.error("Upload failed", { error: error instanceof Error ? error.message : "Unknown upload error" });
+    console.error("Upload failed", { error: describeServerError(error) });
     return NextResponse.json({ error: "Upload failed. Provide a valid PNG, JPEG, or WebP image." }, { status: 400 });
   }
 }
@@ -161,7 +162,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await listUploads(supabase, account.userId);
   if (error) {
-    console.error("List uploads failed", { error: error.message });
+    console.error("List uploads failed", { error: describeServerError(error) });
     return NextResponse.json({ error: "Uploads could not be loaded." }, { status: 503 });
   }
 

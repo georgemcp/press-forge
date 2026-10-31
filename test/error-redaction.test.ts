@@ -83,6 +83,24 @@ describe("API error redaction", () => {
       error: "AI brief enhancement failed. Check that at least one AI provider is configured."
     });
     expect(body).not.toContain("sk-live-secret");
+    expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toContain("sk-live-secret");
+  });
+
+  it("redacts credentials and PII from server-side provider failure logs", async () => {
+    mocks.enhanceBrief.mockRejectedValue(
+      new Error("provider rejected buyer@example.com with Bearer sk-live-secret-123 and key sk_live_abc123")
+    );
+
+    const response = await enhanceBriefRoute(jsonRequest("/api/brief/enhance", {
+      brief: "A business card for a bakery"
+    }));
+    expect(response.status).toBe(500);
+
+    const logged = JSON.stringify(vi.mocked(console.error).mock.calls);
+    expect(logged).not.toContain("buyer@example.com");
+    expect(logged).not.toContain("sk-live-secret-123");
+    expect(logged).not.toContain("sk_live_abc123");
+    expect(logged).toContain("[redacted-email]");
   });
 
   it("does not expose provider details from design chat failures", async () => {

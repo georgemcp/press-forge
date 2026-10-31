@@ -221,4 +221,17 @@ describe("proof export delivery and allowance", () => {
     expect(mocks.finalizeExportCredit).toHaveBeenCalledOnce();
     expect(mocks.releaseExportCredit).not.toHaveBeenCalled();
   });
+
+  it("redacts provider detail and emails from generation-failure logs", async () => {
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.generateProof.mockRejectedValue(new Error("provider rejected buyer@example.com with sk_live_abc123"));
+
+    const response = await POST(request("dummy"));
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ error: "Proof generation failed. Try again later." });
+    const logged = JSON.stringify(errorLog.mock.calls);
+    expect(logged).not.toContain("buyer@example.com");
+    expect(logged).not.toContain("sk_live_abc123");
+  });
 });

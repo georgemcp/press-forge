@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
 import type { LayoutSpec } from "@/lib/print/layout-spec";
 import type { BriefEnhancementResult } from "./brief-enhancer";
+import { describeServerError } from "@/lib/security/server-error";
 
 export interface DesignChatMessage {
   role: "user" | "assistant";
@@ -182,7 +183,7 @@ export async function designChat(
     try {
       return await chatWithOpenAI(messages, context);
     } catch (error) {
-      console.warn("OpenAI design chat failed, trying Gemini:", error);
+      console.warn("OpenAI design chat failed, trying Gemini", { error: describeServerError(error) });
     }
   }
 

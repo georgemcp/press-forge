@@ -20,12 +20,9 @@ import {
   verifyPaidCheckoutSession
 } from "@/lib/billing/paid-session";
 import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
-
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
 
 const proofRequestSchema = z.object({
   spec: layoutSpecSchema.optional(),
@@ -74,7 +71,7 @@ export async function POST(request: Request) {
     paidSession = mode === "advanced" ? await verifyPaidCheckoutSession(payload.checkoutSessionId, account) : undefined;
   } catch (error) {
     console.error("Proof export checkout verification failed", {
-      error: getErrorMessage(error)
+      error: describeServerError(error)
     });
     return NextResponse.json(
       {
@@ -103,7 +100,7 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error("Proof export credit claim failed", {
         jobId,
-        error: getErrorMessage(error)
+        error: describeServerError(error)
       });
       return NextResponse.json(
         {
@@ -119,7 +116,7 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error("Proof export subscription claim failed", {
         jobId,
-        error: getErrorMessage(error)
+        error: describeServerError(error)
       });
       return NextResponse.json(
         {
@@ -234,12 +231,12 @@ export async function POST(request: Request) {
   } catch (error) {
     // A failed delivery must not leave an unlocked manifest behind.
     await fs.rm(path.join(outputDir, deliveryManifestFileName), { force: true }).catch((cleanupError) => {
-      console.error("Proof delivery manifest cleanup failed", { jobId, error: cleanupError });
+      console.error("Proof delivery manifest cleanup failed", { jobId, error: describeServerError(cleanupError) });
     });
     try {
       await releaseClaimedEntitlement();
     } catch (releaseError) {
-      console.error("Proof export allowance release failed", { jobId, error: releaseError });
+      console.error("Proof export allowance release failed", { jobId, error: describeServerError(releaseError) });
       return NextResponse.json({
         error: "Proof generation failed and the export allowance could not be restored. Contact support before retrying.",
         jobId
@@ -247,7 +244,7 @@ export async function POST(request: Request) {
     }
     console.error("Proof export generation failed", {
       jobId,
-      error: getErrorMessage(error)
+      error: describeServerError(error)
     });
     return NextResponse.json(
       {

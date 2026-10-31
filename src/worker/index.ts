@@ -1,6 +1,7 @@
 import { Worker } from "bullmq";
 import { layoutSpecSchema } from "@/lib/print/layout-spec";
 import { generateProof } from "@/lib/print/proof";
+import { describeServerError } from "@/lib/security/server-error";
 import {
   createWorkerProofOutputDir,
   startWorkerProofRetention,
@@ -28,12 +29,10 @@ const generatedRoot = workerGeneratedProofRoot();
 
 try {
   await startWorkerProofRetention(generatedRoot, (error) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`Trim Proof worker proof cleanup failed: ${message}`);
+    console.error(`Trim Proof worker proof cleanup failed: ${describeServerError(error)}`);
   });
 } catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`Trim Proof worker startup cleanup failed: ${message}`);
+  console.error(`Trim Proof worker startup cleanup failed: ${describeServerError(error)}`);
   process.exit(1);
 }
 
@@ -59,5 +58,5 @@ worker.on("completed", (job) => {
 });
 
 worker.on("failed", (job, error) => {
-  console.error(`Trim Proof export job ${job?.id ?? "unknown"} failed: ${error.message}`);
+  console.error(`Trim Proof export job ${job?.id ?? "unknown"} failed: ${describeServerError(error)}`);
 });

@@ -6,6 +6,7 @@ import { generateDesignSpec } from "@/lib/ai/design-generator";
 import { layoutSpecSchema } from "@/lib/print/layout-spec";
 import { briefEnhancementSchema } from "@/lib/ai/brief-enhancer";
 import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
 
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
       assetPrompts: result.assetPrompts,
     });
   } catch (error) {
-    console.error("Design generation failed:", error);
+    console.error("Design generation failed", { error: describeServerError(error) });
     return NextResponse.json(
       {
         error: "Design generation failed. Check AI provider configuration.",

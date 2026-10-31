@@ -106,7 +106,13 @@ export async function POST(request: Request) {
     );
   }
 
+  // Stripe success/cancel URLs are absolute and must come from the configured
+  // site origin, never the request Host / X-Forwarded-Host headers.
   const appUrl = getAppUrl();
+  if (!appUrl) {
+    console.error("Trim Proof checkout is unavailable: NEXT_PUBLIC_APP_URL or APP_URL is not a valid absolute origin");
+    return NextResponse.json({ error: "Checkout is temporarily unavailable. Try again later." }, { status: 503 });
+  }
   const accountMetadata = await loadAccountMetadata(account.userId);
   const metadata = {
     product: "trimproof",
