@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { enhanceBrief } from "@/lib/ai/brief-enhancer";
 import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
 
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
       enhancement: result,
     });
   } catch (error) {
-    console.error("Brief enhancement failed:", error);
+    console.error("Brief enhancement failed", { error: describeServerError(error) });
     return NextResponse.json(
       {
         error: "AI brief enhancement failed. Check that at least one AI provider is configured.",

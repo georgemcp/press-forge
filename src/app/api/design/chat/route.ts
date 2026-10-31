@@ -5,6 +5,7 @@ import { designChat } from "@/lib/ai/design-agent";
 import { briefEnhancementSchema } from "@/lib/ai/brief-enhancer";
 import { assetSlotSchema, layoutSpecSchema, textBlockSchema } from "@/lib/print/layout-spec";
 import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
 
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
       ...response,
     });
   } catch (error) {
-    console.error("Design chat failed:", error);
+    console.error("Design chat failed", { error: describeServerError(error) });
     return NextResponse.json(
       {
         error: "Design chat failed. Check AI provider configuration.",
