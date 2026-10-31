@@ -191,10 +191,15 @@ export async function openStripeCustomerPortal(formData: FormData) {
     redirectWithMessage(returnPath, "adminError", "Stripe is not configured.");
   }
 
+  const appUrl = getAppUrl();
+  if (!appUrl) {
+    redirectWithMessage(returnPath, "adminError", "The app origin is not configured.");
+  }
+
   const portalConfigurationId = process.env.STRIPE_PORTAL_CONFIGURATION_ID;
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
-    return_url: new URL(returnPath, getAppUrl()).toString(),
+    return_url: new URL(returnPath, appUrl).toString(),
     ...(portalConfigurationId ? { configuration: portalConfigurationId } : {})
   });
   redirect(session.url);
@@ -214,7 +219,11 @@ export async function sendOrderAccessLink(formData: FormData) {
     redirectWithMessage(returnPath, "adminError", "Only active paid orders can receive access links.");
   }
 
-  const accessUrl = `${getAppUrl()}/app?mode=advanced&checkout=success&session_id=${encodeURIComponent(order.stripe_session_id)}`;
+  const appUrl = getAppUrl();
+  if (!appUrl) {
+    redirectWithMessage(returnPath, "adminError", "The app origin is not configured.");
+  }
+  const accessUrl = `${appUrl}/app?mode=advanced&checkout=success&session_id=${encodeURIComponent(order.stripe_session_id)}`;
   const delivery = await sendTransactionalEmail(buildAccessLinkEmail(email, order, accessUrl));
   await recordAdminAuditEvent({
     supabase,

@@ -4,6 +4,7 @@ import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
 import { verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
 import { getAppUrl, getStripeClient } from "@/lib/billing/stripe";
 import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
 
@@ -50,6 +51,15 @@ export async function POST(request: Request) {
     );
   }
 
+  // The portal return URL is an absolute link the customer follows back from
+  // Stripe. It must come from the configured site origin, never the request
+  // Host / X-Forwarded-Host headers.
+  const appUrl = getAppUrl();
+  if (!appUrl) {
+    console.error("Trim Proof billing portal is unavailable: NEXT_PUBLIC_APP_URL or APP_URL is not a valid absolute origin");
+    return NextResponse.json({ error: "Subscription management is temporarily unavailable. Try again later." }, { status: 503 });
+  }
+
   const payload = await request.json().catch(() => ({}));
   const parsed = portalSchema.safeParse(payload);
   if (!parsed.success) {
@@ -68,7 +78,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "This subscription is missing a Stripe customer record." }, { status: 409 });
     }
 
-    const appUrl = getAppUrl();
     const portalConfigurationId = process.env.STRIPE_PORTAL_CONFIGURATION_ID;
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: paidSession.customerId,
@@ -81,7 +90,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Trim Proof billing portal session failed", {
-      error: error instanceof Error ? error.message : String(error)
+      error: describeServerError(error)
     });
     return NextResponse.json(
       {
