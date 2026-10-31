@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { LEGACY_SESSION_KEYS_UNTIL } from "@/lib/security/legacy-session-keys";
 
 export const ACCOUNT_SESSION_COOKIE = "trimproof_account";
 
@@ -29,22 +30,28 @@ function deriveSessionKey(baseSecret: string) {
 /**
  * Key used to sign new account-session tokens.
  *
- * Order: a dedicated ACCOUNT_SESSION_SECRET, the pre-existing dedicated
- * TRIMPROOF_AUTH_SESSION_SECRET (so current deployments need no new env var),
- * then a domain-separated key derived from NEXTAUTH_SECRET. NEXTAUTH_SECRET is
- * never used as a signing key directly. When none of these is configured the
- * caller fails closed: no signing and no verification.
+ * A dedicated ACCOUNT_SESSION_SECRET is used directly. Otherwise a
+ * domain-separated key is derived from the first configured shared secret:
+ * the pre-existing dedicated TRIMPROOF_AUTH_SESSION_SECRET (so current
+ * deployments need no new env var), then NEXTAUTH_SECRET, then the old
+ * TRIMPROOF_ADMIN_SESSION_SECRET fallback that earlier releases also accepted.
+ * Shared secrets are never used as signing keys directly. When none of these
+ * is configured the caller fails closed: no signing and no verification.
  */
 function getSigningKey(): string | Buffer | undefined {
-  const dedicated = firstValue(process.env.ACCOUNT_SESSION_SECRET, process.env.TRIMPROOF_AUTH_SESSION_SECRET);
+  const dedicated = firstValue(process.env.ACCOUNT_SESSION_SECRET);
   if (dedicated) {
     return dedicated;
   }
-  const nextAuthSecret = firstValue(process.env.NEXTAUTH_SECRET);
-  return nextAuthSecret ? deriveSessionKey(nextAuthSecret) : undefined;
+  const sharedSecret = firstValue(
+    process.env.TRIMPROOF_AUTH_SESSION_SECRET,
+    process.env.NEXTAUTH_SECRET,
+    process.env.TRIMPROOF_ADMIN_SESSION_SECRET
+  );
+  return sharedSecret ? deriveSessionKey(sharedSecret) : undefined;
 }
 
-function getVerificationKeys(): Array<string | Buffer> {
+function getVerificationKeys(now: number): Array<string | Buffer> {
   const signingKey = getSigningKey();
   if (!signingKey) {
     return [];
@@ -52,10 +59,14 @@ function getVerificationKeys(): Array<string | Buffer> {
 
   const keys: Array<string | Buffer> = [signingKey];
   // Tokens issued before the domain-separated key shipped were signed with the
-  // raw secrets below. Accept them for verification only; each token carries
-  // its own expiresAt (at most 7 days after it was issued), so every legacy
-  // token stops verifying on its natural expiry. New tokens are never signed
-  // with a legacy key.
+  // raw secrets below. Accept them for verification only, and only before the
+  // hard sunset: every legacy token was issued before this release, so its
+  // own expiry (at most 7 days) falls inside that window. After the cutoff the
+  // raw keys are not considered at all. New tokens are never signed with a
+  // legacy key.
+  if (now >= LEGACY_SESSION_KEYS_UNTIL) {
+    return keys;
+  }
   for (const legacySecret of [
     firstValue(process.env.TRIMPROOF_AUTH_SESSION_SECRET),
     firstValue(process.env.TRIMPROOF_ADMIN_SESSION_SECRET),
@@ -118,7 +129,7 @@ export function verifyAccountSessionValue(value: string | undefined, now = Date.
   if (!Number.isFinite(issuedAt) || issuedAt > now + 30_000 || !Number.isFinite(expiresAt) || expiresAt <= now || expiresAt <= issuedAt) {
     return undefined;
   }
-  const verificationKeys = getVerificationKeys();
+  const verificationKeys = getVerificationKeys(now);
   if (verificationKeys.length === 0) {
     return undefined;
   }

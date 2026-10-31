@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAdminPasswordHash, createAdminSessionValue, isAdminAuthConfigured, validateAdminCredentials, verifyAdminSessionValue } from "@/lib/admin/auth";
+import { LEGACY_SESSION_KEYS_UNTIL } from "@/lib/security/legacy-session-keys";
 
 const derivedKeyLabel = "press-forge:admin-session:v1";
 
@@ -28,6 +29,7 @@ function deriveKey(secret: string) {
 
 describe("admin auth", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllEnvs();
   });
 
@@ -156,5 +158,35 @@ describe("admin auth", () => {
     expect(isAdminAuthConfigured()).toBe(false);
     expect(() => createAdminSessionValue(now)).toThrow("Admin session secret is not configured.");
     expect(verifyAdminSessionValue(legacyAdminToken("orphaned-secret", "owner@trimproof.com", passwordHash, now), now + 1000)).toBe(false);
+  });
+
+  it("stops verifying legacy raw-key sessions at the hard cutoff", () => {
+    clearAdminSessionSecrets();
+    vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "owner@trimproof.com");
+    const passwordHash = createAdminPasswordHash("a-strong-admin-password", Buffer.alloc(16, 8));
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", passwordHash);
+    vi.stubEnv("TRIMPROOF_ADMIN_SESSION_SECRET", "new-admin-session-secret");
+    vi.stubEnv("NEXTAUTH_SECRET", "shared-nextauth-secret");
+    const issuedAt = LEGACY_SESSION_KEYS_UNTIL - 60 * 60 * 1000;
+    const expiresAt = LEGACY_SESSION_KEYS_UNTIL + 60 * 60 * 1000;
+    // Signed with a legacy raw secret, and still within its own signed expiry
+    // at the cutoff, so only the cutoff can reject it.
+    const legacySession = legacyAdminToken("shared-nextauth-secret", "owner@trimproof.com", passwordHash, issuedAt, expiresAt);
+
+    vi.useFakeTimers();
+
+    vi.setSystemTime(LEGACY_SESSION_KEYS_UNTIL - 1000);
+    expect(verifyAdminSessionValue(legacySession)).toBe(true);
+
+    vi.setSystemTime(LEGACY_SESSION_KEYS_UNTIL);
+    expect(verifyAdminSessionValue(legacySession)).toBe(false);
+
+    vi.setSystemTime(LEGACY_SESSION_KEYS_UNTIL + 1000);
+    expect(verifyAdminSessionValue(legacySession)).toBe(false);
+
+    // Sessions signed with the current key keep verifying after the cutoff.
+    const currentSession = createAdminSessionValue();
+    expect(verifyAdminSessionValue(currentSession)).toBe(true);
+    expect(currentSession.split(".").at(-1)).not.toBe(hmac("shared-nextauth-secret", currentSession.split(".").slice(0, 4).join(".")));
   });
 });

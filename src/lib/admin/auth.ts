@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { LEGACY_SESSION_KEYS_UNTIL } from "@/lib/security/legacy-session-keys";
 
 export const ADMIN_SESSION_COOKIE = "trimproof_admin";
 
@@ -63,7 +64,7 @@ function getAdminSessionSigningKey(): string | Buffer | undefined {
   return nextAuthSecret ? createHmac("sha256", nextAuthSecret).update(derivedKeyLabel).digest() : undefined;
 }
 
-function getAdminSessionVerificationKeys(): Array<string | Buffer> {
+function getAdminSessionVerificationKeys(now: number): Array<string | Buffer> {
   const signingKey = getAdminSessionSigningKey();
   if (!signingKey) {
     return [];
@@ -72,9 +73,13 @@ function getAdminSessionVerificationKeys(): Array<string | Buffer> {
   const keys: Array<string | Buffer> = [signingKey];
   // Tokens issued before the derived key shipped were signed (and their
   // credential fingerprint computed) with the raw secrets below. Accept them
-  // for verification only; the token's expiresAt (at most 8 hours after issue)
-  // bounds how long that can matter. New tokens are never signed with a legacy
+  // for verification only, and only before the shared hard sunset (admin
+  // sessions live at most 8 hours, well inside it). After the cutoff the raw
+  // keys are not considered at all. New tokens are never signed with a legacy
   // key.
+  if (now >= LEGACY_SESSION_KEYS_UNTIL) {
+    return keys;
+  }
   for (const legacySecret of [
     firstValue(process.env.TRIMPROOF_ADMIN_SESSION_SECRET),
     firstValue(process.env.ADMIN_DASHBOARD_SESSION_SECRET),
@@ -179,7 +184,7 @@ export function verifyAdminSessionValue(value: string | undefined, now = Date.no
   if (!expectedEmail || !passwordHash || emailSegment !== encodeEmailSegment(expectedEmail)) {
     return false;
   }
-  const verificationKeys = getAdminSessionVerificationKeys();
+  const verificationKeys = getAdminSessionVerificationKeys(now);
   if (verificationKeys.length === 0) {
     return false;
   }

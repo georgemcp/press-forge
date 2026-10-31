@@ -5,6 +5,7 @@ import {
   isAccountAuthConfigured,
   verifyAccountSessionValue
 } from "@/lib/auth/account-session";
+import { LEGACY_SESSION_KEYS_UNTIL } from "@/lib/security/legacy-session-keys";
 
 const userId = "6df3f657-766d-4f15-8af8-a3a8ccda0b04";
 const email = "owner@example.com";
@@ -42,6 +43,7 @@ function deriveKey(secret: string) {
 
 describe("account session cookies", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllEnvs();
   });
 
@@ -122,7 +124,7 @@ describe("account session cookies", () => {
     expect(isAccountAuthConfigured()).toBe(false);
   });
 
-  it("treats an existing dedicated TRIMPROOF_AUTH_SESSION_SECRET as the signing key", () => {
+  it("derives from an existing TRIMPROOF_AUTH_SESSION_SECRET and still verifies raw-key cookies before the cutoff", () => {
     clearSessionSecrets();
     vi.stubEnv("TRIMPROOF_AUTH_SESSION_SECRET", "existing-dedicated-secret");
     vi.stubEnv("NEXTAUTH_SECRET", "shared-nextauth-secret");
@@ -131,8 +133,71 @@ describe("account session cookies", () => {
     const now = new Date("2026-10-30T12:00:00Z").getTime();
 
     const cookie = createAccountSessionValue({ userId, email }, now);
+    const rawSecretKey = deriveKey("existing-dedicated-secret");
 
-    expect(signatureOf(cookie)).toBe(hmac("existing-dedicated-secret", payloadOf(cookie)));
+    expect(signatureOf(cookie)).toBe(hmac(rawSecretKey, payloadOf(cookie)));
+    expect(signatureOf(cookie)).not.toBe(hmac("existing-dedicated-secret", payloadOf(cookie)));
     expect(isAccountAuthConfigured()).toBe(true);
+
+    // Releases before this change signed with the raw secret; those cookies
+    // must keep verifying until the hard cutoff.
+    const oldCookie = legacyToken("existing-dedicated-secret", now);
+    expect(verifyAccountSessionValue(oldCookie, now + 1000)).toMatchObject({ userId, email });
+  });
+
+  it("falls back to a derived key from TRIMPROOF_ADMIN_SESSION_SECRET", () => {
+    clearSessionSecrets();
+    vi.stubEnv("TRIMPROOF_ADMIN_SESSION_SECRET", "old-shared-admin-secret");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    const now = new Date("2026-10-30T12:00:00Z").getTime();
+
+    const cookie = createAccountSessionValue({ userId, email }, now);
+
+    expect(signatureOf(cookie)).toBe(hmac(deriveKey("old-shared-admin-secret"), payloadOf(cookie)));
+    expect(signatureOf(cookie)).not.toBe(hmac("old-shared-admin-secret", payloadOf(cookie)));
+    expect(verifyAccountSessionValue(cookie, now + 1000)).toMatchObject({ userId, email });
+    expect(isAccountAuthConfigured()).toBe(true);
+  });
+
+  it("prefers TRIMPROOF_AUTH_SESSION_SECRET over the other derived fallbacks", () => {
+    clearSessionSecrets();
+    vi.stubEnv("TRIMPROOF_AUTH_SESSION_SECRET", "auth-session-secret");
+    vi.stubEnv("NEXTAUTH_SECRET", "shared-nextauth-secret");
+    vi.stubEnv("TRIMPROOF_ADMIN_SESSION_SECRET", "shared-admin-secret");
+    const now = new Date("2026-10-30T12:00:00Z").getTime();
+
+    const cookie = createAccountSessionValue({ userId, email }, now);
+
+    expect(signatureOf(cookie)).toBe(hmac(deriveKey("auth-session-secret"), payloadOf(cookie)));
+    expect(signatureOf(cookie)).not.toBe(hmac(deriveKey("shared-nextauth-secret"), payloadOf(cookie)));
+    expect(signatureOf(cookie)).not.toBe(hmac(deriveKey("shared-admin-secret"), payloadOf(cookie)));
+  });
+
+  it("stops verifying legacy raw-key cookies at the hard cutoff", () => {
+    clearSessionSecrets();
+    vi.stubEnv("ACCOUNT_SESSION_SECRET", "new-account-session-secret");
+    vi.stubEnv("NEXTAUTH_SECRET", "shared-nextauth-secret");
+    const issuedAt = LEGACY_SESSION_KEYS_UNTIL - 60 * 60 * 1000;
+    const expiresAt = LEGACY_SESSION_KEYS_UNTIL + 60 * 60 * 1000;
+    // Signed with a legacy raw secret, and still within its own signed expiry
+    // at the cutoff, so only the cutoff can reject it.
+    const legacyCookie = legacyToken("shared-nextauth-secret", issuedAt, expiresAt);
+
+    vi.useFakeTimers();
+
+    vi.setSystemTime(LEGACY_SESSION_KEYS_UNTIL - 1000);
+    expect(verifyAccountSessionValue(legacyCookie)).toMatchObject({ userId, email });
+
+    vi.setSystemTime(LEGACY_SESSION_KEYS_UNTIL);
+    expect(verifyAccountSessionValue(legacyCookie)).toBeUndefined();
+
+    vi.setSystemTime(LEGACY_SESSION_KEYS_UNTIL + 1000);
+    expect(verifyAccountSessionValue(legacyCookie)).toBeUndefined();
+
+    // Tokens signed with the current key keep verifying after the cutoff.
+    const currentCookie = createAccountSessionValue({ userId, email });
+    expect(signatureOf(currentCookie)).toBe(hmac("new-account-session-secret", payloadOf(currentCookie)));
+    expect(verifyAccountSessionValue(currentCookie)).toMatchObject({ userId, email });
   });
 });
