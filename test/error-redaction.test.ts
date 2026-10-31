@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST as enhanceBriefRoute } from "@/app/api/brief/enhance/route";
 import { POST as designChatRoute } from "@/app/api/design/chat/route";
 import { POST as designGenerateRoute } from "@/app/api/design/generate/route";
+import { layoutSpecSchema } from "@/lib/print/layout-spec";
 import { clearRateLimitState } from "@/lib/security/request";
 
 const mocks = vi.hoisted(() => ({
@@ -133,5 +134,57 @@ describe("API error redaction", () => {
       error: "Design generation failed. Check AI provider configuration."
     });
     expect(body).not.toContain("provider stack trace detail");
+  });
+
+  it("does not echo rejected input values from an invalid generated layout", async () => {
+    const userValue = "hunter2-from-the-brief";
+    const schema = layoutSpecSchema as unknown as {
+      safeParse: (...args: unknown[]) => unknown;
+    };
+    // Zod can copy the rejected input onto each issue (`input`/`received`), and
+    // its messages can quote the value. Simulate that shape directly so the
+    // route's sanitizing is exercised even if the installed zod omits it.
+    schema.safeParse = () => ({
+      success: false,
+      error: {
+        issues: [
+          {
+            code: "invalid_value",
+            path: ["textBlocks", 0, "role"],
+            message: `Invalid option: received '${userValue}'`,
+            expected: "brand",
+            received: userValue,
+            input: { enhancedBrief: { brandName: userValue } }
+          }
+        ]
+      }
+    });
+
+    try {
+      mocks.generateDesignSpec.mockResolvedValue({
+        layoutSpec: { textBlocks: [] },
+        designRationale: "unused",
+        assetPrompts: []
+      });
+
+      const response = await designGenerateRoute(jsonRequest("/api/design/generate", {
+        enhancedBrief,
+        productType: "business_card"
+      }));
+      const body = await response.text();
+
+      expect(response.status).toBe(422);
+      expect(body).not.toContain(userValue);
+      expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toContain(userValue);
+      expect(JSON.parse(body).issues).toEqual([
+        {
+          path: ["textBlocks", 0, "role"],
+          code: "invalid_value",
+          message: "Invalid option: received '[redacted]'"
+        }
+      ]);
+    } finally {
+      delete (schema as { safeParse?: (...args: unknown[]) => unknown }).safeParse;
+    }
   });
 });

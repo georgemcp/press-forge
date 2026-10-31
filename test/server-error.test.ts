@@ -26,6 +26,65 @@ describe("describeServerError", () => {
     expect(detail).toContain("[redacted-email]");
   });
 
+  // `\b` does not match between `_` and a word character, so these key forms
+  // used to pass through untouched.
+  const credentialKeyCases: Array<[string, string, string]> = [
+    ["a client_secret assignment", "client_secret=cs_abc123", "cs_abc123"],
+    ["an access_token colon form", "access_token: at_abc123", "at_abc123"],
+    ["a refresh_token assignment", "refresh_token=rt_abc123", "rt_abc123"],
+    ["an id_token assignment", "id_token=idt_abc123", "idt_abc123"],
+    ["an api_key assignment", "api_key=ak_abc123", "ak_abc123"],
+    ["an apikey assignment", "apikey=apk_abc123", "apk_abc123"],
+    ["a bare secret assignment", "secret=sec_abc123", "sec_abc123"],
+    ["a password assignment", "password=hunter2", "hunter2"],
+    ["a passwd assignment", "passwd=pass123", "pass123"],
+    ["an authorization assignment", "authorization=auth_abc123", "auth_abc123"],
+    ["a camelCase clientSecret", "clientSecret=cs_camel123", "cs_camel123"],
+    ["a camelCase accessToken", "accessToken: at_camel123", "at_camel123"],
+    ["a kebab-case refresh-token", "refresh-token=rt_kebab123", "rt_kebab123"],
+    ["a camelCase idToken", "idToken=idt_camel123", "idt_camel123"],
+    ["a camelCase apiKey", "apiKey=ak_camel123", "ak_camel123"],
+    ["a kebab-case api-key", "api-key=ak_kebab123", "ak_kebab123"],
+    ["a kebab-case client-secret", "client-secret=cs_kebab123", "cs_kebab123"],
+    ["an uppercase env-style key", "OPENAI_API_KEY=openai_value_123", "openai_value_123"],
+    ["a header-style api key", "x-api-key: header_value_123", "header_value_123"],
+    [
+      "an access_token URL query parameter",
+      "https://app.example/cb?access_token=url_token_123&state=xyz",
+      "url_token_123"
+    ],
+    [
+      "a client_secret URL query parameter",
+      "https://app.example/cb?client_secret=url_secret_123&state=xyz",
+      "url_secret_123"
+    ],
+    ["a double-quoted JSON value", '{"password":"json_hunter2"}', "json_hunter2"],
+    ["a single-quoted JSON value", "{'password': 'single_hunter2'}", "single_hunter2"],
+    ["a spaced JSON value", '{"api_key": "spaced_key_123"}', "spaced_key_123"],
+    ["a camelCase JSON key", '{"clientSecret":"camel_secret_123"}', "camel_secret_123"],
+    ["a JSON authorization value", '{"authorization":"Basic dXNlcjpwYXNz"}', "dXNlcjpwYXNz"],
+    ["a double-quoted assignment value", 'password="double_quoted_123"', "double_quoted_123"],
+    ["a single-quoted assignment value", "password='single_quoted_123'", "single_quoted_123"]
+  ];
+
+  it.each(credentialKeyCases)("redacts %s", (_name, detail, secret) => {
+    const redacted = describeServerError(new Error(detail));
+
+    expect(redacted).not.toContain(secret);
+    expect(redacted).toContain("[redacted");
+  });
+
+  it.each([
+    "the token was not found in the response",
+    "the secret to good design is contrast",
+    "passwordless sign-in is supported",
+    "the secretary scheduled a meeting",
+    "tokenizer settings are invalid"
+  ])("does not mangle credential-free prose: %s", (detail) => {
+    expect(() => describeServerError(new Error(detail))).not.toThrow();
+    expect(describeServerError(new Error(detail))).toBe(detail);
+  });
+
   it("does not throw or leak a non-string message", () => {
     const value = { message: 42, toString: () => "custom string form" };
 
