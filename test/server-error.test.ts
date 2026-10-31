@@ -106,6 +106,63 @@ describe("describeServerError", () => {
     expect(redacted).toContain("[redacted");
   });
 
+  // A quoted value can contain a backslash-escaped quote. The quoted
+  // alternatives must consume the escape pair instead of treating the escaped
+  // quote as the value terminator; otherwise the tail of the value reaches the
+  // log (`password="ab\"cd"` used to become `password=[redacted]cd"`).
+  it.each([
+    ["a double-quoted assignment", 'password="ab\\"cd"', 'ab\\"cd'],
+    ["a single-quoted assignment", "api_key='ab\\'cd'", "ab\\'cd"]
+  ])("redacts the whole escaped-quote %s", (_name, detail, secret) => {
+    const redacted = describeServerError(new Error(detail));
+
+    expect(redacted).not.toContain(secret);
+    expect(redacted).not.toContain("cd");
+    expect(redacted).toContain("[redacted");
+  });
+
+  it("keeps text after a terminated escaped-quote value", () => {
+    const redacted = describeServerError(new Error('password="ab\\"cd" next=ok'));
+
+    expect(redacted).not.toContain("cd");
+    expect(redacted).toContain("next=ok");
+  });
+
+  // An error can embed a stringified body, which puts a backslash before every
+  // quote: {\"password\":\"x\"}. The key's closing quote is escaped too, so the
+  // plain JSON rule cannot match and the value used to pass through untouched.
+  it.each([
+    ["a double-quoted value", '{\\"password\\":\\"double_encoded_1\\"}', "double_encoded_1"],
+    ["a single-quoted value", "{\\'password\\':\\'single_encoded_1\\'}", "single_encoded_1"],
+    ["a compound key", '{\\"api_key\\":\\"compound_encoded_1\\"}', "compound_encoded_1"],
+    ["a spaced key and value", '{\\"password\\" : \\"spaced_encoded_1\\"}', "spaced_encoded_1"],
+    ["a numeric value", '\\"password\\":987654', "987654"],
+    ["a numeric value inside an object", '{\\"api_key\\": 123456}', "123456"],
+    ["an unterminated value", '\\"password\\":\\"unterminated_encoded_1', "unterminated_encoded_1"]
+  ])("redacts a double-encoded %s", (_name, detail, secret) => {
+    const redacted = describeServerError(new Error(detail));
+
+    expect(redacted).not.toContain(secret);
+    expect(redacted).toContain("[redacted");
+  });
+
+  it("keeps text after a double-encoded credential value", () => {
+    const redacted = describeServerError(
+      new Error('{\\"password\\":\\"encoded_1\\"} and \\"state\\":\\"ok\\"')
+    );
+
+    expect(redacted).not.toContain("encoded_1");
+    expect(redacted).toContain('\\"state\\":\\"ok\\"');
+  });
+
+  it.each([
+    '{"username":"alice","note":"hello"}',
+    '{\\"username\\":\\"alice\\"}',
+    'launch path "C:\\\\temp" is missing'
+  ])("does not mangle credential-free JSON or escaped prose: %s", (detail) => {
+    expect(describeServerError(new Error(detail))).toBe(detail);
+  });
+
   // An opening quote with no closing quote has no whole value for the quoted
   // alternatives to consume, so its visible prefix used to reach the log.
   it.each([
@@ -173,6 +230,22 @@ describe("describeServerError", () => {
 
     expect(elapsed).toBeLessThan(200);
     expect(detail).not.toContain("secret");
+    expect(detail).toContain("[redacted");
+  });
+
+  it("redacts a 100 KB adversarial mix of escaped quotes and double-encoding in under 200 ms", () => {
+    // Alternate an escaped-quote assignment with a double-encoded JSON value,
+    // the two shapes that used to leak or backtrack. The 4 KB cap bounds every
+    // rule; this guards the cap and the escape-aware bodies together.
+    const chunk = 'password="ab\\"cd" {\\"api_key\\":\\"MIXED_SECRET_1\\"} ';
+    const huge = chunk.repeat(Math.ceil(100_000 / chunk.length));
+    const started = performance.now();
+    const detail = describeServerError(new Error(huge));
+    const elapsed = performance.now() - started;
+
+    expect(elapsed).toBeLessThan(200);
+    expect(detail).not.toContain("MIXED_SECRET_1");
+    expect(detail).not.toContain("cd");
     expect(detail).toContain("[redacted");
   });
 

@@ -55,15 +55,36 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
     ),
     replacement: "$1$2$1$3$4[redacted]$4"
   },
+  // Double-encoded JSON: an error that embeds a stringified body puts a
+  // backslash before the key's closing quote and the value's quotes, e.g.
+  // {\"password\":\"x\"}. The rule above requires bare delimiters, so it
+  // cannot see the escaped ones. Match the escaped key close and value quotes
+  // explicitly. The value body stops at the first escaped closing quote, so a
+  // value cannot swallow text that follows the embedded JSON object.
+  {
+    pattern: new RegExp(
+      String.raw`(["'])(${compoundCredentialKeySource})\\\1(\s*:\s*)\\(["'])((?:(?!\\\4)[\s\S])*)\\\4`,
+      "gi"
+    ),
+    replacement: "$1$2\\$1$3\\$4[redacted]\\$4"
+  },
   // key=value, key: value, URL query (?key=...), env style (MY_KEY=...) and
   // quoted or bare values, e.g. password="hunter2", password = "a b c",
   // "password":123456. The quoted alternatives come first so the whole quoted
   // value is consumed; the unquoted class cannot cross a quote and would
-  // otherwise leave the value untouched. The optional quote before the
-  // separator is the closing quote of a JSON-style key.
+  // otherwise leave the value untouched.
+  //
+  // The plain quoted alternatives are escape-aware, so a backslash-escaped
+  // quote inside a value does not end it early: without that,
+  // password="ab\"cd" was redacted only through the escaped quote and `cd"`
+  // reached the log. The escaped-quote alternatives cover values that are
+  // themselves double-encoded (\"password\":\"x\") and stop at the escaped
+  // delimiter rather than swallowing trailing log text. The optional backslash
+  // before the key's closing quote lets the same rule handle the escaped key
+  // close, including numeric values that the quoted JSON rules cannot consume.
   {
     pattern: new RegExp(
-      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(["']?)(\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s"'&,;\\]+)`,
+      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(\\?["']?)(\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\\"(?:(?!\\")[\s\S])*\\"|\\'(?:(?!\\')[\s\S])*\\'|[^\s"'&,;\\]+)`,
       "gi"
     ),
     replacement: "$1$2$3[redacted]"
@@ -72,11 +93,13 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
   // an upstream message that never closed its quote) has no closing quote for
   // the whole-value alternatives above to consume, so its visible prefix used
   // to survive. Any opening quote still standing after those rules ran has no
-  // matching closing quote: redact from it to the end of the input. The body is
+  // matching closing quote: redact from it to the end of the input. The
+  // optional backslash on the key close and value quote also catches
+  // double-encoded values whose escaped closing quote is missing. The body is
   // one greedy class, so the scan is linear and cannot backtrack catastrophically.
   {
     pattern: new RegExp(
-      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(["']?)(\s*[:=]\s*)(["'])[\s\S]*$`,
+      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(\\?["']?)(\s*[:=]\s*)(\\?["'])[\s\S]*$`,
       "gi"
     ),
     replacement: "$1$2$3$4[redacted]"
