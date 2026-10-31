@@ -64,25 +64,26 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
   // The value is NOT terminated by finding its closing \": a value that
   // itself contains an escaped quote carries \\\" at this encoding level, and
   // stopping at the first \" exposed the rest of the value — for
-  // {\"password\":\"ab\\\"cd\"} the tail `cd` reached the log. Instead the
-  // value runs to the next object close (`}`) or the end of the bounded
-  // input, redacting everything before it. A `}` inside the value is
-  // indistinguishable from the object close without the fragile quote
-  // matching this rule avoids, but every byte up to the first `}` is
-  // redacted either way. A comma or a bracket is deliberately not a
-  // boundary: both occur inside values, and `]` also occurs in the markers
-  // earlier rules insert, so stopping on one could expose the value's tail.
-  // Over-redacting text after the credential (including a following key) is
-  // acceptable; leaking a value byte is not.
+  // {\"password\":\"ab\\\"cd\"} the tail `cd` reached the log. Bare structural
+  // characters are not boundaries either: {\"password\":\"a}bcd\"} used to be
+  // cut at the `}` and leak `bcd`. The value ends at the next escaped closing
+  // quote that is followed by `,`, `}`, `]` or the end of the bounded input;
+  // if no such quote exists, everything to the end is redacted. An escaped
+  // quote followed by ordinary content (`ab\\\"cd`) is therefore skipped, and
+  // only a quote whose next structural byte ends the value is treated as the
+  // close. The body is a one-character greedy class, so the scan is linear
+  // and cannot backtrack catastrophically. Over-redacting text after the
+  // credential (including a following key) is acceptable; leaking a value
+  // byte is not.
   //
   // The escapes accept one to three backslashes so the triple-encoded form
   // (\\\"password\\\":\\\"x\\\") is covered as well.
   {
     pattern: new RegExp(
-      String.raw`(["'])(${compoundCredentialKeySource})(\\{1,3})\1(\s*:\s*)(\\{1,3})(["'])([^}]*)`,
+      String.raw`(["'])(${compoundCredentialKeySource})(\\{1,3})\1(\s*:\s*)(\\{1,3})(["'])((?:[^\\]|\\(?!\6(?=\s*[,}\]]|$)))*)`,
       "gi"
     ),
-    replacement: "$1$2$3$1$4$5$6[redacted]$5$6"
+    replacement: "$1$2$3$1$4$5$6[redacted]"
   },
   // key=value, key: value, URL query (?key=...), env style (MY_KEY=...) and
   // quoted or bare values, e.g. password="hunter2", password = "a b c",
@@ -97,17 +98,16 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
   // themselves double-encoded (\"password\":\"x\"). They must not stop at the
   // first \" either: a double-encoded value that contains an escaped quote
   // carries \\\" inside it, and stopping there exposed the tail. Like the
-  // double-encoded rule above, they redact from the opening escaped quote to
-  // the next object close or the end of the bounded input instead of trying
-  // to match the value's closing quote; comma and bracket are not boundaries,
-  // because both occur inside values (and `]` in the markers earlier rules
-  // insert). Over-redaction is preferred to leaking a value byte. The key
-  // close accepts up to three backslashes so the same alternatives handle
-  // double- and triple-encoded keys, including numeric values that the
-  // quoted JSON rules cannot consume.
+  // double-encoded rule above, the value ends at the next escaped closing
+  // quote followed by `,`, `}`, `]` or the end of the bounded input, not at
+  // a bare object close (a `}` inside a double-encoded value used to cut the
+  // match and leak the tail). Over-redaction is preferred to leaking a value
+  // byte. The key close accepts up to three backslashes so the same
+  // alternatives handle double- and triple-encoded keys, including numeric
+  // values that the quoted JSON rules cannot consume.
   {
     pattern: new RegExp(
-      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(\\{0,3}["']?)(\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\\{1,3}"[^}]*|\\{1,3}'[^}]*|[^\s"'&,;\\]+)`,
+      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(\\{0,3}["']?)(\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\\{1,3}"(?:[^\\]|\\(?!"(?=\s*[,}\]]|$)))*|\\{1,3}'(?:[^\\]|\\(?!'(?=\s*[,}\]]|$)))*|[^\s"'&,;\\]+)`,
       "gi"
     ),
     replacement: "$1$2$3[redacted]"

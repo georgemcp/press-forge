@@ -169,6 +169,12 @@ describe("describeServerError", () => {
     // Comma and bracket occur inside values, so they are not boundaries.
     ["a comma", String.raw`{\"api_key\":\"UU,VV\"}`, ["UU", "VV"]],
     ["a bracket", String.raw`{\"api_key\":\"UU]VV\"}`, ["UU", "VV"]],
+    // A bare `}` is not the value close either: stopping at it used to cut
+    // the match and leave the rest of the value (`bcd`) in the log.
+    ["a brace", String.raw`{\"password\":\"a}bcd\"}`, ["a}bcd", "bcd"]],
+    // Mixed structural characters inside the value must stay redacted; only
+    // the escaped closing quote followed by a delimiter ends the match.
+    ["a bracket and comma", String.raw`{\"token\":\"x]y,z\"}`, ["x", "y", "z"]],
     // The DD's out-of-scope triple-encoded form falls out of the same rule.
     ["a triple-encoded body", String.raw`\\\"password\\\":\\\"secret\\\"}`, ["secret"]]
   ])("redacts the whole double-encoded value with %s", (_name, detail, secrets) => {
@@ -198,6 +204,8 @@ describe("describeServerError", () => {
   it.each([
     ["a double-quoted assignment", String.raw`password=\"ab\\\"cd\"`, ["ab", "cd"]],
     ["a single-quoted assignment", String.raw`api_key=\'UU\\\'VV\'`, ["UU", "VV"]],
+    // Structural characters inside the value are not a boundary here either.
+    ["a brace inside the value", String.raw`password=\"a}bcd\"`, ["bcd"]],
     ["a triple-encoded assignment", String.raw`token=\\\"XX\\\\\\\"YY\\\"`, ["XX", "YY"]]
   ])("redacts the whole escaped-quote %s without JSON key quotes", (_name, detail, secrets) => {
     const redacted = describeServerError(new Error(detail));
@@ -309,6 +317,22 @@ describe("describeServerError", () => {
 
     expect(elapsed).toBeLessThan(200);
     expect(detail).not.toContain("cd");
+    expect(detail).toContain("[redacted");
+  });
+
+  it("redacts a 100 KB double-encoded mix full of structural characters in under 200 ms", () => {
+    // Values packed with `}`, `]` and `,` must not be cut at those bytes; only
+    // an escaped closing quote followed by a structural delimiter ends a
+    // value. The 4 KB cap and the one-character body keep the scan linear.
+    const chunk = String.raw`{\"password\":\"a}b]c,d\"} `;
+    const huge = chunk.repeat(Math.ceil(100_000 / chunk.length));
+    const started = performance.now();
+    const detail = describeServerError(new Error(huge));
+    const elapsed = performance.now() - started;
+
+    expect(elapsed).toBeLessThan(200);
+    expect(detail).not.toContain("b]c");
+    expect(detail).not.toContain("c,d");
     expect(detail).toContain("[redacted");
   });
 
