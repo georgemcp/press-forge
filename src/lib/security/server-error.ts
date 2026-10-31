@@ -59,14 +59,30 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
   // backslash before the key's closing quote and the value's quotes, e.g.
   // {\"password\":\"x\"}. The rule above requires bare delimiters, so it
   // cannot see the escaped ones. Match the escaped key close and value quotes
-  // explicitly. The value body stops at the first escaped closing quote, so a
-  // value cannot swallow text that follows the embedded JSON object.
+  // explicitly.
+  //
+  // The value is NOT terminated by finding its closing \": a value that
+  // itself contains an escaped quote carries \\\" at this encoding level, and
+  // stopping at the first \" exposed the rest of the value — for
+  // {\"password\":\"ab\\\"cd\"} the tail `cd` reached the log. Instead the
+  // value runs to the next object close (`}`) or the end of the bounded
+  // input, redacting everything before it. A `}` inside the value is
+  // indistinguishable from the object close without the fragile quote
+  // matching this rule avoids, but every byte up to the first `}` is
+  // redacted either way. A comma or a bracket is deliberately not a
+  // boundary: both occur inside values, and `]` also occurs in the markers
+  // earlier rules insert, so stopping on one could expose the value's tail.
+  // Over-redacting text after the credential (including a following key) is
+  // acceptable; leaking a value byte is not.
+  //
+  // The escapes accept one to three backslashes so the triple-encoded form
+  // (\\\"password\\\":\\\"x\\\") is covered as well.
   {
     pattern: new RegExp(
-      String.raw`(["'])(${compoundCredentialKeySource})\\\1(\s*:\s*)\\(["'])((?:(?!\\\4)[\s\S])*)\\\4`,
+      String.raw`(["'])(${compoundCredentialKeySource})(\\{1,3})\1(\s*:\s*)(\\{1,3})(["'])([^}]*)`,
       "gi"
     ),
-    replacement: "$1$2\\$1$3\\$4[redacted]\\$4"
+    replacement: "$1$2$3$1$4$5$6[redacted]$5$6"
   },
   // key=value, key: value, URL query (?key=...), env style (MY_KEY=...) and
   // quoted or bare values, e.g. password="hunter2", password = "a b c",
@@ -78,13 +94,20 @@ const redactionRules: Array<{ pattern: RegExp; replacement: string }> = [
   // quote inside a value does not end it early: without that,
   // password="ab\"cd" was redacted only through the escaped quote and `cd"`
   // reached the log. The escaped-quote alternatives cover values that are
-  // themselves double-encoded (\"password\":\"x\") and stop at the escaped
-  // delimiter rather than swallowing trailing log text. The optional backslash
-  // before the key's closing quote lets the same rule handle the escaped key
-  // close, including numeric values that the quoted JSON rules cannot consume.
+  // themselves double-encoded (\"password\":\"x\"). They must not stop at the
+  // first \" either: a double-encoded value that contains an escaped quote
+  // carries \\\" inside it, and stopping there exposed the tail. Like the
+  // double-encoded rule above, they redact from the opening escaped quote to
+  // the next object close or the end of the bounded input instead of trying
+  // to match the value's closing quote; comma and bracket are not boundaries,
+  // because both occur inside values (and `]` in the markers earlier rules
+  // insert). Over-redaction is preferred to leaking a value byte. The key
+  // close accepts up to three backslashes so the same alternatives handle
+  // double- and triple-encoded keys, including numeric values that the
+  // quoted JSON rules cannot consume.
   {
     pattern: new RegExp(
-      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(\\?["']?)(\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\\"(?:(?!\\")[\s\S])*\\"|\\'(?:(?!\\')[\s\S])*\\'|[^\s"'&,;\\]+)`,
+      String.raw`(?<![A-Za-z0-9_-])(${compoundCredentialKeySource})(\\{0,3}["']?)(\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\\{1,3}"[^}]*|\\{1,3}'[^}]*|[^\s"'&,;\\]+)`,
       "gi"
     ),
     replacement: "$1$2$3[redacted]"

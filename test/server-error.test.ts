@@ -155,6 +155,70 @@ describe("describeServerError", () => {
     expect(redacted).toContain('\\"state\\":\\"ok\\"');
   });
 
+  // A double-encoded value can itself contain an escaped quote: the value
+  // `ab"cd` gets a third backslash when the body is stringified twice. The
+  // value must not end at that inner \" or the tail leaks
+  // (`{\"password\":\"ab\\\"cd\"}` used to redact only `ab\\` and log `cd`).
+  // The value runs to the next `}` or the end of the bounded input instead;
+  // redacting past the credential is acceptable, leaking is not.
+  it.each([
+    ["an escaped quote", String.raw`{\"password\":\"ab\\\"cd\"}`, ["ab", "cd"]],
+    ["two escaped quotes", String.raw`{\"password\":\"UU\\\"VV\\\"WW\"}`, ["UU", "VV", "WW"]],
+    // The value's quote is escaped three times (seven backslashes).
+    ["a triple-escaped quote", String.raw`{\"token\":\"XX\\\\\\\"YY\"}`, ["XX", "YY"]],
+    // Comma and bracket occur inside values, so they are not boundaries.
+    ["a comma", String.raw`{\"api_key\":\"UU,VV\"}`, ["UU", "VV"]],
+    ["a bracket", String.raw`{\"api_key\":\"UU]VV\"}`, ["UU", "VV"]],
+    // The DD's out-of-scope triple-encoded form falls out of the same rule.
+    ["a triple-encoded body", String.raw`\\\"password\\\":\\\"secret\\\"}`, ["secret"]]
+  ])("redacts the whole double-encoded value with %s", (_name, detail, secrets) => {
+    const redacted = describeServerError(new Error(detail));
+
+    for (const secret of secrets) {
+      expect(redacted).not.toContain(secret);
+    }
+    expect(redacted).toContain("[redacted");
+  });
+
+  it("does not stop a double-encoded value at a marker an earlier rule inserted", () => {
+    // The bearer rule inserts `[redacted]` inside the value before the
+    // double-encoded rule runs. That marker's `]` must not be treated as the
+    // end of the value, or the tail after it would leak.
+    const redacted = describeServerError(
+      new Error(String.raw`{\"password\":\"Bearer token_value_1 hunter2\"}`)
+    );
+
+    expect(redacted).not.toContain("hunter2");
+    expect(redacted).toContain("[redacted");
+  });
+
+  // The key=value rule's escaped-quote alternatives have the same defect and
+  // must also redact to the next `}` or the end of the input. These forms have
+  // no JSON key quotes, so the double-encoded rule cannot match them.
+  it.each([
+    ["a double-quoted assignment", String.raw`password=\"ab\\\"cd\"`, ["ab", "cd"]],
+    ["a single-quoted assignment", String.raw`api_key=\'UU\\\'VV\'`, ["UU", "VV"]],
+    ["a triple-encoded assignment", String.raw`token=\\\"XX\\\\\\\"YY\\\"`, ["XX", "YY"]]
+  ])("redacts the whole escaped-quote %s without JSON key quotes", (_name, detail, secrets) => {
+    const redacted = describeServerError(new Error(detail));
+
+    for (const secret of secrets) {
+      expect(redacted).not.toContain(secret);
+    }
+    expect(redacted).toContain("[redacted");
+  });
+
+  it.each([
+    String.raw`{\"password\":\"tail_at_end`,
+    String.raw`\"token\":\"tail_at_end`,
+    String.raw`password=\"tail_at_end`
+  ])("redacts a double-encoded value at the end of the input: %s", (detail) => {
+    const redacted = describeServerError(new Error(detail));
+
+    expect(redacted).not.toContain("tail_at_end");
+    expect(redacted).toContain("[redacted");
+  });
+
   it.each([
     '{"username":"alice","note":"hello"}',
     '{\\"username\\":\\"alice\\"}',
@@ -230,6 +294,21 @@ describe("describeServerError", () => {
 
     expect(elapsed).toBeLessThan(200);
     expect(detail).not.toContain("secret");
+    expect(detail).toContain("[redacted");
+  });
+
+  it("redacts a 100 KB double-encoded escaped-quote mix in under 200 ms", () => {
+    // The value contains the inner escaped quote that used to end the match
+    // early. The 4 KB cap bounds the scan, and the replacement body is one
+    // greedy class, so this also guards against backtracking.
+    const chunk = String.raw`{\"password\":\"ab\\\"cd\"} `;
+    const huge = chunk.repeat(Math.ceil(100_000 / chunk.length));
+    const started = performance.now();
+    const detail = describeServerError(new Error(huge));
+    const elapsed = performance.now() - started;
+
+    expect(elapsed).toBeLessThan(200);
+    expect(detail).not.toContain("cd");
     expect(detail).toContain("[redacted");
   });
 
