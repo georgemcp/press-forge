@@ -10,6 +10,9 @@ export interface AccountSession {
 
 const sessionVersion = "v2";
 const sessionTtlSeconds = 60 * 60 * 24 * 7;
+// NEXTAUTH_SECRET is a shared secret. Derive a purpose-specific key from it so
+// an account-session signature can never be replayed as another token type.
+const derivedKeyLabel = "press-forge:account-session:v1";
 
 function firstValue(...values: Array<string | undefined>) {
   return values.find((value) => typeof value === "string" && value.trim().length > 0)?.trim();
@@ -19,16 +22,54 @@ function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
-function getAccountSessionSecret() {
-  return firstValue(process.env.TRIMPROOF_AUTH_SESSION_SECRET, process.env.TRIMPROOF_ADMIN_SESSION_SECRET, process.env.NEXTAUTH_SECRET);
+function deriveSessionKey(baseSecret: string) {
+  return createHmac("sha256", baseSecret).update(derivedKeyLabel).digest();
 }
 
-function sign(payload: string) {
-  const secret = getAccountSessionSecret();
-  if (!secret) {
-    return undefined;
+/**
+ * Key used to sign new account-session tokens.
+ *
+ * Order: a dedicated ACCOUNT_SESSION_SECRET, the pre-existing dedicated
+ * TRIMPROOF_AUTH_SESSION_SECRET (so current deployments need no new env var),
+ * then a domain-separated key derived from NEXTAUTH_SECRET. NEXTAUTH_SECRET is
+ * never used as a signing key directly. When none of these is configured the
+ * caller fails closed: no signing and no verification.
+ */
+function getSigningKey(): string | Buffer | undefined {
+  const dedicated = firstValue(process.env.ACCOUNT_SESSION_SECRET, process.env.TRIMPROOF_AUTH_SESSION_SECRET);
+  if (dedicated) {
+    return dedicated;
   }
-  return createHmac("sha256", secret).update(payload).digest("base64url");
+  const nextAuthSecret = firstValue(process.env.NEXTAUTH_SECRET);
+  return nextAuthSecret ? deriveSessionKey(nextAuthSecret) : undefined;
+}
+
+function getVerificationKeys(): Array<string | Buffer> {
+  const signingKey = getSigningKey();
+  if (!signingKey) {
+    return [];
+  }
+
+  const keys: Array<string | Buffer> = [signingKey];
+  // Tokens issued before the domain-separated key shipped were signed with the
+  // raw secrets below. Accept them for verification only; each token carries
+  // its own expiresAt (at most 7 days after it was issued), so every legacy
+  // token stops verifying on its natural expiry. New tokens are never signed
+  // with a legacy key.
+  for (const legacySecret of [
+    firstValue(process.env.TRIMPROOF_AUTH_SESSION_SECRET),
+    firstValue(process.env.TRIMPROOF_ADMIN_SESSION_SECRET),
+    firstValue(process.env.NEXTAUTH_SECRET)
+  ]) {
+    if (legacySecret && !keys.some((key) => typeof key === "string" && key === legacySecret)) {
+      keys.push(legacySecret);
+    }
+  }
+  return keys;
+}
+
+function sign(payload: string, key: string | Buffer) {
+  return createHmac("sha256", key).update(payload).digest("base64url");
 }
 
 function safeEqual(left: string, right: string) {
@@ -50,19 +91,17 @@ function decodeSegment(value: string) {
 }
 
 export function isAccountAuthConfigured() {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && getAccountSessionSecret());
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && getSigningKey());
 }
 
 export function createAccountSessionValue(session: AccountSession, now = Date.now()) {
-  if (!getAccountSessionSecret()) {
+  const signingKey = getSigningKey();
+  if (!signingKey) {
     throw new Error("Account session secret is not configured.");
   }
   const expiresAt = now + sessionTtlSeconds * 1000;
   const payload = `${sessionVersion}.${now}.${expiresAt}.${encodeSegment(session.userId)}.${encodeSegment(normalizeEmail(session.email))}`;
-  const signature = sign(payload);
-  if (!signature) {
-    throw new Error("Account session secret is not configured.");
-  }
+  const signature = sign(payload, signingKey);
   return `${payload}.${signature}`;
 }
 
@@ -79,8 +118,12 @@ export function verifyAccountSessionValue(value: string | undefined, now = Date.
   if (!Number.isFinite(issuedAt) || issuedAt > now + 30_000 || !Number.isFinite(expiresAt) || expiresAt <= now || expiresAt <= issuedAt) {
     return undefined;
   }
-  const expected = sign(`${version}.${issuedAtValue}.${expiresAtValue}.${userIdSegment}.${emailSegment}`);
-  if (!expected || !safeEqual(signature, expected)) {
+  const verificationKeys = getVerificationKeys();
+  if (verificationKeys.length === 0) {
+    return undefined;
+  }
+  const payload = `${version}.${issuedAtValue}.${expiresAtValue}.${userIdSegment}.${emailSegment}`;
+  if (!verificationKeys.some((key) => safeEqual(signature, sign(payload, key)))) {
     return undefined;
   }
   const userId = decodeSegment(userIdSegment);

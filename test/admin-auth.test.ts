@@ -1,5 +1,30 @@
+import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAdminPasswordHash, createAdminSessionValue, isAdminAuthConfigured, validateAdminCredentials, verifyAdminSessionValue } from "@/lib/admin/auth";
+
+const derivedKeyLabel = "press-forge:admin-session:v1";
+
+function clearAdminSessionSecrets() {
+  vi.stubEnv("TRIMPROOF_ADMIN_SESSION_SECRET", "");
+  vi.stubEnv("ADMIN_DASHBOARD_SESSION_SECRET", "");
+  vi.stubEnv("NEXTAUTH_SECRET", "");
+}
+
+function legacyAdminToken(key: string, email: string, passwordHash: string, now: number, expiresAt = now + 8 * 60 * 60 * 1000) {
+  const emailSegment = Buffer.from(email.trim().toLowerCase()).toString("base64url");
+  const fingerprint = createHmac("sha256", key).update(passwordHash).digest("base64url").slice(0, 24);
+  const payload = `v4.${expiresAt}.${emailSegment}.${fingerprint}`;
+  const signature = createHmac("sha256", key).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+function hmac(secret: string | Buffer, value: string) {
+  return createHmac("sha256", secret).update(value).digest("base64url");
+}
+
+function deriveKey(secret: string) {
+  return createHmac("sha256", secret).update(derivedKeyLabel).digest();
+}
 
 describe("admin auth", () => {
   afterEach(() => {
@@ -80,5 +105,56 @@ describe("admin auth", () => {
 
     vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", createAdminPasswordHash("second-strong-password", Buffer.alloc(16, 2)));
     expect(verifyAdminSessionValue(session)).toBe(false);
+  });
+
+  it("derives a domain-separated key when only NEXTAUTH_SECRET is configured", () => {
+    clearAdminSessionSecrets();
+    vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "owner@trimproof.com");
+    const passwordHash = createAdminPasswordHash("a-strong-admin-password", Buffer.alloc(16, 5));
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", passwordHash);
+    vi.stubEnv("NEXTAUTH_SECRET", "shared-nextauth-secret");
+    const now = new Date("2026-10-30T12:00:00Z").getTime();
+
+    const session = createAdminSessionValue(now);
+    const [, , emailSegment, fingerprint, signature] = session.split(".");
+    const derivedKey = deriveKey("shared-nextauth-secret");
+
+    expect(emailSegment).toBe(Buffer.from("owner@trimproof.com").toString("base64url"));
+    expect(fingerprint).toBe(hmac(derivedKey, passwordHash).slice(0, 24));
+    expect(fingerprint).not.toBe(hmac("shared-nextauth-secret", passwordHash).slice(0, 24));
+    expect(signature).toBe(hmac(derivedKey, `${session.split(".").slice(0, 4).join(".")}`));
+    expect(verifyAdminSessionValue(session, now + 1000)).toBe(true);
+  });
+
+  it("accepts old-key admin tokens for verification only until their natural expiry", () => {
+    clearAdminSessionSecrets();
+    vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "owner@trimproof.com");
+    const passwordHash = createAdminPasswordHash("a-strong-admin-password", Buffer.alloc(16, 6));
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", passwordHash);
+    vi.stubEnv("NEXTAUTH_SECRET", "shared-nextauth-secret");
+    const now = new Date("2026-10-30T12:00:00Z").getTime();
+    const expiresAt = now + 8 * 60 * 60 * 1000;
+
+    // Pre-change code signed and fingerprinted with the raw shared secret.
+    const oldSession = legacyAdminToken("shared-nextauth-secret", "owner@trimproof.com", passwordHash, now, expiresAt);
+    expect(verifyAdminSessionValue(oldSession, now + 1000)).toBe(true);
+    expect(verifyAdminSessionValue(oldSession, expiresAt + 1)).toBe(false);
+
+    // New sessions are signed with the derived key, never the raw secret.
+    const newSession = createAdminSessionValue(now);
+    expect(newSession.split(".").at(-1)).not.toBe(hmac("shared-nextauth-secret", newSession.split(".").slice(0, 4).join(".")));
+    expect(verifyAdminSessionValue(newSession, now + 1000)).toBe(true);
+  });
+
+  it("fails closed when no dedicated or NextAuth secret is configured", () => {
+    clearAdminSessionSecrets();
+    vi.stubEnv("TRIMPROOF_ADMIN_EMAIL", "owner@trimproof.com");
+    const passwordHash = createAdminPasswordHash("a-strong-admin-password", Buffer.alloc(16, 7));
+    vi.stubEnv("TRIMPROOF_ADMIN_PASSWORD_HASH", passwordHash);
+    const now = new Date("2026-10-30T12:00:00Z").getTime();
+
+    expect(isAdminAuthConfigured()).toBe(false);
+    expect(() => createAdminSessionValue(now)).toThrow("Admin session secret is not configured.");
+    expect(verifyAdminSessionValue(legacyAdminToken("orphaned-secret", "owner@trimproof.com", passwordHash, now), now + 1000)).toBe(false);
   });
 });
