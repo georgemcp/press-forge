@@ -104,6 +104,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "The normalized image is too large." }, { status: 413 });
     }
 
+    // Cheap pre-check alongside the recount below: refuse a request that is already over the limit before
+    // paying to upload it. Best-effort only — if this list fails, fall through and let the post-upload
+    // recount decide, so the pre-check can never reject an upload the recount would have accepted.
+    const precheck = await listUploads(supabase, account.userId).catch(() => null);
+    if (precheck && !precheck.error) {
+      const usage = (precheck.data ?? []).reduce((total, item) => total + Number(item.metadata?.size ?? 0), 0);
+      if (usage + normalized.length > configuredStorageLimit()) {
+        return NextResponse.json({ error: "Account upload storage limit reached. Delete an image before uploading another." }, { status: 413 });
+      }
+    }
+
     // Insert-first-then-recount: there is no usage counter or uploads table to update conditionally, so the
     // object itself is the reservation. Upload it, then sum the account's objects (which now include it) and
     // roll our own object back if the total is over the limit. Of any set of parallel uploads, the one that
