@@ -29,6 +29,8 @@ type OrderColumn = "id" | "stripe_session_id" | "stripe_payment_intent_id" | "st
 
 const refundableStatuses: ExportOrderStatus[] = ["paid", "processing", "consumed", "expired"];
 const expirableStatuses: ExportOrderStatus[] = ["paid"];
+// An operator may also cut off an order that is mid-export or already spent, but never a refunded one.
+const adminExpirableStatuses: ExportOrderStatus[] = ["paid", "processing", "consumed"];
 
 const TOMBSTONE_PREFIX = "refund-tombstone:";
 
@@ -75,7 +77,7 @@ export async function updateExportOrderBySessionId(supabase: SupabaseClient, ses
 }
 
 export async function expireExportOrderById(supabase: SupabaseClient, orderId: string) {
-  return transitionExportOrders(supabase, "id", orderId, "expired", expirableStatuses);
+  return transitionExportOrders(supabase, "id", orderId, "expired", adminExpirableStatuses);
 }
 
 async function hasRefundTombstone(supabase: SupabaseClient, paymentIntentId: string) {

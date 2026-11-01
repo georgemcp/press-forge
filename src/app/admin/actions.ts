@@ -250,6 +250,10 @@ export async function expireOrderAccess(formData: FormData) {
   const { supabase, order } = await getOrderForAction(textField(formData, "orderId"), fallbackReturnPath);
   const returnPath = orderReturnPath(order, fallbackReturnPath);
 
+  if (order.status === "expired") {
+    redirectWithMessage(returnPath, "saved", "Order access expired.");
+  }
+
   let result;
   try {
     result = await expireExportOrderById(supabase, order.id);
@@ -257,8 +261,8 @@ export async function expireOrderAccess(formData: FormData) {
     redirectWithMessage(returnPath, "adminError", error instanceof Error ? error.message : "Order could not be expired.");
   }
   if (result !== "updated") {
-    // Only a paid order can expire; a refunded (or spent) order keeps its status.
-    redirectWithMessage(returnPath, "adminError", "Only a paid order can be expired. This order was left unchanged.");
+    // A refunded order keeps its status.
+    redirectWithMessage(returnPath, "adminError", "This order can no longer be expired (refunded). It was left unchanged.");
   }
 
   await recordAdminAuditEvent({

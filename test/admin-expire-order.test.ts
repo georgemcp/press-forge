@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { cancelSubscription, expireOrderAccess } from "@/app/admin/actions";
+import { expireExportOrderById, updateExportOrderBySessionId, updateExportOrdersByPaymentIntentId } from "@/lib/billing/order-lifecycle";
 import { createFakeOrders } from "./helpers/fake-orders";
 
 const mocks = vi.hoisted(() => ({
@@ -59,6 +60,38 @@ describe("admin expiry actions respect the order lifecycle", () => {
     mocks.supabase = fake.supabase;
     expect(await submit(expireOrderAccess, "order_a")).toContain("adminError");
     expect(fake.rows[0]).toMatchObject({ status: "refunded" });
+  });
+
+  it.each(["paid", "processing", "consumed"])("expireOrderAccess keeps its reach: expires a %s order", async (status) => {
+    const fake = createFakeOrders([{ id: "order_a", stripe_session_id: "cs_a", status, proof_job_id: "job_1", consumed_at: "2026-01-01" }]);
+    mocks.supabase = fake.supabase;
+    expect(await submit(expireOrderAccess, "order_a")).toContain("saved");
+    expect(fake.rows[0]).toMatchObject({ status: "expired", proof_job_id: null, consumed_at: null });
+  });
+
+  it("expireOrderAccess on an already expired order is a no-op with the existing message", async () => {
+    const fake = createFakeOrders([{ id: "order_a", stripe_session_id: "cs_a", status: "expired" }]);
+    mocks.supabase = fake.supabase;
+    expect(await submit(expireOrderAccess, "order_a")).toContain("Order access expired.");
+    expect(fake.writes.filter((w) => w.op === "update")).toEqual([]);
+    expect(fake.rows[0]).toMatchObject({ status: "expired" });
+  });
+
+  it("expireExportOrderById refuses a refunded order even if the caller saw it as paid", async () => {
+    const fake = createFakeOrders([{ id: "order_a", stripe_session_id: "cs_a", status: "refunded" }]);
+    expect(await expireExportOrderById(fake.supabase as never, "order_a")).toBe("terminal");
+    expect(fake.rows[0]).toMatchObject({ status: "refunded" });
+  });
+
+  it("webhook-driven expiry stays paid-only", async () => {
+    for (const status of ["processing", "consumed", "refunded"]) {
+      const fake = createFakeOrders([{ id: "order_a", stripe_session_id: "cs_a", stripe_payment_intent_id: "pi_a", status }]);
+      expect(await updateExportOrderBySessionId(fake.supabase as never, "cs_a", "expired")).toBe("terminal");
+      expect(await updateExportOrdersByPaymentIntentId(fake.supabase as never, "pi_a", "expired")).toBe("terminal");
+      expect(fake.rows[0]).toMatchObject({ status });
+    }
+    const paid = createFakeOrders([{ id: "order_a", stripe_session_id: "cs_a", status: "paid" }]);
+    expect(await updateExportOrderBySessionId(paid.supabase as never, "cs_a", "expired")).toBe("updated");
   });
 
   it("cancelSubscription expires a paid subscription order", async () => {
