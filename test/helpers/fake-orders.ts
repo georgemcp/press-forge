@@ -9,6 +9,23 @@ export function createFakeOrders(initial: FakeRow[] = []) {
   const rows: FakeRow[] = initial.map((row, index) => ({ id: `order_${index}`, ...row }));
   let nextId = rows.length;
   const writes: Array<{ op: string; payload?: FakeRow }> = [];
+  type Interleave = { when: (info: { op: string; affected: number }) => boolean; run: () => unknown };
+  const interleaves: Interleave[] = [];
+
+  /** Runs `run` once, right after the first export_orders query matching `when` completes and before its caller resumes. */
+  function interleaveAfter(when: Interleave["when"], run: Interleave["run"]) {
+    interleaves.push({ when, run });
+  }
+
+  async function settle<T extends { data: unknown }>(op: string, result: T): Promise<T> {
+    const affected = Array.isArray(result.data) ? result.data.length : 0;
+    const index = interleaves.findIndex((i) => i.when({ op, affected }));
+    if (index >= 0) {
+      const [hit] = interleaves.splice(index, 1);
+      await hit.run();
+    }
+    return result;
+  }
 
   function query() {
     let op: "select" | "update" | "upsert" | "delete" = "select";
@@ -77,9 +94,9 @@ export function createFakeOrders(initial: FakeRow[] = []) {
       limit: vi.fn(() => builder),
       maybeSingle: vi.fn(() => {
         single = true;
-        return Promise.resolve(run());
+        return settle(op, run());
       }),
-      then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) => Promise.resolve(run()).then(resolve, reject)
+      then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) => settle(op, run()).then(resolve, reject)
     };
     return builder;
   }
@@ -95,5 +112,5 @@ export function createFakeOrders(initial: FakeRow[] = []) {
   };
   const creditInsert = vi.fn(async () => ({ error: null }));
 
-  return { supabase, rows, writes, creditInsert };
+  return { supabase, rows, writes, creditInsert, interleaveAfter };
 }

@@ -115,7 +115,7 @@ export async function POST(request: Request) {
       }
       // Duplicate deliveries and orders that landed refunded must not send another purchase event.
       if (order?.created && !order.refunded) {
-  const analytics = await sendServerAnalyticsEvent({
+        const analytics = await sendServerAnalyticsEvent({
           name: "purchase",
           clientId: session.metadata?.ga_client_id,
           userId,
