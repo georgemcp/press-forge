@@ -178,5 +178,17 @@ export async function recordPaidExportOrder(
     await deleteRefundTombstone(supabase, paymentIntentId);
     refunded = true;
   }
+  if (!created && !refunded) {
+    // A duplicate delivery finds the existing row: report it refunded so callers do not grant credit for a refunded order.
+    const { data: existing, error: existingError } = await supabase
+      .from("export_orders")
+      .select("status")
+      .eq("stripe_session_id", row.stripe_session_id)
+      .maybeSingle();
+    if (existingError) {
+      throw new Error(existingError.message);
+    }
+    refunded = existing?.status === "refunded";
+  }
   return { created, refunded };
 }
