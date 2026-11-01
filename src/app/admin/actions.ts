@@ -14,6 +14,7 @@ import {
 } from "@/lib/admin/auth";
 import { getOrderAccountEmail, normalizeAdminEmail, type ExportOrderRow } from "@/lib/admin/metrics";
 import { buildAccessLinkEmail } from "@/lib/billing/access-link-email";
+import { expireExportOrderById, updateExportOrdersBySubscriptionId } from "@/lib/billing/order-lifecycle";
 import { getAppUrl, getStripeClient } from "@/lib/billing/stripe";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { sendTransactionalEmail } from "@/lib/email/transactional";
@@ -249,16 +250,15 @@ export async function expireOrderAccess(formData: FormData) {
   const { supabase, order } = await getOrderForAction(textField(formData, "orderId"), fallbackReturnPath);
   const returnPath = orderReturnPath(order, fallbackReturnPath);
 
-  const { error } = await supabase
-    .from("export_orders")
-    .update({
-      status: "expired",
-      proof_job_id: null,
-      consumed_at: null
-    })
-    .eq("id", order.id);
-  if (error) {
-    redirectWithMessage(returnPath, "adminError", error.message);
+  let result;
+  try {
+    result = await expireExportOrderById(supabase, order.id);
+  } catch (error) {
+    redirectWithMessage(returnPath, "adminError", error instanceof Error ? error.message : "Order could not be expired.");
+  }
+  if (result !== "updated") {
+    // Only a paid order can expire; a refunded (or spent) order keeps its status.
+    redirectWithMessage(returnPath, "adminError", "Only a paid order can be expired. This order was left unchanged.");
   }
 
   await recordAdminAuditEvent({
@@ -382,16 +382,11 @@ export async function cancelSubscription(formData: FormData) {
     redirectWithMessage(returnPath, "adminError", error instanceof Error ? error.message : "Stripe cancellation failed.");
   }
 
-  const { error } = await supabase
-    .from("export_orders")
-    .update({
-      status: "expired",
-      proof_job_id: null,
-      consumed_at: null
-    })
-    .eq("stripe_subscription_id", order.stripe_subscription_id);
-  if (error) {
-    redirectWithMessage(returnPath, "adminError", error.message);
+  // Stripe is already canceled; a refunded order keeps its status rather than being rewritten to expired.
+  try {
+    await updateExportOrdersBySubscriptionId(supabase, order.stripe_subscription_id, "expired");
+  } catch (error) {
+    redirectWithMessage(returnPath, "adminError", error instanceof Error ? error.message : "Order could not be expired.");
   }
 
   await recordAdminAuditEvent({

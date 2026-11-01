@@ -25,7 +25,7 @@ export function exportOrderStatusForSubscription(status?: Stripe.Subscription.St
  */
 export type LifecycleResult = "updated" | "terminal" | "missing";
 
-type OrderColumn = "stripe_session_id" | "stripe_payment_intent_id" | "stripe_subscription_id";
+type OrderColumn = "id" | "stripe_session_id" | "stripe_payment_intent_id" | "stripe_subscription_id";
 
 const refundableStatuses: ExportOrderStatus[] = ["paid", "processing", "consumed", "expired"];
 const expirableStatuses: ExportOrderStatus[] = ["paid"];
@@ -72,6 +72,10 @@ async function transitionExportOrders(
 
 export async function updateExportOrderBySessionId(supabase: SupabaseClient, sessionId: string, status: Extract<ExportOrderStatus, "expired">) {
   return transitionExportOrders(supabase, "stripe_session_id", sessionId, status, expirableStatuses);
+}
+
+export async function expireExportOrderById(supabase: SupabaseClient, orderId: string) {
+  return transitionExportOrders(supabase, "id", orderId, "expired", expirableStatuses);
 }
 
 async function hasRefundTombstone(supabase: SupabaseClient, paymentIntentId: string) {
