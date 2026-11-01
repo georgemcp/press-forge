@@ -38,6 +38,14 @@ async function listUploads(supabase: NonNullable<ReturnType<typeof createService
   });
 }
 
+async function releaseUpload(supabase: NonNullable<ReturnType<typeof createServiceSupabaseClient>>, storagePath: string) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { error } = await supabase.storage.from("design-assets").remove([storagePath]).catch((caught: unknown) => ({ error: caught }));
+    if (!error) return;
+    console.error("Upload reservation release failed", { error: describeServerError(error) });
+  }
+}
+
 export async function POST(request: Request) {
   const account = await getAccountSessionFromCookies();
   if (!account) {
@@ -96,15 +104,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "The normalized image is too large." }, { status: 413 });
     }
 
-    const { data: existing, error: listError } = await listUploads(supabase, account.userId);
-    if (listError) {
-      throw new Error("Storage usage could not be verified.");
-    }
-    const currentUsage = (existing ?? []).reduce((total, item) => total + Number(item.metadata?.size ?? 0), 0);
-    if (currentUsage + normalized.length > configuredStorageLimit()) {
-      return NextResponse.json({ error: "Account upload storage limit reached. Delete an image before uploading another." }, { status: 413 });
+    // Cheap pre-check alongside the recount below: refuse a request that is already over the limit before
+    // paying to upload it. Best-effort only — if this list fails, fall through and let the post-upload
+    // recount decide, so the pre-check can never reject an upload the recount would have accepted.
+    const precheck = await listUploads(supabase, account.userId).catch(() => null);
+    if (precheck && !precheck.error) {
+      const usage = (precheck.data ?? []).reduce((total, item) => total + Number(item.metadata?.size ?? 0), 0);
+      if (usage + normalized.length > configuredStorageLimit()) {
+        return NextResponse.json({ error: "Account upload storage limit reached. Delete an image before uploading another." }, { status: 413 });
+      }
     }
 
+    // Insert-first-then-recount: there is no usage counter or uploads table to update conditionally, so the
+    // object itself is the reservation. Upload it, then sum the account's objects (which now include it) and
+    // roll our own object back if the total is over the limit. Of any set of parallel uploads, the one that
+    // lists last sees every other object, so the accepted total can never stay above the limit.
     const fileId = randomUUID();
     const storagePath = canonicalUploadPath(account.userId, fileId);
     const { error: uploadError } = await supabase.storage.from("design-assets").upload(storagePath, normalized, {
@@ -114,6 +128,23 @@ export async function POST(request: Request) {
     });
     if (uploadError) {
       throw new Error(uploadError.message);
+    }
+
+    let overLimit = false;
+    try {
+      const { data: stored, error: listError } = await listUploads(supabase, account.userId);
+      if (listError) {
+        throw new Error("Storage usage could not be verified.");
+      }
+      const usage = (stored ?? []).reduce((total, item) => total + Number(item.metadata?.size ?? 0), 0);
+      overLimit = usage > configuredStorageLimit();
+    } catch (error) {
+      await releaseUpload(supabase, storagePath);
+      throw error;
+    }
+    if (overLimit) {
+      await releaseUpload(supabase, storagePath);
+      return NextResponse.json({ error: "Account upload storage limit reached. Delete an image before uploading another." }, { status: 413 });
     }
 
     return NextResponse.json({
