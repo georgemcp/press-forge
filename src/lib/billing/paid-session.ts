@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import type { AccountSession } from "@/lib/auth/account-session";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { getStripeClient } from "@/lib/billing/stripe";
-import { stripeObjectId } from "@/lib/billing/order-lifecycle";
+import { recordPaidExportOrder, stripeObjectId } from "@/lib/billing/order-lifecycle";
 
 export interface PaidCheckoutSession {
   id: string;
@@ -153,27 +153,20 @@ export async function verifyPaidCheckoutSession(
       return { ...paidSession, consumed };
     }
 
-    const { error: insertError } = await supabase.from("export_orders").upsert(
-      {
-        stripe_session_id: session.id,
-        stripe_customer_id: customerId ?? null,
-        stripe_payment_intent_id: stripeObjectId(session.payment_intent),
-        stripe_subscription_id: subscriptionId ?? null,
-        amount_total_cents: session.amount_total ?? null,
-        currency: session.currency?.toUpperCase() ?? null,
-        customer_email: customerEmail ?? null,
-        entitlement,
-        checkout_mode: session.mode,
-        status: consumed ? "consumed" : "paid"
-      },
-      {
-        onConflict: "stripe_session_id",
-        // Verification may race an export or webhook; never reset an existing order's status.
-        ignoreDuplicates: true
-      }
-    );
-    if (insertError) {
-      throw new Error(insertError.message);
+    // Verification may race an export or webhook; this never resets an existing order and lands refunded after an early refund.
+    const { refunded } = await recordPaidExportOrder(supabase, {
+      stripe_session_id: session.id,
+      stripe_customer_id: customerId ?? null,
+      stripe_payment_intent_id: stripeObjectId(session.payment_intent),
+      stripe_subscription_id: subscriptionId ?? null,
+      amount_total_cents: session.amount_total ?? null,
+      currency: session.currency?.toUpperCase() ?? null,
+      customer_email: customerEmail ?? null,
+      entitlement,
+      checkout_mode: session.mode
+    });
+    if (refunded && entitlement === "export_credit") {
+      consumed = true;
     }
   }
 

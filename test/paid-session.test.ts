@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "@supabase/supabase-js";
+import { createFakeOrders } from "./helpers/fake-orders";
 import { claimExportCredit, finalizeExportCredit, paidCheckoutSessionBelongsToAccount, releaseExportCredit, releaseSubscriptionExport, verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
 
 const mocks = vi.hoisted(() => ({
@@ -51,7 +52,7 @@ function makeVerifySupabase(existingStatus: string | undefined) {
     }))
   };
   const upsertBuilder = {
-    upsert: vi.fn(async () => ({ error: null }))
+    upsert: vi.fn(() => ({ select: vi.fn(async () => ({ data: [{ id: "order_new" }], error: null })) }))
   };
   const supabase = {
     from: vi.fn((table: string) => {
@@ -149,9 +150,21 @@ describe("paid checkout sessions", () => {
     await expect(claimExportCredit("cs_paid", "job_second")).rejects.toThrow("already been used");
   });
 
+  it("lands a verified checkout refunded, and unusable, when the refund arrived first", async () => {
+    mocks.stripe.checkout.sessions.retrieve.mockResolvedValue({ ...(await mocks.stripe.checkout.sessions.retrieve()), payment_intent: "pi_paid" });
+    const fake = createFakeOrders([{ stripe_session_id: "refund-tombstone:pi_paid", stripe_payment_intent_id: "pi_paid", status: "refunded" }]);
+    mocks.supabase = fake.supabase;
+
+    const session = await verifyPaidCheckoutSession("cs_paid");
+
+    expect(session?.consumed).toBe(true);
+    expect(fake.rows).toHaveLength(1);
+    expect(fake.rows[0]).toMatchObject({ stripe_session_id: "cs_paid", status: "refunded" });
+  });
+
   it("surfaces a failed order insert during verification", async () => {
     const { supabase, upsertBuilder } = makeVerifySupabase(undefined);
-    upsertBuilder.upsert.mockResolvedValue({ error: { message: "Insert failed" } } as never);
+    upsertBuilder.upsert.mockReturnValue({ select: vi.fn(async () => ({ data: null, error: { message: "Insert failed" } })) } as never);
     mocks.supabase = supabase;
     await expect(verifyPaidCheckoutSession("cs_paid")).rejects.toThrow("Insert failed");
   });

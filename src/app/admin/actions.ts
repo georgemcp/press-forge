@@ -303,6 +303,9 @@ export async function refundOrder(formData: FormData) {
         admin_action: "refund_order",
         export_order_id: order.id
       }
+    }, {
+      // One refund per order: a double submit or retry gets the same Stripe refund back instead of a second one.
+      idempotencyKey: `trimproof-refund-order-${order.id}`
     });
     refundId = refund.id;
   } catch (error) {
