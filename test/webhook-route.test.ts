@@ -1,25 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/billing/webhook/route";
+import { createFakeOrders } from "./helpers/fake-orders";
 
 const mocks = vi.hoisted(() => ({
   constructEvent: vi.fn(),
-  upsert: vi.fn(),
-  creditInsert: vi.fn(),
-  analytics: vi.fn()
+  analytics: vi.fn(),
+  supabase: undefined as unknown
 }));
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ "stripe-signature": "test-signature" }) }));
 vi.mock("@/lib/billing/stripe", () => ({ getStripeClient: () => ({ webhooks: { constructEvent: mocks.constructEvent } }) }));
 vi.mock("@/lib/analytics/server-events", () => ({ sendServerAnalyticsEvent: mocks.analytics }));
-vi.mock("@/lib/db/supabase", () => ({
-  createServiceSupabaseClient: () => ({
-    from: (table: string) => {
-      if (table === "export_orders") return { upsert: mocks.upsert };
-      if (table === "credits_usage") return { insert: mocks.creditInsert };
-      throw new Error(`Unexpected table ${table}`);
-    }
-  })
-}));
+vi.mock("@/lib/db/supabase", () => ({ createServiceSupabaseClient: () => mocks.supabase }));
 
 function request() {
   return new Request("https://trimproof.com/api/billing/webhook", { method: "POST", body: "test event" });
@@ -44,40 +36,36 @@ describe("checkout webhook replay", () => {
       }
     });
     mocks.analytics.mockResolvedValue({ status: "skipped" });
-    mocks.creditInsert.mockResolvedValue({ error: null });
   });
 
   afterEach(() => vi.unstubAllEnvs());
 
   it.each(["processing", "consumed", "refunded", "expired"])("does not revive an existing %s order", async (status) => {
-    const order: Record<string, unknown> = { stripe_session_id: "cs_paid", status, proof_job_id: "job_existing" };
-    mocks.upsert.mockImplementation(async (data, options) => {
-      if (!options?.ignoreDuplicates) Object.assign(order, data);
-      return { error: null };
-    });
+    const fake = createFakeOrders([{ stripe_session_id: "cs_paid", status, proof_job_id: "job_existing" }]);
+    mocks.supabase = fake.supabase;
 
     const response = await POST(request());
     expect(response.status).toBe(200);
-    expect(mocks.upsert).toHaveBeenCalledWith(expect.objectContaining({ stripe_session_id: "cs_paid" }), { onConflict: "stripe_session_id", ignoreDuplicates: true });
-    expect(order).toMatchObject({ status, proof_job_id: "job_existing" });
+    expect(fake.rows).toHaveLength(1);
+    expect(fake.rows[0]).toMatchObject({ status, proof_job_id: "job_existing" });
+    expect(mocks.analytics).not.toHaveBeenCalled();
   });
 
   it("records a new paid checkout", async () => {
-    let order: Record<string, unknown> | undefined;
-    mocks.upsert.mockImplementation(async (data) => {
-      order ??= data;
-      return { error: null };
-    });
+    const fake = createFakeOrders();
+    mocks.supabase = fake.supabase;
     const response = await POST(request());
     expect(response.status).toBe(200);
-    expect(order).toMatchObject({ stripe_session_id: "cs_paid", entitlement: "export_credit", status: "paid", amount_total_cents: 1200 });
+    expect(fake.rows[0]).toMatchObject({ stripe_session_id: "cs_paid", entitlement: "export_credit", status: "paid", amount_total_cents: 1200 });
+    expect(fake.creditInsert).toHaveBeenCalledTimes(1);
   });
 
   it("returns a retryable error when the checkout order cannot be recorded", async () => {
-    mocks.upsert.mockResolvedValue({ error: { message: "Database unavailable" } });
+    mocks.supabase = {
+      from: () => ({ upsert: () => ({ select: async () => ({ data: null, error: { message: "Database unavailable" } }) }) })
+    };
     const response = await POST(request());
     expect(response.status).toBe(500);
     expect(mocks.analytics).not.toHaveBeenCalled();
-    expect(mocks.creditInsert).not.toHaveBeenCalled();
   });
 });

@@ -10,7 +10,9 @@ import {
 function makeUpdateSupabase() {
   const builder = {
     update: vi.fn(() => builder),
-    eq: vi.fn(() => builder)
+    eq: vi.fn(() => builder),
+    in: vi.fn((..._args: unknown[]) => builder),
+    select: vi.fn(async () => ({ data: [{ id: "order_1" }], error: null }))
   };
   return {
     supabase: {
@@ -46,6 +48,7 @@ describe("Stripe order lifecycle helpers", () => {
       consumed_at: null
     });
     expect(builder.eq).toHaveBeenCalledWith("stripe_session_id", "cs_expired");
+    expect(builder.in).toHaveBeenCalledWith("status", ["paid"]);
   });
 
   it("marks refunded orders by payment intent ID", async () => {
@@ -59,6 +62,21 @@ describe("Stripe order lifecycle helpers", () => {
       consumed_at: null
     });
     expect(builder.eq).toHaveBeenCalledWith("stripe_payment_intent_id", "pi_refunded");
+    expect(builder.in).toHaveBeenCalledWith("status", ["paid", "processing", "consumed", "expired"]);
+  });
+
+  it("never lists refunded as a prior state for any transition", async () => {
+    const { supabase, builder } = makeUpdateSupabase();
+
+    await updateExportOrderBySessionId(supabase as never, "cs", "expired");
+    await updateExportOrdersByPaymentIntentId(supabase as never, "pi", "refunded");
+    await updateExportOrdersBySubscriptionId(supabase as never, "sub", "paid", { reactivate: true });
+    await updateExportOrdersBySubscriptionId(supabase as never, "sub", "paid");
+
+    for (const [column, priors] of builder.in.mock.calls) {
+      expect(column).toBe("status");
+      expect(priors).not.toContain("refunded");
+    }
   });
 
   it("updates subscription orders by subscription ID", async () => {
@@ -72,5 +90,6 @@ describe("Stripe order lifecycle helpers", () => {
       consumed_at: null
     });
     expect(builder.eq).toHaveBeenCalledWith("stripe_subscription_id", "sub_canceled");
+    expect(builder.in).toHaveBeenCalledWith("status", ["paid"]);
   });
 });
