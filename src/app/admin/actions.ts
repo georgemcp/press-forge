@@ -387,11 +387,14 @@ export async function cancelSubscription(formData: FormData) {
   }
 
   // Stripe is already canceled; a refunded order keeps its status rather than being rewritten to expired.
+  let expiry;
   try {
-    await updateExportOrdersBySubscriptionId(supabase, order.stripe_subscription_id, "expired");
+    expiry = await updateExportOrdersBySubscriptionId(supabase, order.stripe_subscription_id, "expired");
   } catch (error) {
     redirectWithMessage(returnPath, "adminError", error instanceof Error ? error.message : "Order could not be expired.");
   }
+  // The write only leaves "paid", so a processing or consumed order is still live after the Stripe cancel.
+  const accessLeftActive = expiry !== "updated" && order.status !== "refunded" && order.status !== "expired";
 
   await recordAdminAuditEvent({
     supabase,
@@ -400,11 +403,15 @@ export async function cancelSubscription(formData: FormData) {
     targetId: order.id,
     metadata: {
       stripeSubscriptionId: order.stripe_subscription_id,
-      subscriptionStatus
+      subscriptionStatus,
+      orderExpiry: expiry
     }
   });
 
   revalidatePath("/admin");
   revalidatePath(returnPath);
+  if (accessLeftActive) {
+    redirectWithMessage(returnPath, "adminError", `Subscription canceled in Stripe, but this ${order.status} order's access was left active. Review it manually.`);
+  }
   redirectWithMessage(returnPath, "saved", "Subscription canceled and access expired.");
 }
