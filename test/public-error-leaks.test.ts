@@ -11,7 +11,13 @@ const mocks = vi.hoisted(() => ({
   analytics: vi.fn(),
   constructEvent: vi.fn(),
   verifyPaidCheckoutSession: vi.fn(),
-  supabase: undefined as unknown
+  supabase: undefined as unknown,
+  afterTasks: [] as Array<() => unknown>
+}));
+
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: (task: () => unknown) => mocks.afterTasks.push(task)
 }));
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ "stripe-signature": "t=1,v1=x" }) }));
@@ -60,35 +66,23 @@ describe("public email responses never carry provider text", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://trimproof.com");
     mocks.analytics.mockResolvedValue({ status: "skipped", configured: false });
     mocks.supabase = undefined;
+    mocks.afterTasks.length = 0;
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it("email-signup returns {sent, code} and logs a redacted reason", async () => {
+  it("email-signup never returns email results and logs a redacted reason", async () => {
     mocks.send.mockResolvedValue(failed);
     const response = await signupRoute(post("/api/email-signup", { email: "lead@example.com", source: "test" }));
+    await Promise.all(mocks.afterTasks.map((task) => task()));
     const text = await response.text();
 
-    expect(response.status).toBe(200);
-    expect(JSON.parse(text).email).toEqual({
-      confirmation: { sent: false, code: "failed" },
-      adminNotification: { sent: false, code: "failed" }
-    });
+    expect(response.status).toBe(202);
+    expect(Object.keys(JSON.parse(text)).sort()).toEqual(["message", "ok"]);
     expect(text).not.toContain("sk_test_abc123");
     expect(text).not.toContain("relay.internal");
     expect(logged()).toContain("signup notification failed");
     expect(logged()).toContain("relay.internal");
     expect(logged()).not.toContain("sk_test_abc123");
-  });
-
-  it("email-signup for an already-registered address returns codes only", async () => {
-    mocks.supabase = {
-      from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: 1 }, error: null }) }) }) })
-    };
-    const response = await signupRoute(post("/api/email-signup", { email: "again@example.com", source: "test" }));
-    expect((await response.json()).email).toEqual({
-      confirmation: { sent: false, code: "skipped" },
-      adminNotification: { sent: false, code: "skipped" }
-    });
   });
 
   it("access-link returns {sent, code} and logs a redacted reason", async () => {

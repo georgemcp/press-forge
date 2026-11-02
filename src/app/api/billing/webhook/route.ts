@@ -31,6 +31,30 @@ function invoiceSubscriptionId(invoice: { subscription?: string | { id?: string 
 
 type SupabaseClient = NonNullable<ReturnType<typeof createServiceSupabaseClient>>;
 
+// credits_usage has a unique index on stripe_session_id, so a redelivered event hits this on the second insert.
+function isDuplicateInsert(error: { code?: string; message?: string }) {
+  return error.code === "23505" || /duplicate key|already exists/i.test(error.message ?? "");
+}
+
+/** Runs a write the paid order depends on. Returns false (after a redacted log) when it failed, so the caller can answer 500. */
+async function runOrderWrite(
+  label: string,
+  eventType: string,
+  write: () => PromiseLike<{ error: { code?: string; message?: string } | null }>,
+  options: { ignoreDuplicate?: boolean } = {}
+) {
+  try {
+    const { error } = await write();
+    if (!error || (options.ignoreDuplicate && isDuplicateInsert(error))) {
+      return true;
+    }
+    console.error("Trim Proof Stripe webhook order write failed", { write: label, eventType, error: describeServerError(error.message) });
+  } catch (error) {
+    console.error("Trim Proof Stripe webhook order write failed", { write: label, eventType, error: describeServerError(error) });
+  }
+  return false;
+}
+
 async function handleLifecycleEvent(supabase: SupabaseClient, event: Stripe.Event) {
   if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
     const session = event.data.object;
@@ -84,11 +108,11 @@ export async function POST(request: Request) {
 
   const supabase = createServiceSupabaseClient();
   if (!supabase) {
-    return NextResponse.json({
-      received: true,
-      persisted: false,
-      reason: "Supabase service client is not configured."
+    // The signature already verified, so the event is genuine; answering 2xx would make Stripe drop a paid event.
+    console.error("Trim Proof Stripe webhook cannot persist: Supabase service client is not configured", {
+      eventType: event.type
     });
+    return NextResponse.json({ error: "Order storage is not configured." }, { status: 503 });
   }
 
   if (event.type === "checkout.session.completed") {
@@ -151,24 +175,39 @@ export async function POST(request: Request) {
         }
       }
     }
+    // A failed write returns 500 so Stripe redelivers. Redelivery is safe: the order upsert ignores duplicates,
+    // the credit insert is unique on stripe_session_id (a duplicate counts as done) and the user update is a plain set.
     if (userId && entitlement === "export_credit" && !order?.refunded) {
-      await supabase.from("credits_usage").insert({
-        user_id: userId,
-        delta: 1,
-        reason: "purchase",
-        stripe_session_id: session.id
-      });
+      const credited = await runOrderWrite(
+        "credits_usage.insert",
+        event.type,
+        () =>
+          supabase.from("credits_usage").insert({
+            user_id: userId,
+            delta: 1,
+            reason: "purchase",
+            stripe_session_id: session.id
+          }),
+        { ignoreDuplicate: true }
+      );
+      if (!credited) {
+        return NextResponse.json({ error: "Checkout credit could not be recorded." }, { status: 500 });
+      }
     }
     if (userId && entitlement === "subscription") {
-      await supabase
-        .from("users")
-        .update({
-          subscription_status: "active",
-          stripe_customer_id: typeof session.customer === "string" ? session.customer : undefined
-        })
-        .eq("id", userId);
+      const activated = await runOrderWrite("users.update", event.type, () =>
+        supabase
+          .from("users")
+          .update({
+            subscription_status: "active",
+            stripe_customer_id: typeof session.customer === "string" ? session.customer : undefined
+          })
+          .eq("id", userId)
+      );
+      if (!activated) {
+        return NextResponse.json({ error: "Subscription could not be activated." }, { status: 500 });
+      }
     }
-
   } else {
     try {
       await handleLifecycleEvent(supabase, event);
