@@ -36,23 +36,38 @@ function isDuplicateInsert(error: { code?: string; message?: string }) {
   return error.code === "23505" || /duplicate key|already exists/i.test(error.message ?? "");
 }
 
-/** Runs a write the paid order depends on. Returns false (after a redacted log) when it failed, so the caller can answer 500. */
+// Postgres errors a redelivery can never fix: 23503 FK violation (the user was deleted), 22P02 malformed uuid in
+// client_reference_id, and 23505 on users. A 23505 on credits_usage is the redelivery case and is handled as done.
+function isTerminalWriteError(label: string, error: { code?: string }) {
+  return error.code === "23503" || error.code === "22P02" || (error.code === "23505" && label.startsWith("users."));
+}
+
+type WriteScope = { eventId: string; eventType: string; sessionId: string; userId: string };
+
+/**
+ * Runs a write the paid order depends on. "failed" (after a redacted log) means transient, so the caller answers 500
+ * and Stripe retries. "terminal" means a retry cannot succeed: it is alerted once and the caller answers 200.
+ */
 async function runOrderWrite(
   label: string,
-  eventType: string,
+  scope: WriteScope,
   write: () => PromiseLike<{ error: { code?: string; message?: string } | null }>,
   options: { ignoreDuplicate?: boolean } = {}
-) {
+): Promise<"ok" | "failed" | "terminal"> {
   try {
     const { error } = await write();
     if (!error || (options.ignoreDuplicate && isDuplicateInsert(error))) {
-      return true;
+      return "ok";
     }
-    console.error("Trim Proof Stripe webhook order write failed", { write: label, eventType, error: describeServerError(error.message) });
+    if (isTerminalWriteError(label, error)) {
+      console.error("stripe_webhook_terminal", { write: label, ...scope, code: error.code });
+      return "terminal";
+    }
+    console.error("Trim Proof Stripe webhook order write failed", { write: label, eventType: scope.eventType, error: describeServerError(error.message) });
   } catch (error) {
-    console.error("Trim Proof Stripe webhook order write failed", { write: label, eventType, error: describeServerError(error) });
+    console.error("Trim Proof Stripe webhook order write failed", { write: label, eventType: scope.eventType, error: describeServerError(error) });
   }
-  return false;
+  return "failed";
 }
 
 async function handleLifecycleEvent(supabase: SupabaseClient, event: Stripe.Event) {
@@ -175,12 +190,14 @@ export async function POST(request: Request) {
         }
       }
     }
-    // A failed write returns 500 so Stripe redelivers. Redelivery is safe: the order upsert ignores duplicates,
+    // A transient write failure returns 500 so Stripe redelivers. Redelivery is safe: the order upsert ignores duplicates,
     // the credit insert is unique on stripe_session_id (a duplicate counts as done) and the user update is a plain set.
+    // A terminal failure (see isTerminalWriteError) returns 200: retrying it for three days cannot succeed.
+    const scope = { eventId: event.id, eventType: event.type, sessionId: session.id, userId: userId ?? "" };
     if (userId && entitlement === "export_credit" && !order?.refunded) {
       const credited = await runOrderWrite(
         "credits_usage.insert",
-        event.type,
+        scope,
         () =>
           supabase.from("credits_usage").insert({
             user_id: userId,
@@ -190,12 +207,15 @@ export async function POST(request: Request) {
           }),
         { ignoreDuplicate: true }
       );
-      if (!credited) {
+      if (credited === "failed") {
         return NextResponse.json({ error: "Checkout credit could not be recorded." }, { status: 500 });
+      }
+      if (credited === "terminal") {
+        return NextResponse.json({ received: true, persisted: false });
       }
     }
     if (userId && entitlement === "subscription") {
-      const activated = await runOrderWrite("users.update", event.type, () =>
+      const activated = await runOrderWrite("users.update", scope, () =>
         supabase
           .from("users")
           .update({
@@ -204,8 +224,11 @@ export async function POST(request: Request) {
           })
           .eq("id", userId)
       );
-      if (!activated) {
+      if (activated === "failed") {
         return NextResponse.json({ error: "Subscription could not be activated." }, { status: 500 });
+      }
+      if (activated === "terminal") {
+        return NextResponse.json({ received: true, persisted: false });
       }
     }
   } else {
