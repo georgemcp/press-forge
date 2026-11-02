@@ -98,12 +98,10 @@ export async function POST(request: Request) {
   const mode: CheckoutMode = parsed.data.mode === "subscription" ? "subscription" : "payment";
   const priceId = resolvePriceId(mode);
   if (!priceId) {
-    return NextResponse.json(
-      {
-        error: `Missing ${mode === "subscription" ? "STRIPE_SUBSCRIPTION_PRICE_ID" : "STRIPE_EXPORT_PRICE_ID"}.`
-      },
-      { status: 503 }
-    );
+    console.error("Trim Proof checkout price is not configured", {
+      missing: mode === "subscription" ? "STRIPE_SUBSCRIPTION_PRICE_ID" : "STRIPE_EXPORT_PRICE_ID"
+    });
+    return NextResponse.json({ error: "Checkout is not configured yet. Try again later." }, { status: 503 });
   }
 
   // Stripe success/cancel URLs are absolute and must come from the configured

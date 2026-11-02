@@ -6,6 +6,7 @@ import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { resolveEmailConfig } from "@/lib/email/transactional";
 import { deliveryManifestFileName, type ProofDeliveryManifest } from "@/lib/print/delivery-manifest";
 import { getCreativeProviderStatus } from "@/lib/providers/model-config";
+import { describeServerError } from "@/lib/security/server-error";
 import type { Tables } from "@/types/supabase";
 import {
   buildAdminAccountSummaries,
@@ -164,7 +165,8 @@ export async function readGeneratedProofInventory(limit = 250) {
 async function fetchTable<T>(promise: PromiseLike<{ data: T[] | null; error: { message: string } | null }>, label: string, sourceErrors: string[]) {
   const result = await promise;
   if (result.error) {
-    sourceErrors.push(`${label}: ${result.error.message}`);
+    console.error("Trim Proof admin data source failed", { label, error: describeServerError(result.error) });
+    sourceErrors.push(`${label}: could not be loaded.`);
   }
   return result.data ?? [];
 }

@@ -12,6 +12,7 @@ import {
   updateExportOrdersBySubscriptionId
 } from "@/lib/billing/order-lifecycle";
 import { getStripeClient } from "@/lib/billing/stripe";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
 
@@ -75,12 +76,10 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Invalid webhook signature."
-      },
-      { status: 400 }
-    );
+    console.error("Trim Proof Stripe webhook signature verification failed", {
+      error: describeServerError(error)
+    });
+    return NextResponse.json({ error: "Invalid webhook signature." }, { status: 400 });
   }
 
   const supabase = createServiceSupabaseClient();
