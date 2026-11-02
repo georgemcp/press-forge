@@ -745,12 +745,12 @@ export function PressForgeWorkspace({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: accountEmail.toLowerCase() }),
       });
-      const payload = await response.json().catch(() => undefined) as { matched?: boolean; error?: string; email?: { status?: string } } | undefined;
+      const payload = await response.json().catch(() => undefined) as { matched?: boolean; error?: string; email?: { sent?: boolean } } | undefined;
       if (!response.ok) {
         dispatch({ type: "SET_ERROR", error: payload?.error ?? "Access link request failed." });
         return;
       }
-      if (payload?.matched && payload.email?.status === "sent") {
+      if (payload?.matched && payload.email?.sent === true) {
         dispatch({ type: "SET_ACCESS_MESSAGE", accessMessage: "Access link sent. Check your inbox." });
       } else if (payload?.matched) {
         dispatch({ type: "SET_ACCESS_MESSAGE", accessMessage: "Access was found, but email delivery is not configured." });

@@ -6,6 +6,7 @@ import { getPageGeometry, type ProductType } from "./constants";
 import { convertToPdfX, type GhostscriptResult } from "./ghostscript";
 import type { ResolvedAsset } from "./assets";
 import type { LayoutSpec } from "./layout-spec";
+import { describeServerError } from "@/lib/security/server-error";
 
 const execFileAsync = promisify(execFile);
 
@@ -163,11 +164,12 @@ export async function runPreflight(
       evidence: subtype ? `pdfinfo reported ${subtype}; expected ${spec.pdfxLevel}.` : "pdfinfo did not report a PDF/X subtype."
     });
   } catch (error) {
+    console.error("Trim Proof preflight pdfinfo failed", { error: describeServerError(error) });
     checks.push({
       id: "pdfinfo",
       label: "pdfinfo inspection",
       status: "failed",
-      evidence: error instanceof Error ? error.message : "pdfinfo failed."
+      evidence: "pdfinfo could not inspect the PDF."
     });
   }
 
@@ -182,21 +184,25 @@ export async function runPreflight(
       evidence: fontRows.length > 0 ? fontRows.join(" | ") : "No font rows were reported by pdffonts."
     });
   } catch (error) {
+    console.error("Trim Proof preflight pdffonts failed", { error: describeServerError(error) });
     checks.push({
       id: "pdffonts",
       label: "pdffonts inspection",
       status: "failed",
-      evidence: error instanceof Error ? error.message : "pdffonts failed."
+      evidence: "pdffonts could not inspect the PDF."
     });
   }
 
   checks.push(checkPlacedRasterDpi(assets));
 
+  if (ghostscript.error) {
+    console.error("Trim Proof preflight Ghostscript conversion failed", { error: describeServerError(ghostscript.error) });
+  }
   checks.push({
     id: "ghostscript_pdfx",
     label: "Ghostscript PDF/X conversion",
     status: ghostscript.available && !ghostscript.error ? "passed" : "needs_attention",
-    evidence: ghostscript.error ?? `Wrote ${path.basename(ghostscript.outputPdfPath ?? sourcePdfPath)}.`
+    evidence: ghostscript.error ? "PDF/X conversion did not complete." : `Wrote ${path.basename(ghostscript.outputPdfPath ?? sourcePdfPath)}.`
   });
 
   const failed = checks.some((check) => check.status === "failed");

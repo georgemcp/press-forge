@@ -12,6 +12,7 @@ import {
   updateExportOrdersBySubscriptionId
 } from "@/lib/billing/order-lifecycle";
 import { getStripeClient } from "@/lib/billing/stripe";
+import { describeServerError } from "@/lib/security/server-error";
 
 export const runtime = "nodejs";
 
@@ -29,6 +30,45 @@ function invoiceSubscriptionId(invoice: { subscription?: string | { id?: string 
 }
 
 type SupabaseClient = NonNullable<ReturnType<typeof createServiceSupabaseClient>>;
+
+// credits_usage has a unique index on stripe_session_id, so a redelivered event hits this on the second insert.
+function isDuplicateInsert(error: { code?: string; message?: string }) {
+  return error.code === "23505" || /duplicate key|already exists/i.test(error.message ?? "");
+}
+
+// Postgres errors a redelivery can never fix: 23503 FK violation (the user was deleted), 22P02 malformed uuid in
+// client_reference_id, and 23505 on users. A 23505 on credits_usage is the redelivery case and is handled as done.
+function isTerminalWriteError(label: string, error: { code?: string }) {
+  return error.code === "23503" || error.code === "22P02" || (error.code === "23505" && label.startsWith("users."));
+}
+
+type WriteScope = { eventId: string; eventType: string; sessionId: string; userId: string };
+
+/**
+ * Runs a write the paid order depends on. "failed" (after a redacted log) means transient, so the caller answers 500
+ * and Stripe retries. "terminal" means a retry cannot succeed: it is alerted once and the caller answers 200.
+ */
+async function runOrderWrite(
+  label: string,
+  scope: WriteScope,
+  write: () => PromiseLike<{ error: { code?: string; message?: string } | null }>,
+  options: { ignoreDuplicate?: boolean } = {}
+): Promise<"ok" | "failed" | "terminal"> {
+  try {
+    const { error } = await write();
+    if (!error || (options.ignoreDuplicate && isDuplicateInsert(error))) {
+      return "ok";
+    }
+    if (isTerminalWriteError(label, error)) {
+      console.error("stripe_webhook_terminal", { write: label, ...scope, code: error.code });
+      return "terminal";
+    }
+    console.error("Trim Proof Stripe webhook order write failed", { write: label, eventType: scope.eventType, error: describeServerError(error.message) });
+  } catch (error) {
+    console.error("Trim Proof Stripe webhook order write failed", { write: label, eventType: scope.eventType, error: describeServerError(error) });
+  }
+  return "failed";
+}
 
 async function handleLifecycleEvent(supabase: SupabaseClient, event: Stripe.Event) {
   if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
@@ -75,21 +115,19 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Invalid webhook signature."
-      },
-      { status: 400 }
-    );
+    console.error("Trim Proof Stripe webhook signature verification failed", {
+      error: describeServerError(error)
+    });
+    return NextResponse.json({ error: "Invalid webhook signature." }, { status: 400 });
   }
 
   const supabase = createServiceSupabaseClient();
   if (!supabase) {
-    return NextResponse.json({
-      received: true,
-      persisted: false,
-      reason: "Supabase service client is not configured."
+    // The signature already verified, so the event is genuine; answering 2xx would make Stripe drop a paid event.
+    console.error("Trim Proof Stripe webhook cannot persist: Supabase service client is not configured", {
+      eventType: event.type
     });
+    return NextResponse.json({ error: "Order storage is not configured." }, { status: 503 });
   }
 
   if (event.type === "checkout.session.completed") {
@@ -110,7 +148,12 @@ export async function POST(request: Request) {
           entitlement,
           checkout_mode: session.mode
         });
-      } catch {
+      } catch (error) {
+        // 500 keeps Stripe retrying the delivery; the log is the only place the cause is visible.
+        console.error("Trim Proof Stripe webhook order record failed", {
+          eventType: event.type,
+          error: describeServerError(error)
+        });
         return NextResponse.json({ error: "Checkout order could not be recorded." }, { status: 500 });
       }
       // Duplicate deliveries and orders that landed refunded must not send another purchase event.
@@ -142,34 +185,61 @@ export async function POST(request: Request) {
           console.error("Trim Proof server analytics event failed", {
             event: "purchase",
             provider: analytics.provider,
-            reason: analytics.reason
+            reason: describeServerError(analytics.reason)
           });
         }
       }
     }
+    // A transient write failure returns 500 so Stripe redelivers. Redelivery is safe: the order upsert ignores duplicates,
+    // the credit insert is unique on stripe_session_id (a duplicate counts as done) and the user update is a plain set.
+    // A terminal failure (see isTerminalWriteError) returns 200: retrying it for three days cannot succeed.
+    const scope = { eventId: event.id, eventType: event.type, sessionId: session.id, userId: userId ?? "" };
     if (userId && entitlement === "export_credit" && !order?.refunded) {
-      await supabase.from("credits_usage").insert({
-        user_id: userId,
-        delta: 1,
-        reason: "purchase",
-        stripe_session_id: session.id
-      });
+      const credited = await runOrderWrite(
+        "credits_usage.insert",
+        scope,
+        () =>
+          supabase.from("credits_usage").insert({
+            user_id: userId,
+            delta: 1,
+            reason: "purchase",
+            stripe_session_id: session.id
+          }),
+        { ignoreDuplicate: true }
+      );
+      if (credited === "failed") {
+        return NextResponse.json({ error: "Checkout credit could not be recorded." }, { status: 500 });
+      }
+      if (credited === "terminal") {
+        return NextResponse.json({ received: true, persisted: false });
+      }
     }
     if (userId && entitlement === "subscription") {
-      await supabase
-        .from("users")
-        .update({
-          subscription_status: "active",
-          stripe_customer_id: typeof session.customer === "string" ? session.customer : undefined
-        })
-        .eq("id", userId);
+      const activated = await runOrderWrite("users.update", scope, () =>
+        supabase
+          .from("users")
+          .update({
+            subscription_status: "active",
+            stripe_customer_id: typeof session.customer === "string" ? session.customer : undefined
+          })
+          .eq("id", userId)
+      );
+      if (activated === "failed") {
+        return NextResponse.json({ error: "Subscription could not be activated." }, { status: 500 });
+      }
+      if (activated === "terminal") {
+        return NextResponse.json({ received: true, persisted: false });
+      }
     }
-
   } else {
     try {
       await handleLifecycleEvent(supabase, event);
-    } catch {
+    } catch (error) {
       // A 0-row lifecycle update is a logged no-op; only database failures reach here, and Stripe should retry them.
+      console.error("Trim Proof Stripe webhook lifecycle update failed", {
+        eventType: event.type,
+        error: describeServerError(error)
+      });
       return NextResponse.json({ error: "Order lifecycle update failed." }, { status: 500 });
     }
   }

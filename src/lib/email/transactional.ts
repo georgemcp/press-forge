@@ -25,6 +25,26 @@ export interface TransactionalEmail {
   replyTo?: string;
 }
 
+/**
+ * What a route may tell its caller about a send. `EmailSendResult.reason` can
+ * carry the provider's response message or a network error string, so it is
+ * for the server log only and never part of a response.
+ */
+export interface PublicEmailResult {
+  sent: boolean;
+  code: "sent" | "not_configured" | "skipped" | "failed";
+}
+
+export function publicEmailResult(result: Pick<EmailSendResult, "status" | "configured">): PublicEmailResult {
+  if (result.status === "sent") {
+    return { sent: true, code: "sent" };
+  }
+  if (result.status === "failed") {
+    return { sent: false, code: "failed" };
+  }
+  return { sent: false, code: result.configured ? "skipped" : "not_configured" };
+}
+
 type FetchLike = typeof fetch;
 
 function firstValue(...values: Array<string | undefined>) {

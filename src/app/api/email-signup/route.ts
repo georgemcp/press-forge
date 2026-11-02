@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { getAdminSignupRecipients, sendTransactionalEmail } from "@/lib/email/transactional";
@@ -112,82 +112,68 @@ export async function POST(request: Request) {
   const supabase = createServiceSupabaseClient();
   let isNewSignup = true;
   if (supabase) {
-    const { data: existing, error: lookupError } = await supabase
+    // One conditional insert for every address, so a new and a known address cost the same database round trip.
+    // ignoreDuplicates returns a row only when this call created it.
+    const { data, error } = await supabase
       .from("email_signups")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-    if (lookupError) {
+      .upsert({ email, source: parsed.data.source }, { onConflict: "email", ignoreDuplicates: true })
+      .select("id");
+    if (error) {
       return NextResponse.json({ error: "Signup could not be saved." }, { status: 503 });
     }
-    isNewSignup = !existing;
-    if (isNewSignup) {
-      const { error } = await supabase.from("email_signups").insert({ email, source: parsed.data.source });
-      if (error && !error.message.toLowerCase().includes("duplicate")) {
-        return NextResponse.json({ error: "Signup could not be saved." }, { status: 503 });
-      }
-      if (error) {
-        isNewSignup = false;
-      }
-    }
+    isNewSignup = Boolean(data && data.length > 0);
   }
 
-  if (!isNewSignup) {
-    return NextResponse.json({
-      ok: true,
-      persisted: Boolean(supabase),
-      email: {
-        confirmation: { status: "skipped", configured: true, reason: "Email already registered." },
-        adminNotification: { status: "skipped", configured: true, reason: "Email already registered." }
+  // Same status and body whether or not the address was already on the list; the emails and the analytics
+  // event go out after the response so the work they add does not show up in the timing.
+  if (isNewSignup) {
+    after(() => notifyNewSignup(email, parsed.data.source, parsed.data.analytics));
+  }
+  return NextResponse.json({ ok: true, message: "Thanks. You're on the list." }, { status: 202 });
+}
+
+async function notifyNewSignup(email: string, source: string, attribution: z.infer<typeof analyticsSchema>) {
+  try {
+    const confirmation = await sendTransactionalEmail(confirmationEmail(email));
+    const adminRecipients = getAdminSignupRecipients();
+    const adminNotification = adminRecipients?.length
+      ? await sendTransactionalEmail(adminNotificationEmail(email, source, adminRecipients))
+      : {
+          status: "skipped" as const,
+          configured: false,
+          reason: "Admin notification recipient is not configured."
+        };
+
+    if (confirmation.status === "failed" || adminNotification.status === "failed") {
+      console.error("Trim Proof email signup notification failed", {
+        confirmationStatus: confirmation.status,
+        confirmationProvider: confirmation.provider,
+        confirmationReason: confirmation.status === "failed" ? describeServerError(confirmation.reason) : undefined,
+        adminStatus: adminNotification.status,
+        adminProvider: adminNotification.provider,
+        adminReason: adminNotification.status === "failed" ? describeServerError(adminNotification.reason) : undefined
+      });
+    }
+
+    const analytics = await sendServerAnalyticsEvent({
+      name: "generate_lead",
+      clientId: attribution?.gaClientId,
+      params: {
+        source,
+        page_path: attribution?.pagePath,
+        session_id: numericSessionId(attribution?.gaSessionId),
+        currency: "USD",
+        value: 0
       }
     });
-  }
-
-  const confirmation = await sendTransactionalEmail(confirmationEmail(email));
-  const adminRecipients = getAdminSignupRecipients();
-  const adminNotification = adminRecipients?.length
-    ? await sendTransactionalEmail(adminNotificationEmail(email, parsed.data.source, adminRecipients))
-    : {
-        status: "skipped" as const,
-        configured: false,
-        reason: "Admin notification recipient is not configured."
-      };
-
-  if (confirmation.status === "failed" || adminNotification.status === "failed") {
-    console.error("Trim Proof email signup notification failed", {
-      confirmationStatus: confirmation.status,
-      confirmationProvider: confirmation.provider,
-      adminStatus: adminNotification.status,
-      adminProvider: adminNotification.provider
-    });
-  }
-
-  const analytics = await sendServerAnalyticsEvent({
-    name: "generate_lead",
-    clientId: parsed.data.analytics?.gaClientId,
-    params: {
-      source: parsed.data.source,
-      page_path: parsed.data.analytics?.pagePath,
-      session_id: numericSessionId(parsed.data.analytics?.gaSessionId),
-      currency: "USD",
-      value: 0
+    if (analytics.status === "failed") {
+      console.error("Trim Proof server analytics event failed", {
+        event: "generate_lead",
+        provider: analytics.provider,
+        reason: describeServerError(analytics.reason)
+      });
     }
-  });
-  if (analytics.status === "failed") {
-    console.error("Trim Proof server analytics event failed", {
-      event: "generate_lead",
-      provider: analytics.provider,
-      reason: describeServerError(analytics.reason)
-    });
+  } catch (error) {
+    console.error("Trim Proof email signup follow-up failed", { error: describeServerError(error) });
   }
-
-  return NextResponse.json({
-    ok: true,
-    persisted: Boolean(supabase),
-    analytics,
-    email: {
-      confirmation,
-      adminNotification
-    }
-  });
 }
