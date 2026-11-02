@@ -109,7 +109,12 @@ export async function POST(request: Request) {
           entitlement,
           checkout_mode: session.mode
         });
-      } catch {
+      } catch (error) {
+        // 500 keeps Stripe retrying the delivery; the log is the only place the cause is visible.
+        console.error("Trim Proof Stripe webhook order record failed", {
+          eventType: event.type,
+          error: describeServerError(error)
+        });
         return NextResponse.json({ error: "Checkout order could not be recorded." }, { status: 500 });
       }
       // Duplicate deliveries and orders that landed refunded must not send another purchase event.
@@ -141,7 +146,7 @@ export async function POST(request: Request) {
           console.error("Trim Proof server analytics event failed", {
             event: "purchase",
             provider: analytics.provider,
-            reason: analytics.reason
+            reason: describeServerError(analytics.reason)
           });
         }
       }
@@ -167,8 +172,12 @@ export async function POST(request: Request) {
   } else {
     try {
       await handleLifecycleEvent(supabase, event);
-    } catch {
+    } catch (error) {
       // A 0-row lifecycle update is a logged no-op; only database failures reach here, and Stripe should retry them.
+      console.error("Trim Proof Stripe webhook lifecycle update failed", {
+        eventType: event.type,
+        error: describeServerError(error)
+      });
       return NextResponse.json({ error: "Order lifecycle update failed." }, { status: 500 });
     }
   }

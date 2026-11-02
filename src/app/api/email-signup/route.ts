@@ -2,7 +2,7 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
-import { getAdminSignupRecipients, sendTransactionalEmail } from "@/lib/email/transactional";
+import { getAdminSignupRecipients, publicEmailResult, sendTransactionalEmail } from "@/lib/email/transactional";
 import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
 import { describeServerError } from "@/lib/security/server-error";
 
@@ -137,8 +137,8 @@ export async function POST(request: Request) {
       ok: true,
       persisted: Boolean(supabase),
       email: {
-        confirmation: { status: "skipped", configured: true, reason: "Email already registered." },
-        adminNotification: { status: "skipped", configured: true, reason: "Email already registered." }
+        confirmation: { sent: false, code: "skipped" },
+        adminNotification: { sent: false, code: "skipped" }
       }
     });
   }
@@ -157,8 +157,10 @@ export async function POST(request: Request) {
     console.error("Trim Proof email signup notification failed", {
       confirmationStatus: confirmation.status,
       confirmationProvider: confirmation.provider,
+      confirmationReason: confirmation.status === "failed" ? describeServerError(confirmation.reason) : undefined,
       adminStatus: adminNotification.status,
-      adminProvider: adminNotification.provider
+      adminProvider: adminNotification.provider,
+      adminReason: adminNotification.status === "failed" ? describeServerError(adminNotification.reason) : undefined
     });
   }
 
@@ -186,8 +188,8 @@ export async function POST(request: Request) {
     persisted: Boolean(supabase),
     analytics,
     email: {
-      confirmation,
-      adminNotification
+      confirmation: publicEmailResult(confirmation),
+      adminNotification: publicEmailResult(adminNotification)
     }
   });
 }

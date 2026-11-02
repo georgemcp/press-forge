@@ -20,7 +20,8 @@ vi.mock("@/lib/billing/paid-session", () => ({
   verifyPaidCheckoutSession: mocks.verifyPaidCheckoutSession
 }));
 
-vi.mock("@/lib/email/transactional", () => ({
+vi.mock("@/lib/email/transactional", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/email/transactional")>()),
   sendTransactionalEmail: mocks.sendTransactionalEmail
 }));
 

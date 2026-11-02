@@ -5,7 +5,7 @@ import { getAppUrl } from "@/lib/billing/stripe";
 import { verifyPaidCheckoutSession } from "@/lib/billing/paid-session";
 import { buildAccessLinkEmail } from "@/lib/billing/access-link-email";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
-import { sendTransactionalEmail } from "@/lib/email/transactional";
+import { publicEmailResult, sendTransactionalEmail } from "@/lib/email/transactional";
 import { checkRateLimit, getRequestIp, rateLimitResponse } from "@/lib/security/request";
 import { describeServerError } from "@/lib/security/server-error";
 
@@ -101,11 +101,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       matched: false,
-      email: {
-        status: "skipped",
-        configured: false,
-        reason: "No active subscription or unused export credit was found for this billing email."
-      }
+      email: { sent: false, code: "skipped" }
     });
   }
 
@@ -114,7 +110,8 @@ export async function POST(request: Request) {
   if (delivery.status === "failed") {
     console.error("Trim Proof access link email failed", {
       provider: delivery.provider,
-      status: delivery.status
+      status: delivery.status,
+      reason: describeServerError(delivery.reason)
     });
   }
 
@@ -122,6 +119,6 @@ export async function POST(request: Request) {
     ok: true,
     matched: true,
     entitlement: order.entitlement,
-    email: delivery
+    email: publicEmailResult(delivery)
   });
 }

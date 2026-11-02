@@ -4,6 +4,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAccountSessionFromCookies } from "@/lib/auth/account-server";
+import { sanitizeValidationIssues } from "@/lib/security/validation-issues";
 import { sendServerAnalyticsEvent } from "@/lib/analytics/server-events";
 import { generateProof, publicPreflightReport } from "@/lib/print/proof";
 import { cleanupStaleProofJobs, deliveryManifestFileName, writeProofDeliveryManifest } from "@/lib/print/delivery-manifest";
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: "Proof request failed validation.",
-        issues: parsedRequest.error.issues
+        issues: sanitizeValidationIssues(parsedRequest.error.issues)
       },
       { status: 400 }
     );
