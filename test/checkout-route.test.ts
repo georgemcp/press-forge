@@ -46,6 +46,17 @@ describe("checkout route", () => {
     vi.unstubAllEnvs();
   });
 
+  it("does not name the missing price environment variable to the client", async () => {
+    vi.stubEnv("STRIPE_EXPORT_PRICE_ID", "");
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const response = await POST(
+      new Request("https://trimproof.com/api/billing/checkout", { method: "POST", body: JSON.stringify({ mode: "payment" }) })
+    );
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "Checkout is not configured yet. Try again later." });
+    expect(mocks.checkoutCreate).not.toHaveBeenCalled();
+  });
+
   it("stores GA attribution in Stripe metadata", async () => {
     const response = await POST(
       new Request("https://trimproof.com/api/billing/checkout", {

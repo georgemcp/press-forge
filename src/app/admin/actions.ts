@@ -19,6 +19,7 @@ import { getAppUrl, getStripeClient } from "@/lib/billing/stripe";
 import { createServiceSupabaseClient } from "@/lib/db/supabase";
 import { sendTransactionalEmail } from "@/lib/email/transactional";
 import { checkRateLimit, getForwardedIp } from "@/lib/security/request";
+import { describeServerError } from "@/lib/security/server-error";
 
 export interface AdminLoginState {
   error?: string;
@@ -86,6 +87,12 @@ function redirectWithMessage(path: string, key: "saved" | "adminError", message:
   redirect(`${path}${separator}${key}=${encodeURIComponent(message)}`);
 }
 
+/** Logs the real failure server-side and sends the admin back with a fixed message, never provider or database text. */
+function redirectWithServerError(path: string, context: string, error: unknown, message: string): never {
+  console.error("Trim Proof admin action failed", { context, error: describeServerError(error) });
+  redirectWithMessage(path, "adminError", message);
+}
+
 async function requireAdminAction() {
   const cookieStore = await cookies();
   if (!isAdminAuthConfigured() || !verifyAdminSessionValue(cookieStore.get(ADMIN_SESSION_COOKIE)?.value)) {
@@ -121,7 +128,7 @@ async function getOrderForAction(orderId: string, returnPath: string) {
   const supabase = await getSupabaseForAction(returnPath);
   const { data, error } = await supabase.from("export_orders").select("*").eq("id", orderId).maybeSingle();
   if (error) {
-    redirectWithMessage(returnPath, "adminError", error.message);
+    redirectWithServerError(returnPath, "order.load", error, "Order could not be loaded.");
   }
   if (!data) {
     redirectWithMessage(returnPath, "adminError", "Order was not found.");
@@ -159,7 +166,7 @@ export async function updateAccountManagement(formData: FormData) {
     { onConflict: "email" }
   );
   if (error) {
-    redirectWithMessage(returnPath, "adminError", error.message);
+    redirectWithServerError(returnPath, "account.update", error, "Account management notes could not be saved.");
   }
 
   await recordAdminAuditEvent({
@@ -198,12 +205,18 @@ export async function openStripeCustomerPortal(formData: FormData) {
   }
 
   const portalConfigurationId = process.env.STRIPE_PORTAL_CONFIGURATION_ID;
-  const session = await stripe.billingPortal.sessions.create({
-    customer: customerId,
-    return_url: new URL(returnPath, appUrl).toString(),
-    ...(portalConfigurationId ? { configuration: portalConfigurationId } : {})
-  });
-  redirect(session.url);
+  let portalUrl: string;
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: new URL(returnPath, appUrl).toString(),
+      ...(portalConfigurationId ? { configuration: portalConfigurationId } : {})
+    });
+    portalUrl = session.url;
+  } catch (error) {
+    redirectWithServerError(returnPath, "stripe.portal", error, "Stripe Customer Portal could not start.");
+  }
+  redirect(portalUrl);
 }
 
 export async function sendOrderAccessLink(formData: FormData) {
@@ -238,7 +251,7 @@ export async function sendOrderAccessLink(formData: FormData) {
     }
   });
   if (delivery.status !== "sent") {
-    redirectWithMessage(returnPath, "adminError", delivery.reason ?? "Access link email was not sent.");
+    redirectWithServerError(returnPath, "order.access_link_email", delivery.reason, "Access link email was not sent.");
   }
 
   redirectWithMessage(returnPath, "saved", "Access link sent.");
@@ -258,7 +271,7 @@ export async function expireOrderAccess(formData: FormData) {
   try {
     result = await expireExportOrderById(supabase, order.id);
   } catch (error) {
-    redirectWithMessage(returnPath, "adminError", error instanceof Error ? error.message : "Order could not be expired.");
+    redirectWithServerError(returnPath, "order.expire_access", error, "Order could not be expired.");
   }
   if (result !== "updated") {
     // A refunded order keeps its status.
@@ -319,10 +332,10 @@ export async function refundOrder(formData: FormData) {
       targetType: "order",
       targetId: order.id,
       metadata: {
-        reason: error instanceof Error ? error.message : "Stripe refund failed."
+        reason: describeServerError(error)
       }
     });
-    redirectWithMessage(returnPath, "adminError", error instanceof Error ? error.message : "Stripe refund failed.");
+    redirectWithServerError(returnPath, "order.refund", error, "Stripe refund failed.");
   }
 
   const { error } = await supabase
@@ -334,7 +347,7 @@ export async function refundOrder(formData: FormData) {
     })
     .eq("id", order.id);
   if (error) {
-    redirectWithMessage(returnPath, "adminError", error.message);
+    redirectWithServerError(returnPath, "order.refund_mark", error, "The Stripe refund was created, but the order could not be marked refunded.");
   }
 
   await recordAdminAuditEvent({
@@ -380,10 +393,10 @@ export async function cancelSubscription(formData: FormData) {
       targetId: order.id,
       metadata: {
         stripeSubscriptionId: order.stripe_subscription_id,
-        reason: error instanceof Error ? error.message : "Stripe cancellation failed."
+        reason: describeServerError(error)
       }
     });
-    redirectWithMessage(returnPath, "adminError", error instanceof Error ? error.message : "Stripe cancellation failed.");
+    redirectWithServerError(returnPath, "subscription.cancel", error, "Stripe cancellation failed.");
   }
 
   // Stripe is already canceled; a refunded order keeps its status rather than being rewritten to expired.
@@ -391,7 +404,7 @@ export async function cancelSubscription(formData: FormData) {
   try {
     expiry = await updateExportOrdersBySubscriptionId(supabase, order.stripe_subscription_id, "expired");
   } catch (error) {
-    redirectWithMessage(returnPath, "adminError", error instanceof Error ? error.message : "Order could not be expired.");
+    redirectWithServerError(returnPath, "subscription.cancel_expire", error, "Order could not be expired.");
   }
   // The write only leaves "paid", so a processing or consumed order is still live after the Stripe cancel.
   const accessLeftActive = expiry !== "updated" && order.status !== "refunded" && order.status !== "expired";
