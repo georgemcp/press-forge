@@ -46,4 +46,19 @@ describe("order lifecycle races (refund vs. checkout recording)", () => {
     expect(fake.rows[0]).toMatchObject({ id: "order_late", status: "refunded" });
     expect(fake.rows.some((r) => String(r.stripe_session_id).startsWith("refund-tombstone:"))).toBe(false);
   });
+
+  it("recordPaidExportOrder reports refunded for a pre-existing refunded row on a duplicate delivery", async () => {
+    const fake = createFakeOrders([{ ...checkout, status: "refunded" }]);
+
+    expect(await recordPaidExportOrder(fake.supabase as never, checkout)).toEqual({ created: false, refunded: true });
+    expect(fake.rows).toHaveLength(1);
+    expect(fake.rows[0]).toMatchObject({ status: "refunded" });
+  });
+
+  it.each(["paid", "processing", "consumed", "expired"])("recordPaidExportOrder reports a duplicate %s row as not refunded", async (status) => {
+    const fake = createFakeOrders([{ ...checkout, status }]);
+
+    expect(await recordPaidExportOrder(fake.supabase as never, checkout)).toEqual({ created: false, refunded: false });
+    expect(fake.rows[0]).toMatchObject({ status });
+  });
 });

@@ -109,4 +109,19 @@ describe("admin expiry actions respect the order lifecycle", () => {
     expect(mocks.cancel).toHaveBeenCalledWith("sub_1");
     expect(fake.rows[0]).toMatchObject({ status: "refunded" });
   });
+
+  it.each(["processing", "consumed"])("cancelSubscription reports an admin error when a %s order's access stays alive", async (status) => {
+    const fake = createFakeOrders([{ id: "order_s", stripe_session_id: "cs_s", stripe_subscription_id: "sub_1", status }]);
+    mocks.supabase = fake.supabase;
+    expect(await submit(cancelSubscription, "order_s")).toContain("adminError");
+    expect(mocks.cancel).toHaveBeenCalledWith("sub_1");
+    expect(fake.rows[0]).toMatchObject({ status });
+  });
+
+  it.each(["refunded", "expired"])("cancelSubscription on a %s order is not an admin error (nothing is left live)", async (status) => {
+    const fake = createFakeOrders([{ id: "order_s", stripe_session_id: "cs_s", stripe_subscription_id: "sub_1", status }]);
+    mocks.supabase = fake.supabase;
+    expect(await submit(cancelSubscription, "order_s")).toContain("saved");
+    expect(fake.rows[0]).toMatchObject({ status });
+  });
 });
