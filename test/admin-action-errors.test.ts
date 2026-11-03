@@ -61,7 +61,8 @@ const paidOrder = {
   customer_email: "buyer@example.com",
   stripe_session_id: "cs_a",
   stripe_payment_intent_id: "pi_a",
-  stripe_subscription_id: "sub_a"
+  stripe_subscription_id: "sub_a",
+  stripe_customer_id: "cus_a"
 };
 
 function form(fields: Record<string, string>) {
@@ -170,7 +171,7 @@ describe("admin actions never put provider or database error text in the redirec
 
   it("Stripe portal failure", async () => {
     mocks.portalCreate.mockRejectedValue(new Error(leak));
-    const target = await redirectOf(openStripeCustomerPortal, { stripeCustomerId: "cus_a" });
+    const target = await redirectOf(openStripeCustomerPortal, { orderId: "order_a" });
     expectFixed(target, "Stripe Customer Portal could not start.");
   });
 });

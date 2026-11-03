@@ -188,10 +188,13 @@ export async function updateAccountManagement(formData: FormData) {
 
 export async function openStripeCustomerPortal(formData: FormData) {
   await requireAdminAction();
-  const returnPath = safeReturnPath(textField(formData, "returnPath") || "/admin");
-  const customerId = textField(formData, "stripeCustomerId");
-  if (!customerId) {
-    redirectWithMessage(returnPath, "adminError", "Stripe customer ID is required.");
+  const fallbackReturnPath = safeReturnPath(textField(formData, "returnPath") || "/admin");
+  // The customer comes from the stored order, never from the form, so an admin POST cannot open an arbitrary customer's portal.
+  const { supabase, order } = await getOrderForAction(textField(formData, "orderId"), fallbackReturnPath);
+  const returnPath = orderReturnPath(order, fallbackReturnPath);
+  const customerId = order.stripe_customer_id;
+  if (!customerId || !customerId.startsWith("cus_")) {
+    redirectWithMessage(returnPath, "adminError", "This order has no Stripe customer.");
   }
 
   const stripe = getStripeClient();
@@ -216,6 +219,17 @@ export async function openStripeCustomerPortal(formData: FormData) {
   } catch (error) {
     redirectWithServerError(returnPath, "stripe.portal", error, "Stripe Customer Portal could not start.");
   }
+
+  await recordAdminAuditEvent({
+    supabase,
+    action: "stripe.portal_opened",
+    targetType: "order",
+    targetId: order.id,
+    metadata: {
+      stripeCustomerId: customerId
+    }
+  });
+
   redirect(portalUrl);
 }
 

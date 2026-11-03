@@ -139,7 +139,7 @@ function OrderActions({ data, order }: { data: AdminAccountDetailData; order: Ad
       {order.stripe_customer_id ? (
         <form action={openStripeCustomerPortal}>
           <input name="returnPath" type="hidden" value={returnPath} />
-          <input name="stripeCustomerId" type="hidden" value={order.stripe_customer_id} />
+          <input name="orderId" type="hidden" value={order.id} />
           <button className="inline-flex w-full items-center justify-center gap-2 rounded-[8px] border border-border bg-background px-3 py-2 text-xs font-bold text-surface-ink" type="submit">
             <CreditCard aria-hidden className="h-3.5 w-3.5" />
             Portal
